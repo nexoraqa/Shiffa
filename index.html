@@ -872,12 +872,14 @@ function openPatientPopup(el){
       var visits = results[0];
       var notes  = results[1];
 
-      // Index notes by patientId+date for quick lookup
+      // Index notes by visitDate+doctorId for matching with visits
       var notesMap = {};
       for(var n=0;n<notes.length;n++){
-        var key = notes[n].patientId;
+        var note = notes[n];
+        // Key = date + doctor so any doctor can find notes for that visit
+        var key = (note.savedAt||'').substring(0,10) + '_' + (note.doctorId||'');
         if(!notesMap[key]) notesMap[key] = [];
-        notesMap[key].push(notes[n]);
+        notesMap[key].push(note);
       }
 
       if(!visits || visits.length===0){
@@ -895,8 +897,9 @@ function openPatientPopup(el){
           if(ALL_DOCTORS[j].id===v.doctor){ dName=ALL_DOCTORS[j].name; break; }
         }
 
-        // Find notes for this visit
-        var visitNotes = notesMap[v.id] || [];
+        // Find notes for this visit by date + doctor
+        var visitKey = v.visitDate + '_' + v.doctor;
+        var visitNotes = notesMap[visitKey] || [];
 
         html += '<div style="padding:12px 0;border-bottom:1px solid #D6E8DE">';
         html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
@@ -987,7 +990,7 @@ try{
       .catch(function(e){console.error(e);return false;});
   };
   window.fbSaveNotes=function(patientId, notesData){
-    return addDoc(collection(db,'notes'), Object.assign({patientId:patientId}, notesData, {createdAt:serverTimestamp()}))
+    return addDoc(collection(db,'notes'), Object.assign({patientId:patientId, savedAt:new Date().toISOString()}, notesData, {createdAt:serverTimestamp()}))
       .then(function(){ return true; })
       .catch(function(e){ console.error('fbSaveNotes error:',e); return false; });
   };
