@@ -491,10 +491,16 @@ function searchByPhone(){
 function addReturnPatient(){
   var p = retPatient;
   if(!p) return;
-  // Ask for doctor and reason
+  selRetPrio = 'normal';
   document.getElementById('search-result').innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #D6E8DE;margin-top:4px">'+
     '<div style="font-weight:700;font-size:15px;color:#0F1F17;margin-bottom:12px">'+p.name+' - Add to queue</div>'+
+    '<div class="form-field"><label class="form-label">Priority</label>'+
+    '<div class="toggle-group" id="ret-prio-group">'+
+    '<button class="prio-btn" onclick="pickRetPrio(this)" data-val="normal" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>'+
+    '<button class="prio-btn" onclick="pickRetPrio(this)" data-val="urgent">Urgent</button>'+
+    '<button class="prio-btn" onclick="pickRetPrio(this)" data-val="emergency">Emergency</button>'+
+    '</div></div>'+
     '<div class="form-field"><label class="form-label">Assign Doctor *</label>'+
     '<select class="form-select" id="ret-doctor">'+
     '<option value="">Select a doctor...</option>'+
@@ -514,6 +520,17 @@ function addReturnPatient(){
     '</div></div>';
 }
 
+var selRetPrio = 'normal';
+function pickRetPrio(btn){
+  selRetPrio = btn.getAttribute('data-val');
+  var group = btn.parentElement.querySelectorAll('button');
+  for(var i=0;i<group.length;i++){group[i].className='prio-btn';group[i].style.cssText='';}
+  btn.className='prio-btn active';
+  if(selRetPrio==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
+  if(selRetPrio==='urgent')   {btn.style.borderColor='#F0A500';btn.style.background='#FFF8E7';btn.style.color='#F0A500';}
+  if(selRetPrio==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
+}
+
 function confirmReturnPatient(){
   var p = retPatient;
   var doctor = document.getElementById('ret-doctor').value;
@@ -523,7 +540,7 @@ function confirmReturnPatient(){
   errEl.style.display='none';
   var data = {
     patientId:p.id, name:p.name, age:p.age, phone:p.phone, gender:p.gender,
-    visitType:'follow_up', priority:'normal', doctor:doctor, reason:reason,
+    visitType:'follow_up', priority:selRetPrio, doctor:doctor, reason:reason,
     visitDate:new Date().toISOString().split('T')[0],
     status:'waiting', clinicId:'clinic_001', createdAt:new Date().toISOString()
   };
