@@ -957,7 +957,323 @@ function loadContent(section) {
     return;
   }
 
+  // ── REGISTER PATIENT (Receptionist) ──
+  if (section === 'register') {
+    main.innerHTML = `
+      <h2 style="color:#0F1F17;margin-bottom:20px">➕ Register New Patient</h2>
+      <div class="table-card" style="max-width:560px">
+
+        <div style="display:grid;gap:16px">
+
+          <!-- Full Name -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Full Name *</label>
+            <input id="reg-name" type="text" placeholder="e.g. Ahmed Benali"
+              style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box"/>
+          </div>
+
+          <!-- Age + Phone -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Age *</label>
+              <input id="reg-age" type="number" placeholder="e.g. 45"
+                style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Phone *</label>
+              <input id="reg-phone" type="tel" placeholder="0555 123 456"
+                style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box"/>
+            </div>
+          </div>
+
+          <!-- Gender -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Gender *</label>
+            <div style="display:flex;gap:8px">
+              <button onclick="selectGender('male',this)" id="btn-male"
+                style="flex:1;padding:10px;border:1.5px solid #D6E8DE;border-radius:10px;background:white;font-size:13px;font-weight:600;cursor:pointer">
+                👨 Male
+              </button>
+              <button onclick="selectGender('female',this)" id="btn-female"
+                style="flex:1;padding:10px;border:1.5px solid #D6E8DE;border-radius:10px;background:white;font-size:13px;font-weight:600;cursor:pointer">
+                👩 Female
+              </button>
+            </div>
+          </div>
+
+          <!-- Visit Type -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Visit Type *</label>
+            <div style="display:flex;gap:8px">
+              <button onclick="selectVisitType('new',this)" id="btn-new"
+                style="flex:1;padding:12px;border:2px solid #1B6B4A;border-radius:12px;background:#E8F5EF;color:#1B6B4A;font-size:13px;font-weight:700;cursor:pointer;text-align:center">
+                🆕<br>New Patient
+              </button>
+              <button onclick="selectVisitType('follow_up',this)" id="btn-followup"
+                style="flex:1;padding:12px;border:1.5px solid #D6E8DE;border-radius:12px;background:white;color:#4A5E54;font-size:13px;font-weight:600;cursor:pointer;text-align:center">
+                🔄<br>Follow-up
+              </button>
+            </div>
+          </div>
+
+          <!-- Doctor -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Assign Doctor *</label>
+            <select id="reg-doctor"
+              style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;background:white">
+              <option value="">Select a doctor...</option>
+              <option value="dr.karim">Dr. Karim Mansouri — General Practice</option>
+              <option value="dr.nadia">Dr. Nadia Bouzid — Pediatrics</option>
+              <option value="dr.youcef">Dr. Youcef Hamdani — Cardiology</option>
+            </select>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Priority</label>
+            <div style="display:flex;gap:8px">
+              <button onclick="selectPriority('normal',this)"
+                style="flex:1;padding:8px;border:2px solid #1B6B4A;border-radius:8px;background:#E8F5EF;color:#1B6B4A;font-size:12px;font-weight:700;cursor:pointer">
+                🟢 Normal
+              </button>
+              <button onclick="selectPriority('urgent',this)"
+                style="flex:1;padding:8px;border:1.5px solid #D6E8DE;border-radius:8px;background:white;color:#4A5E54;font-size:12px;font-weight:600;cursor:pointer">
+                🟡 Urgent
+              </button>
+              <button onclick="selectPriority('emergency',this)"
+                style="flex:1;padding:8px;border:1.5px solid #D6E8DE;border-radius:8px;background:white;color:#4A5E54;font-size:12px;font-weight:600;cursor:pointer">
+                🔴 Emergency
+              </button>
+            </div>
+          </div>
+
+          <!-- Reason -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Reason for Visit</label>
+            <textarea id="reg-reason" placeholder="Brief description of symptoms..."
+              style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;height:80px;resize:vertical"></textarea>
+          </div>
+
+          <!-- Error -->
+          <div id="reg-error" style="display:none;background:#FDECEA;border:1px solid #D64045;border-radius:10px;padding:10px 14px;color:#D64045;font-size:13px;font-weight:500"></div>
+
+          <!-- Submit -->
+          <button onclick="registerPatient()"
+            style="width:100%;padding:14px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+            ✅ Register Patient
+          </button>
+
+        </div>
+      </div>`;
+
+    // Set defaults
+    window._selectedGender    = '';
+    window._selectedVisitType = 'new';
+    window._selectedPriority  = 'normal';
+    return;
+  }
+
+  // ── TODAY'S QUEUE (Real from Firebase) ──
+  if (section === 'queue') {
+    main.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="color:#0F1F17;margin:0">🔢 Today's Queue</h2>
+        <button onclick="loadQueue()" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer">🔄 Refresh</button>
+      </div>
+      <div id="queue-list">
+        <div style="text-align:center;padding:40px;color:#8FA89D">
+          <div style="font-size:32px;margin-bottom:12px">⏳</div>
+          Loading patients from database...
+        </div>
+      </div>`;
+    loadQueue();
+    return;
+  }
+
   main.innerHTML = '<p style="color:#8FA89D;padding:40px;text-align:center">🚧 Coming soon...</p>';
+}
+
+// ─────────────────────────────────────────
+// HELPER: Select Gender
+// ─────────────────────────────────────────
+function selectGender(gender, btn) {
+  window._selectedGender = gender;
+  ['btn-male','btn-female'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.style.border = '1.5px solid #D6E8DE'; b.style.background = 'white'; b.style.color = '#4A5E54'; }
+  });
+  btn.style.border     = '2px solid #1B6B4A';
+  btn.style.background = '#E8F5EF';
+  btn.style.color      = '#1B6B4A';
+}
+
+// ─────────────────────────────────────────
+// HELPER: Select Visit Type
+// ─────────────────────────────────────────
+function selectVisitType(type, btn) {
+  window._selectedVisitType = type;
+  ['btn-new','btn-followup'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.style.border = '1.5px solid #D6E8DE'; b.style.background = 'white'; b.style.color = '#4A5E54'; b.style.fontWeight = '600'; }
+  });
+  btn.style.border     = '2px solid #1B6B4A';
+  btn.style.background = '#E8F5EF';
+  btn.style.color      = '#1B6B4A';
+  btn.style.fontWeight = '700';
+}
+
+// ─────────────────────────────────────────
+// HELPER: Select Priority
+// ─────────────────────────────────────────
+function selectPriority(priority, btn) {
+  window._selectedPriority = priority;
+  btn.parentElement.querySelectorAll('button').forEach(b => {
+    b.style.border = '1.5px solid #D6E8DE'; b.style.background = 'white'; b.style.color = '#4A5E54';
+  });
+  const colors = { normal: ['#1B6B4A','#E8F5EF'], urgent: ['#F0A500','#FFF8E7'], emergency: ['#D64045','#FDECEA'] };
+  const [c, bg] = colors[priority];
+  btn.style.border = `2px solid ${c}`; btn.style.background = bg; btn.style.color = c;
+}
+
+// ─────────────────────────────────────────
+// REGISTER PATIENT → Save to Firebase
+// ─────────────────────────────────────────
+function registerPatient() {
+  const name   = document.getElementById('reg-name')?.value.trim();
+  const age    = document.getElementById('reg-age')?.value;
+  const phone  = document.getElementById('reg-phone')?.value.trim();
+  const doctor = document.getElementById('reg-doctor')?.value;
+  const reason = document.getElementById('reg-reason')?.value.trim();
+  const errBox = document.getElementById('reg-error');
+
+  // Validate
+  if (!name || !age || !phone || !doctor || !window._selectedGender) {
+    errBox.style.display = 'block';
+    errBox.textContent   = '⚠️ Please fill in all required fields including gender.';
+    return;
+  }
+  errBox.style.display = 'none';
+
+  const btn = document.querySelector('[onclick="registerPatient()"]');
+  btn.textContent = 'Saving...';
+  btn.disabled    = true;
+
+  const today = new Date().toISOString().split('T')[0];
+  const patientData = {
+    name,
+    age:       parseInt(age),
+    phone,
+    gender:    window._selectedGender,
+    visitType: window._selectedVisitType || 'new',
+    priority:  window._selectedPriority  || 'normal',
+    doctor,
+    reason,
+    visitDate: today,
+    status:    'waiting',
+    clinicId:  'clinic_001',
+    createdAt: new Date().toISOString(),
+  };
+
+  // Save to Firebase
+  if (window.savePatientToFirebase) {
+    window.savePatientToFirebase(patientData).then(id => {
+      if (id) {
+        // Show success
+        document.querySelector('.table-card').innerHTML = `
+          <div style="text-align:center;padding:40px">
+            <div style="font-size:48px;margin-bottom:16px">✅</div>
+            <h3 style="color:#0F1F17;margin:0 0 8px">${name} Registered!</h3>
+            <p style="color:#8FA89D;font-size:14px">Added to today's queue successfully.</p>
+            <div style="display:flex;gap:12px;margin-top:24px;justify-content:center">
+              <button onclick="loadContent('queue')"
+                style="padding:11px 20px;background:#E8F5EF;color:#1B6B4A;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+                👥 View Queue
+              </button>
+              <button onclick="loadContent('register')"
+                style="padding:11px 20px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+                ➕ Register Another
+              </button>
+            </div>
+          </div>`;
+      } else {
+        btn.textContent = '✅ Register Patient';
+        btn.disabled    = false;
+        errBox.style.display = 'block';
+        errBox.textContent   = '❌ Could not save. Check your connection.';
+      }
+    });
+  } else {
+    btn.textContent = '✅ Register Patient';
+    btn.disabled    = false;
+    errBox.style.display = 'block';
+    errBox.textContent   = '❌ Firebase not ready. Refresh the page.';
+  }
+}
+
+// ─────────────────────────────────────────
+// LOAD QUEUE from Firebase
+// ─────────────────────────────────────────
+function loadQueue() {
+  const list = document.getElementById('queue-list');
+  if (!list) return;
+
+  if (window.getTodaysPatients) {
+    window.getTodaysPatients().then(patients => {
+      if (patients.length === 0) {
+        list.innerHTML = `
+          <div style="text-align:center;padding:60px;color:#8FA89D">
+            <div style="font-size:48px;margin-bottom:12px">🏥</div>
+            <p>No patients registered today yet.</p>
+            <button onclick="loadContent('register')"
+              style="margin-top:16px;padding:10px 20px;background:#1B6B4A;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+              ➕ Register First Patient
+            </button>
+          </div>`;
+        return;
+      }
+
+      const priorityOrder = { emergency: 0, urgent: 1, normal: 2 };
+      patients.sort((a, b) => (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2));
+
+      list.innerHTML = patients.map((p, i) => {
+        const priorityColors = {
+          emergency: ['#D64045','#FDECEA','🔴'],
+          urgent:    ['#F0A500','#FFF8E7','🟡'],
+          normal:    ['#1B6B4A','#E8F5EF','🟢'],
+        };
+        const [c, bg, icon] = priorityColors[p.priority] || priorityColors.normal;
+        const statusColors = {
+          waiting:    ['#F0A500','#FFF8E7','⏳ Waiting'],
+          inprogress: ['#1B6B4A','#E8F5EF','🩺 In Progress'],
+          done:       ['#8FA89D','#F0F0F0','✅ Done'],
+        };
+        const [sc, sbg, slabel] = statusColors[p.status] || statusColors.waiting;
+
+        return `
+          <div style="background:white;border-radius:14px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;border-left:4px solid ${c}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-weight:800;font-size:15px;color:#0F1F17">#${i+1} ${p.name}</span>
+                  <span style="background:${bg};color:${c};border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">${icon} ${(p.priority||'normal').toUpperCase()}</span>
+                  <span style="background:${p.visitType==='new'?'#E8F5EF':'#F3EEFF'};color:${p.visitType==='new'?'#1B6B4A':'#7B5EA7'};border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">
+                    ${p.visitType==='new'?'NEW':'FOLLOW-UP'}
+                  </span>
+                </div>
+                <div style="font-size:12px;color:#8FA89D">
+                  Age ${p.age} · ${p.doctor} · ${p.reason || 'No reason given'}
+                </div>
+              </div>
+              <span style="background:${sbg};color:${sc};border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;white-space:nowrap">
+                ${slabel}
+              </span>
+            </div>
+          </div>`;
+      }).join('');
+    });
+  } else {
+    list.innerHTML = '<p style="text-align:center;color:#8FA89D;padding:40px">❌ Firebase not connected. Refresh the page.</p>';
+  }
 }
 
 // ─────────────────────────────────────────
