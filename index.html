@@ -687,6 +687,8 @@ function closePopup(){
 }
 
 function openPatientPopup(el){
+  // Only doctors can see patient popup
+  if(!currentUser || currentUser.role !== 'doctor') return;
   // Get patient data from data attributes
   var details = el.querySelector('.patient-details');
   if(!details) return;
