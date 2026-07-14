@@ -402,7 +402,7 @@ if(page==='register'){
     mc.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">'+
       '<h2 style="color:#0F1F17;margin:0">🔢 Today\'s Queue</h2>'+
-      '<button onclick="loadQueue()" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
+      '<button onclick="loadQueue(currentUser.doctorId)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
       '</div><div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
     loadQueue(currentUser.doctorId);
     return;
