@@ -682,6 +682,69 @@ function loadQueue(doctorFilter){
     list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients today.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register Patient</button></div>';
   }
 }
+function closePopup(){
+  document.getElementById('patient-popup').style.display='none';
+}
+
+function openPatientPopup(el){
+  // Get patient data from data attributes
+  var details = el.querySelector('.patient-details');
+  if(!details) return;
+  var name   = details.getAttribute('data-name');
+  var age    = details.getAttribute('data-age');
+  var gender = details.getAttribute('data-gender');
+  var phone  = details.getAttribute('data-phone');
+  var doctor = details.getAttribute('data-doctor');
+  var reason = details.getAttribute('data-reason');
+  var status = details.getAttribute('data-status');
+
+  // Fill popup header
+  document.getElementById('popup-name').textContent   = name;
+  document.getElementById('popup-info').textContent   = 'Age '+age+' - '+gender;
+  document.getElementById('popup-phone').textContent  = phone ? 'Phone: '+phone : '';
+
+  // Show popup
+  document.getElementById('patient-popup').style.display='block';
+
+  // Load visit history from Firebase
+  var historyEl = document.getElementById('popup-history');
+  historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>';
+
+  if(window.fbGetPatientHistory && phone){
+    window.fbGetPatientHistory(phone).then(function(visits){
+      if(!visits || visits.length===0){
+        historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">No previous visits found.</div>';
+        return;
+      }
+      var html = '';
+      visits.sort(function(a,b){ return b.createdAt > a.createdAt ? 1 : -1; });
+      for(var i=0;i<visits.length;i++){
+        var v = visits[i];
+        var sc = v.status==='done'?'#1B6B4A':v.status==='inprogress'?'#F0A500':'#8FA89D';
+        var sl = v.status==='done'?'Closed':v.status==='inprogress'?'In Progress':'Waiting';
+        html += '<div style="padding:12px 0;border-bottom:1px solid #D6E8DE">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+        html += '<div>';
+        html += '<div style="font-size:12px;color:#8FA89D;margin-bottom:3px">'+v.visitDate+'</div>';
+        html += '<div style="font-weight:600;font-size:13px;color:#0F1F17">'+v.doctor+'</div>';
+        if(v.reason) html += '<div style="font-size:12px;color:#4A5E54;margin-top:2px">'+v.reason+'</div>';
+        html += '</div>';
+        html += '<span style="font-size:11px;font-weight:700;color:'+sc+';background:'+sc+'20;padding:3px 8px;border-radius:8px">'+sl+'</span>';
+        html += '</div></div>';
+      }
+      historyEl.innerHTML = html;
+    });
+  } else {
+    // No Firebase or no phone - show current visit only
+    historyEl.innerHTML =
+      '<div style="padding:12px 0">' +
+      '<div style="font-size:12px;color:#8FA89D;margin-bottom:3px">Today</div>' +
+      '<div style="font-weight:600;font-size:13px;color:#0F1F17">'+doctor+'</div>' +
+      (reason ? '<div style="font-size:12px;color:#4A5E54;margin-top:2px">'+reason+'</div>' : '') +
+      '</div>';
+  }
+}
+
 function renderQueue(patients){
   var list=document.getElementById('queue-list');
   if(!list) return;
@@ -699,15 +762,15 @@ function renderQueue(patients){
     var s=STATUS_DATA[p.status]||STATUS_DATA.waiting;
     var tc=p.visitType==='new'?'type-new':'type-followup';
     var tl=p.visitType==='new'?'NEW':'FOLLOW-UP';
-    html+='<div class="queue-item" style="border-left:4px solid '+c[0]+'">';
+    html+='<div class="queue-item" data-pid="'+p.id+'" style="border-left:4px solid '+c[0]+';cursor:pointer" onclick="openPatientPopup(this)">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
     html+='<div style="flex:1">';
     html+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">';
-    html+='<span style="font-weight:800;font-size:15px">#'+(i+1)+' '+p.name+'</span>';
+    html+='<span class="patient-name" style="font-weight:800;font-size:15px">#'+(i+1)+' '+p.name+'</span>';
     html+='<span style="background:'+c[1]+';color:'+c[0]+';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">'+c[2]+'</span>';
     html+='<span class="'+tc+'">'+tl+'</span>';
     html+='</div>';
-    html+='<div style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
+    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
     html+='<button onclick="cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
     html+='</div></div></div>';
   }
@@ -725,6 +788,13 @@ try{
   window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
   window.fbGetPatients=function(){var t=new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
+  window.fbGetPatientHistory=function(phone){
+    return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){
+      var list=[];
+      snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});
+      return list;
+    }).catch(function(e){console.error(e);return[];});
+  };
   window.fbFindPatient=function(phone){return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){if(snap.empty)return null;var d=snap.docs[0];return Object.assign({id:d.id},d.data());}).catch(function(e){console.error(e);return null;});};
   var b=document.createElement('div');
   b.style.cssText='position:fixed;bottom:80px;right:16px;background:#1B6B4A;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999';
@@ -799,6 +869,32 @@ try{
         <textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea>
       </div>
       <button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="margin-top:0">Register Patient</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- PATIENT POPUP MODAL -->
+<div id="patient-popup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:20px">
+  <div style="background:#fff;border-radius:20px;max-width:500px;margin:20px auto;overflow:hidden">
+    <div id="popup-header" style="padding:20px 20px 16px;border-bottom:1px solid #D6E8DE">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div id="popup-name" style="font-weight:800;font-size:18px;color:#0F1F17"></div>
+          <div id="popup-info" style="font-size:13px;color:#4A5E54;margin-top:3px"></div>
+          <div id="popup-phone" style="font-size:12px;color:#8FA89D;margin-top:2px"></div>
+        </div>
+        <button onclick="closePopup()" style="background:#F7FAF8;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#4A5E54;cursor:pointer">Close</button>
+      </div>
+    </div>
+    <div style="padding:16px 20px">
+      <h3 style="font-size:14px;font-weight:700;color:#0F1F17;margin-bottom:12px">Visit History</h3>
+      <div id="popup-history">
+        <div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>
+      </div>
+    </div>
+    <div style="padding:0 20px 20px;display:flex;gap:10px">
+      <button onclick="closePopup()" style="flex:1;padding:12px;background:#F7FAF8;color:#4A5E54;border:1px solid #D6E8DE;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Close</button>
     </div>
   </div>
 </div>
