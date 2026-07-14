@@ -182,8 +182,8 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
         <button class="btn-use" onclick="fillUser('clinicadmin','clinic123')">Use →</button>
       </div>
       <div class="test-row">
-        <div><span class="test-row-info">👨‍⚕️ Doctor</span><span class="test-row-user">@dr.karim</span></div>
-        <button class="btn-use" onclick="fillUser('dr.karim','doctor123')">Use →</button>
+        <div><span class="test-row-info">👨‍⚕️ Doctor</span><span class="test-row-user">@dr.belouadah</span></div>
+        <button class="btn-use" onclick="fillUser('dr.belouadah','doctor123')">Use →</button>
       </div>
       <div class="test-row">
         <div><span class="test-row-info">🧑‍💼 Receptionist</span><span class="test-row-user">@sara.recep</span></div>
@@ -239,9 +239,9 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 // ═══════════════════════════
 var USERS = [
   {id:'u1', username:'admin',       password:'admin123',  role:'superadmin',   name:'Super Admin',         avatar:'👑'},
-  {id:'u2', username:'clinicadmin', password:'clinic123', role:'clinicadmin',  name:'Dr. Mansouri Clinic', avatar:'🏥', clinicName:'El Amal Clinic'},
-  {id:'u3', username:'dr.karim',    password:'doctor123', role:'doctor',       name:'Dr. Karim Mansouri',  avatar:'👨‍⚕️', clinicName:'El Amal Clinic', specialty:'General Practice'},
-  {id:'u4', username:'sara.recep',  password:'recep123',  role:'receptionist', name:'Sara Bouzid',         avatar:'🧑‍💼', clinicName:'El Amal Clinic'}
+  {id:'u2', username:'clinicadmin', password:'clinic123', role:'clinicadmin',  name:'عيادة بوسعادة المركزية', avatar:'🏥', clinicName:'عيادة بوسعادة المركزية'},
+  {id:'u3', username:'dr.belouadah', password:'doctor123', role:'doctor',       name:'Dr. Abdelmadjid Belouadah', avatar:'👨‍⚕️', clinicName:'عيادة بوسعادة', specialty:'طب عام — General Practice'},
+  {id:'u4', username:'sara.recep',   password:'recep123',  role:'receptionist', name:'Sara Bouzida',              avatar:'🧑‍💼', clinicName:'عيادة بوسعادة'}
 ];
 
 var currentUser = null;
@@ -431,6 +431,8 @@ function loadPage(page) {
     selectedGender = '';
     selectedVisit  = 'new';
     selectedPrio   = 'normal';
+    // Will init button colors after render
+    setTimeout(function() { if(document.getElementById('p-normal')) pickPrio('normal'); }, 50);
     main.innerHTML =
       '<h2 style="color:#0F1F17;margin-bottom:18px">➕ Register New Patient</h2>' +
       '<div class="table-card" style="max-width:540px">' +
@@ -466,7 +468,7 @@ function loadPage(page) {
         '<div class="form-field">' +
           '<label class="form-label">Priority</label>' +
           '<div class="toggle-group">' +
-            '<button class="prio-btn active" id="p-normal"    onclick="pickPrio(\'normal\')"   >🟢 Normal</button>' +
+            '<button class="prio-btn active" id="p-normal"    onclick="pickPrio(\'normal\'"   style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">🟢 Normal</button>' +
             '<button class="prio-btn"        id="p-urgent"    onclick="pickPrio(\'urgent\')"   >🟡 Urgent</button>' +
             '<button class="prio-btn"        id="p-emergency" onclick="pickPrio(\'emergency\')">🔴 Emergency</button>' +
           '</div>' +
@@ -475,9 +477,22 @@ function loadPage(page) {
           '<label class="form-label">Assign Doctor *</label>' +
           '<select class="form-select" id="r-doctor">' +
             '<option value="">Select a doctor...</option>' +
-            '<option value="dr.karim">Dr. Karim Mansouri — General Practice</option>' +
-            '<option value="dr.nadia">Dr. Nadia Bouzid — Pediatrics</option>' +
-            '<option value="dr.youcef">Dr. Youcef Hamdani — Cardiology</option>' +
+            '<optgroup label="طب عام — General Practice">' +
+            '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah — طب عام</option>' +
+            '<option value="dr.ezzine">Dr. Fatima Ezzine — طب عام</option>' +
+            '<option value="dr.chebara">Dr. Bachir Chebara — طب عام</option>' +
+            '<option value="dr.ouali">Dr. Ouali Souad — طب عام</option>' +
+            '<option value="dr.gherbi">Dr. Fathi Gherbi — طب عام</option>' +
+            '</optgroup>' +
+            '<optgroup label="طب الأطفال — Pediatrics">' +
+            '<option value="dr.slimani">Dr. Omar Slimani — طب الأطفال</option>' +
+            '</optgroup>' +
+            '<optgroup label="طب العيون — Ophthalmology">' +
+            '<option value="dr.hariti">Dr. Hariti Amar — طب وجراحة العيون</option>' +
+            '</optgroup>' +
+            '<optgroup label="طب الأسنان — Dentistry">' +
+            '<option value="dr.mansour">Dr. Mansour Manel — طب وجراحة الأسنان</option>' +
+            '</optgroup>' +
           '</select>' +
         '</div>' +
         '<div class="form-field">' +
@@ -548,10 +563,10 @@ function loadPage(page) {
         '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val">14</div><div class="stat-lbl">Total Today</div></div></div>' +
       '</div>' +
       '<div class="table-card"><h3>🔢 My Queue Right Now</h3>' +
-        makeQueueRow('Ahmed Benali', 45, 'new', 'inprogress', 'High blood pressure') +
-        makeQueueRow('Fatima Bouzid', 32, 'follow_up', 'waiting', 'Diabetes follow-up') +
-        makeQueueRow('Omar Khelif', 58, 'follow_up', 'waiting', 'Back pain') +
-        makeQueueRow('Meriem Saidi', 24, 'new', 'waiting', 'General checkup') +
+        makeQueueRow('Bensalem Khaled', 52, 'new', 'inprogress', 'High blood pressure') +
+        makeQueueRow('Boudaoud Fatima', 38, 'follow_up', 'waiting', 'Diabetes follow-up') +
+        makeQueueRow('Zerrouki Mohand', 61, 'follow_up', 'waiting', 'Back pain') +
+        makeQueueRow('Hadj Meriem', 27, 'new', 'waiting', 'General checkup') +
       '</div>';
     return;
   }
@@ -566,10 +581,10 @@ function loadPage(page) {
         '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val">6</div><div class="stat-lbl">New Patients</div></div></div>' +
       '</div>' +
       '<div class="table-card"><h3>📋 Today\'s Queue — All Doctors</h3>' +
-        makeRow('Ahmed Benali · Dr. Karim · New', '🩺 With Doctor', '#1B6B4A', '#E8F5EF') +
-        makeRow('Fatima Bouzid · Dr. Karim · Follow-up', '⏳ Waiting', '#F0A500', '#FFF8E7') +
-        makeRow('Lila Hamdi · Dr. Nadia · New', '✅ Done', '#8FA89D', '#F0F0F0') +
-        makeRow('Rachid Hamza · Dr. Karim · Follow-up', '⏳ Waiting', '#F0A500', '#FFF8E7') +
+        makeRow('Bensalem Khaled · Dr. Belouadah · New', '🩺 With Doctor', '#1B6B4A', '#E8F5EF') +
+        makeRow('Boudaoud Fatima · Dr. Belouadah · Follow-up', '⏳ Waiting', '#F0A500', '#FFF8E7') +
+        makeRow('Brahimi Lila · Dr. Slimani · New', '✅ Done', '#8FA89D', '#F0F0F0') +
+        makeRow('Zerrouki Mohand · Dr. Belouadah · Follow-up', '⏳ Waiting', '#F0A500', '#FFF8E7') +
       '</div>';
     return;
   }
@@ -616,9 +631,17 @@ function pickVisit(val) {
 
 function pickPrio(val) {
   selectedPrio = val;
-  document.getElementById('p-normal').className    = 'prio-btn' + (val==='normal'    ? ' active' : '');
-  document.getElementById('p-urgent').className    = 'prio-btn' + (val==='urgent'    ? ' active' : '');
-  document.getElementById('p-emergency').className = 'prio-btn' + (val==='emergency' ? ' active' : '');
+  var n = document.getElementById('p-normal');
+  var u = document.getElementById('p-urgent');
+  var e = document.getElementById('p-emergency');
+  // Reset all
+  n.className = 'prio-btn'; n.style.cssText = '';
+  u.className = 'prio-btn'; u.style.cssText = '';
+  e.className = 'prio-btn'; e.style.cssText = '';
+  // Activate selected with correct color
+  if (val === 'normal')    { n.className = 'prio-btn active'; n.style.borderColor = '#1B6B4A'; n.style.background = '#E8F5EF'; n.style.color = '#1B6B4A'; }
+  if (val === 'urgent')    { u.className = 'prio-btn active'; u.style.borderColor = '#F0A500'; u.style.background = '#FFF8E7'; u.style.color = '#F0A500'; }
+  if (val === 'emergency') { e.className = 'prio-btn active'; e.style.borderColor = '#D64045'; e.style.background = '#FDECEA'; e.style.color = '#D64045'; }
 }
 
 // ═══════════════════════════
@@ -688,6 +711,30 @@ function showSuccess(name) {
 // ═══════════════════════════
 // QUEUE
 // ═══════════════════════════
+
+// ═══════════════════════════
+// STATUS CYCLE
+// ═══════════════════════════
+var STATUS_CYCLE = {waiting:'inprogress', inprogress:'done', done:'waiting'};
+var STATUS_LABELS = {
+  waiting:    ['#F0A500','#FFF8E7','⏳ Waiting'],
+  inprogress: ['#1B6B4A','#E8F5EF','🩺 In Progress'],
+  done:       ['#8FA89D','#F0F0F0','✅ Done']
+};
+
+function cycleStatus(pid, btn) {
+  var label = btn.textContent.trim();
+  var current = 'waiting';
+  if (label.indexOf('Progress') > -1) current = 'inprogress';
+  if (label.indexOf('Done') > -1) current = 'done';
+  var next = STATUS_CYCLE[current] || 'waiting';
+  var s = STATUS_LABELS[next];
+  btn.style.background = s[1];
+  btn.style.color = s[0];
+  btn.textContent = s[2];
+  if (window.fbUpdateStatus) window.fbUpdateStatus(pid, next);
+}
+
 function loadQueue() {
   var list = document.getElementById('queue-list');
   if (!list) return;
@@ -710,7 +757,7 @@ function renderQueue(patients) {
   }
 
   var pOrder = {emergency:0, urgent:1, normal:2};
-  patients.sort(function(a,b) { return (pOrder[a.priority]||2) - (pOrder[b.priority]||2); });
+  patients.sort(function(a,b) { return (pOrder[a.priority]||99) - (pOrder[b.priority]||99); });
 
   var html = '';
   for (var i = 0; i < patients.length; i++) {
@@ -724,15 +771,15 @@ function renderQueue(patients) {
 
     html += '<div class="queue-item" style="border-left:4px solid ' + c[0] + '">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-        '<div>' +
-          '<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">' +
+        '<div style="flex:1">' +
+          '<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">' +
             '<span style="font-weight:800;font-size:15px">#' + (i+1) + ' ' + p.name + '</span>' +
             '<span style="background:' + c[1] + ';color:' + c[0] + ';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">' + c[2] + ' ' + p.priority.toUpperCase() + '</span>' +
             '<span class="' + tc + '">' + tl + '</span>' +
           '</div>' +
-          '<div style="font-size:12px;color:#8FA89D">Age ' + p.age + ' · ' + p.doctor + (p.reason ? ' · ' + p.reason : '') + '</div>' +
+          '<div style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age ' + p.age + ' · ' + p.doctor + (p.reason ? ' · ' + p.reason : '') + '</div>' +
+          '<button onclick="cycleStatus('' + p.id + '',this)" style="background:' + s[1] + ';color:' + s[0] + ';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">' + s[2] + '</button>' +
         '</div>' +
-        '<span class="status-pill" style="color:' + s[0] + ';background:' + s[1] + '">' + s[2] + '</span>' +
       '</div>' +
     '</div>';
   }
@@ -743,7 +790,7 @@ function renderQueue(patients) {
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 var config = {
   apiKey:            "AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7I_abc",
@@ -779,6 +826,13 @@ div.style.cssText = 'position:fixed;bottom:80px;right:16px;background:#1B6B4A;co
 div.textContent = '🔥 Firebase Connected!';
 document.body.appendChild(div);
 setTimeout(function() { div.remove(); }, 4000);
+
+window.fbUpdateStatus = function(patientId, newStatus) {
+  var ref = doc(db, 'patients', patientId);
+  return updateDoc(ref, {status: newStatus})
+    .then(function() { console.log('Status updated:', newStatus); })
+    .catch(function(e) { console.error('Update error:', e); });
+};
 
 console.log('🌿 Shifaa + Firebase ready!');
 </script>
