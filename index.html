@@ -685,6 +685,59 @@ function loadQueue(doctorFilter){
 var currentPatientId = null;
 var currentPatientPhone = null;
 
+function editNote(btn){
+  var noteId    = btn.getAttribute('data-noteid');
+  var diagnosis = btn.getAttribute('data-diagnosis');
+  var treatment = btn.getAttribute('data-treatment');
+
+  // Show notes form pre-filled
+  var form = document.getElementById('popup-notes-form');
+  form.style.display='block';
+  document.getElementById('note-diagnosis').value = diagnosis||'';
+  document.getElementById('note-treatment').value = treatment||'';
+  document.getElementById('note-err').style.display='none';
+
+  // Change save button to update existing note
+  var saveBtn = form.querySelector('button');
+  saveBtn.textContent='Update Notes';
+  saveBtn.disabled=false;
+  saveBtn.onclick=function(){
+    var newDiag = document.getElementById('note-diagnosis').value.trim();
+    var newTreat = document.getElementById('note-treatment').value.trim();
+    if(!newDiag && !newTreat){
+      document.getElementById('note-err').textContent='Please enter diagnosis or notes.';
+      document.getElementById('note-err').style.display='block';
+      return;
+    }
+    saveBtn.textContent='Updating...';
+    saveBtn.disabled=true;
+    if(window.fbUpdateNote){
+      window.fbUpdateNote(noteId,{diagnosis:newDiag,treatment:newTreat}).then(function(ok){
+        if(ok){
+          form.style.display='none';
+          var writeBtn=document.getElementById('write-notes-btn');
+          writeBtn.textContent='Notes Updated ✅';
+          writeBtn.style.background='#E8F5EF';
+          writeBtn.style.color='#1B6B4A';
+          writeBtn.style.border='1px solid #1B6B4A';
+          writeBtn.disabled=true;
+          // Update the button data attributes
+          btn.setAttribute('data-diagnosis', newDiag);
+          btn.setAttribute('data-treatment', newTreat);
+        } else {
+          saveBtn.textContent='Update Notes';
+          saveBtn.disabled=false;
+          document.getElementById('note-err').textContent='Could not update. Try again.';
+          document.getElementById('note-err').style.display='block';
+        }
+      });
+    }
+  };
+
+  // Scroll to form
+  form.scrollIntoView({behavior:'smooth'});
+}
+
 function toggleNotesForm(){
   var form = document.getElementById('popup-notes-form');
   var btn  = document.getElementById('write-notes-btn');
@@ -811,7 +864,22 @@ function openPatientPopup(el){
   historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>';
 
   if(window.fbGetPatientHistory && phone){
-    window.fbGetPatientHistory(phone).then(function(visits){
+    // Load visits AND notes at same time
+    Promise.all([
+      window.fbGetPatientHistory(phone),
+      window.fbGetNotes ? window.fbGetNotes(currentPatientId) : Promise.resolve([])
+    ]).then(function(results){
+      var visits = results[0];
+      var notes  = results[1];
+
+      // Index notes by patientId+date for quick lookup
+      var notesMap = {};
+      for(var n=0;n<notes.length;n++){
+        var key = notes[n].patientId;
+        if(!notesMap[key]) notesMap[key] = [];
+        notesMap[key].push(notes[n]);
+      }
+
       if(!visits || visits.length===0){
         historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">No previous visits found.</div>';
         return;
@@ -822,14 +890,34 @@ function openPatientPopup(el){
         var v = visits[i];
         var sc = v.status==='done'?'#1B6B4A':v.status==='inprogress'?'#F0A500':'#8FA89D';
         var sl = v.status==='done'?'Closed':v.status==='inprogress'?'In Progress':'Waiting';
+        var dName = v.doctor;
+        for(var j=0;j<ALL_DOCTORS.length;j++){
+          if(ALL_DOCTORS[j].id===v.doctor){ dName=ALL_DOCTORS[j].name; break; }
+        }
+
+        // Find notes for this visit
+        var visitNotes = notesMap[v.id] || [];
+
         html += '<div style="padding:12px 0;border-bottom:1px solid #D6E8DE">';
         html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-        html += '<div>';
+        html += '<div style="flex:1">';
         html += '<div style="font-size:12px;color:#8FA89D;margin-bottom:3px">'+v.visitDate+'</div>';
-        html += '<div style="font-weight:600;font-size:13px;color:#0F1F17">'+v.doctor+'</div>';
+        html += '<div style="font-weight:600;font-size:13px;color:#0F1F17">'+dName+'</div>';
         if(v.reason) html += '<div style="font-size:12px;color:#4A5E54;margin-top:2px">'+v.reason+'</div>';
+
+        // Show notes if exist
+        if(visitNotes.length > 0){
+          var vn = visitNotes[0];
+          html += '<div style="margin-top:8px;background:#E8F5EF;border-radius:8px;padding:8px 10px">';
+          html += '<div style="font-size:11px;font-weight:700;color:#1B6B4A;margin-bottom:4px">Notes by '+vn.doctor+':</div>';
+          if(vn.diagnosis) html += '<div style="font-size:12px;color:#0F1F17"><b>Diagnosis:</b> '+vn.diagnosis+'</div>';
+          if(vn.treatment) html += '<div style="font-size:12px;color:#0F1F17;margin-top:2px"><b>Treatment:</b> '+vn.treatment+'</div>';
+          html += '<button data-noteid="'+vn.id+'" data-diagnosis="'+vn.diagnosis+'" data-treatment="'+vn.treatment+'" onclick="editNote(this)" style="margin-top:8px;background:#fff;color:#1B6B4A;border:1px solid #1B6B4A;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Edit Notes</button>';
+          html += '</div>';
+        }
+
         html += '</div>';
-        html += '<span style="font-size:11px;font-weight:700;color:'+sc+';background:'+sc+'20;padding:3px 8px;border-radius:8px">'+sl+'</span>';
+        html += '<span style="font-size:11px;font-weight:700;color:'+sc+';background:'+sc+'20;padding:3px 8px;border-radius:8px;white-space:nowrap;margin-left:8px">'+sl+'</span>';
         html += '</div></div>';
       }
       historyEl.innerHTML = html;
@@ -888,10 +976,20 @@ try{
   window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
   window.fbGetPatients=function(){var t=new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
-  window.fbSaveNotes=function(patientId, notes){
-    return updateDoc(doc(db,'patients',patientId), {notes: notes})
+  window.fbGetNotes=function(patientId){
+    return getDocs(query(collection(db,'notes'),where('patientId','==',patientId)))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+  window.fbUpdateNote=function(noteId, data){
+    return updateDoc(doc(db,'notes',noteId), data)
+      .then(function(){return true;})
+      .catch(function(e){console.error(e);return false;});
+  };
+  window.fbSaveNotes=function(patientId, notesData){
+    return addDoc(collection(db,'notes'), Object.assign({patientId:patientId}, notesData, {createdAt:serverTimestamp()}))
       .then(function(){ return true; })
-      .catch(function(e){ console.error(e); return false; });
+      .catch(function(e){ console.error('fbSaveNotes error:',e); return false; });
   };
   window.fbGetPatientHistory=function(phone){
     return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){
