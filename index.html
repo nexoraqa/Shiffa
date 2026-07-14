@@ -199,10 +199,10 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 
 <script>
 var USERS = [
-  {id:'u1',username:'admin',       password:'admin123', role:'superadmin',  name:'Super Admin',              avatar:'👑',clinicName:'Shifaa Platform'},
-  {id:'u2',username:'clinicadmin', password:'clinic123',role:'clinicadmin', name:'Clinique Bou Saada',       avatar:'🏥',clinicName:'Clinique Bou Saada'},
-  {id:'u3',username:'dr.belouadah',password:'doctor123',role:'doctor',      name:'Dr. Abdelmadjid Belouadah',avatar:'👨‍⚕️',clinicName:'Clinique Bou Saada',specialty:'General Practice'},
-  {id:'u4',username:'sara.recep',  password:'recep123', role:'receptionist',name:'Sara Bouzida',             avatar:'🧑‍💼',clinicName:'Clinique Bou Saada'}
+  {id:'u1',username:'admin',       password:'admin123', role:'superadmin',  name:'Super Admin',              avatar:'👑',clinicName:'Shifaa Platform',   cabinetName:'Shifaa Platform',   doctorId:null},
+  {id:'u2',username:'clinicadmin', password:'clinic123',role:'clinicadmin', name:'Clinique Bou Saada',       avatar:'🏥',clinicName:'Clinique Bou Saada',cabinetName:'Clinique Bou Saada',doctorId:null},
+  {id:'u3',username:'dr.belouadah',password:'doctor123',role:'doctor',      name:'Dr. Abdelmadjid Belouadah',avatar:'👨‍⚕️',clinicName:'Cabinet Dr. Belouadah',cabinetName:'Cabinet Dr. Belouadah',specialty:'Medecin Generaliste',city:'Bou Saada, M Sila',doctorId:'dr.belouadah'},
+  {id:'u4',username:'sara.recep',  password:'recep123', role:'receptionist',name:'Sara Bouzida',             avatar:'🧑‍💼',clinicName:'Cabinet Dr. Belouadah',cabinetName:'Cabinet Dr. Belouadah',doctorId:'dr.belouadah'}
 ];
 
 var currentUser = null;
@@ -326,7 +326,7 @@ function loadPage(page){
   var greet=hour<12?'morning':hour<17?'afternoon':'evening';
   var dateStr=new Date().toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   var fname=u.name.split(' ')[0];
-  var sub=u.specialty?u.specialty+' - '+u.clinicName:u.clinicName||'';
+  var sub=u.specialty?u.specialty+' - '+(u.city||u.clinicName):u.clinicName||'';
   var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'! 👋</div><div class="w-sub">'+sub+'</div></div>';
 
   // REGISTER PAGE
@@ -347,7 +347,7 @@ function loadPage(page){
       '<h2 style="color:#0F1F17;margin:0">🔢 Today\'s Queue</h2>'+
       '<button onclick="loadQueue()" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
       '</div><div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
-    loadQueue();
+    loadQueue(currentUser.doctorId);
     return;
   }
 
@@ -384,13 +384,21 @@ function loadPage(page){
   }
   if(u.role==='doctor'){
     mc.innerHTML=banner+
+      '<div style="background:#fff;border-radius:13px;border:1px solid #D6E8DE;padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:14px">'+
+        '<div style="width:52px;height:52px;background:#E8F5EF;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid #1B6B4A">👨‍⚕️</div>'+
+        '<div>'+
+          '<div style="font-weight:800;font-size:16px;color:#0F1F17">'+u.name+'</div>'+
+          '<div style="font-size:13px;color:#1B6B4A;font-weight:600">'+(u.specialty||'')+'</div>'+
+          '<div style="font-size:12px;color:#8FA89D">'+(u.city||'Bou Saada')+'</div>'+
+        '</div>'+
+      '</div>'+
       '<div class="stats-grid">'+
         '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Waiting</div></div></div>'+
         '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🩺</div><div><div class="stat-val">1</div><div class="stat-lbl">In Progress</div></div></div>'+
         '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done Today</div></div></div>'+
         '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val">14</div><div class="stat-lbl">Total Today</div></div></div>'+
       '</div>'+
-      '<div class="table-card"><h3>🔢 My Queue</h3>'+
+      '<div class="table-card"><h3>🔢 My Queue Today</h3>'+
         '<div class="table-row" style="border-left:3px solid #1B6B4A;padding-left:10px"><div><div style="display:flex;gap:7px;align-items:center"><span class="row-name">Bensalem Khaled</span><span class="type-new">NEW</span></div><div class="row-sub">Age 52 - High blood pressure</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">🩺 In Progress</span></div>'+
         '<div class="table-row"><div><div style="display:flex;gap:7px;align-items:center"><span class="row-name">Boudaoud Fatima</span><span class="type-followup">FOLLOW-UP</span></div><div class="row-sub">Age 38 - Diabetes follow-up</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">⏳ Waiting</span></div>'+
         '<div class="table-row"><div><div style="display:flex;gap:7px;align-items:center"><span class="row-name">Zerrouki Mohand</span><span class="type-followup">FOLLOW-UP</span></div><div class="row-sub">Age 61 - Back pain</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">⏳ Waiting</span></div>'+
@@ -605,11 +613,14 @@ function cycleStatus(pid,btn){
   btn.style.background=s[1]; btn.style.color=s[0]; btn.textContent=s[2];
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
 }
-function loadQueue(){
+function loadQueue(doctorFilter){
   var list=document.getElementById('queue-list');
   if(!list) return;
   if(window.fbGetPatients){
-    window.fbGetPatients().then(function(pts){renderQueue(pts);});
+    window.fbGetPatients().then(function(pts){
+      if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
+      renderQueue(pts);
+    });
   } else {
     list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients today.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register Patient</button></div>';
   }
