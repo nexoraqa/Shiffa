@@ -332,82 +332,11 @@ function loadPage(page){
   // REGISTER PAGE
   if(page==='register'){
     selGender=''; selVisit='new'; selPrio='normal';
-    mc.innerHTML=
-      '<h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>'+
-      '<div class="table-card" style="max-width:540px">'+
-
-        // STEP 1: PHONE SEARCH (always shown first)
-        '<div id="phone-search-box">'+
-          '<p style="font-size:13px;color:#4A5E54;margin-bottom:14px">Search by phone number first to avoid duplicates:</p>'+
-          '<div style="display:flex;gap:10px;margin-bottom:8px">'+
-            '<input class="form-input" id="search-phone" type="tel" placeholder="0555 123 456" style="flex:1"/>'+
-            '<button onclick="searchByPhone()" style="padding:11px 18px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>'+
-          '</div>'+
-          '<div id="search-result"></div>'+
-          '<hr style="border:none;border-top:1px solid #D6E8DE;margin:16px 0"/>'+
-        '</div>'+
-
-        // STEP 2: REGISTER FORM (hidden until search done)
-        '<div id="reg-form-box" style="display:none">'+
-          '<div style="background:#E8F5EF;border-radius:10px;padding:10px 14px;margin-bottom:14px">'+
-            '<span style="font-size:13px;font-weight:600;color:#1B6B4A">New patient - fill in all details</span>'+
-          '</div>'+
-          '<div class="form-error" id="form-err"></div>'+
-          '<div class="form-field"><label class="form-label">Full Name *</label><input class="form-input" id="r-name" type="text" placeholder="e.g. Bensalem Khaled"/></div>'+
-          '<div class="form-row">'+
-            '<div class="form-field"><label class="form-label">Age *</label><input class="form-input" id="r-age" type="number" placeholder="45"/></div>'+
-            '<div class="form-field"><label class="form-label">Phone *</label><input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/></div>'+
-          '</div>'+
-          '<div class="form-field"><label class="form-label">Gender *</label>'+
-            '<div class="toggle-group">'+
-              '<button class="toggle-btn" id="g-male" onclick="pickGender(this,\"male\")">Male</button>'+
-              '<button class="toggle-btn" id="g-female" onclick="pickGender(this,\"female\")">Female</button>'+
-            '</div></div>'+
-          '<div class="form-field"><label class="form-label">Visit Type</label>'+
-            '<div class="toggle-group">'+
-              '<button class="visit-btn active" id="v-new" onclick="pickVisit(this,\"new\")">New Patient</button>'+
-              '<button class="visit-btn" id="v-follow_up" onclick="pickVisit(this,\"follow_up\")">Follow-up</button>'+
-            '</div></div>'+
-          '<div class="form-field"><label class="form-label">Priority</label>'+
-            '<div class="toggle-group">'+
-              '<button class="prio-btn" id="p-normal" onclick="pickPrio(this,\"normal\")" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>'+
-              '<button class="prio-btn" id="p-urgent" onclick="pickPrio(this,\"urgent\")">Urgent</button>'+
-              '<button class="prio-btn" id="p-emergency" onclick="pickPrio(this,\"emergency\")">Emergency</button>'+
-            '</div></div>'+
-          '<div class="form-field"><label class="form-label">Assign Doctor *</label>'+
-            '<select class="form-select" id="r-doctor">'+
-              '<option value="">Select a doctor...</option>'+
-              '<optgroup label="General Practice">'+
-                '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>'+
-                '<option value="dr.ezzine">Dr. Fatima Ezzine</option>'+
-                '<option value="dr.chebara">Dr. Bachir Chebara</option>'+
-                '<option value="dr.ouali">Dr. Ouali Souad</option>'+
-                '<option value="dr.gherbi">Dr. Fathi Gherbi</option>'+
-              '</optgroup>'+
-              '<optgroup label="Pediatrics">'+
-                '<option value="dr.slimani">Dr. Omar Slimani</option>'+
-              '</optgroup>'+
-              '<optgroup label="Ophthalmology">'+
-                '<option value="dr.hariti">Dr. Hariti Amar</option>'+
-              '</optgroup>'+
-              '<optgroup label="Dentistry">'+
-                '<option value="dr.mansour">Dr. Mansour Manel</option>'+
-              '</optgroup>'+
-            '</select></div>'+
-          '<div class="form-field"><label class="form-label">Reason for Visit</label><textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea></div>'+
-          '<button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="margin-top:0">Register Patient</button>'+
-        '</div>'+
-
-      '</div>';
-
-    // Enter key triggers search
+    mc.innerHTML = document.getElementById('reg-template').innerHTML;
     setTimeout(function(){
-      var sp = document.getElementById('search-phone');
-      if(sp){
-        sp.focus();
-        sp.addEventListener('keydown', function(e){ if(e.key==='Enter') searchByPhone(); });
-      }
-    }, 100);
+      var sp=document.getElementById('search-phone');
+      if(sp){sp.focus();sp.onkeydown=function(e){if(e.key==='Enter')searchByPhone();};}
+    },50);
     return;
   }
 
@@ -719,5 +648,91 @@ try{
   setTimeout(function(){b.remove();},4000);
 }catch(e){console.warn('Firebase:',e.message);}
 </script>
+
+<!-- REGISTER TEMPLATE - real HTML, no JS string issues -->
+<div id="reg-template" style="display:none">
+  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
+  <div class="table-card" style="max-width:540px">
+    <div id="phone-search-box">
+      <p style="font-size:13px;color:#4A5E54;margin-bottom:14px">Search by phone number first:</p>
+      <div style="display:flex;gap:10px;margin-bottom:8px">
+        <input class="form-input" id="search-phone" type="tel" placeholder="0555 123 456" style="flex:1"/>
+        <button onclick="searchByPhone()" style="padding:11px 18px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
+      </div>
+      <div id="search-result"></div>
+      <hr style="border:none;border-top:1px solid #D6E8DE;margin:16px 0"/>
+    </div>
+    <div id="reg-form-box" style="display:none">
+      <div style="background:#E8F5EF;border-radius:10px;padding:10px 14px;margin-bottom:14px">
+        <span style="font-size:13px;font-weight:600;color:#1B6B4A">New patient - fill in all details</span>
+      </div>
+      <div class="form-error" id="form-err"></div>
+      <div class="form-field">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="r-name" type="text" placeholder="e.g. Bensalem Khaled"/>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Age *</label>
+          <input class="form-input" id="r-age" type="number" placeholder="45"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Phone *</label>
+          <input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Gender *</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" onclick="pickGender(this,'male')">Male</button>
+          <button class="toggle-btn" onclick="pickGender(this,'female')">Female</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Visit Type</label>
+        <div class="toggle-group">
+          <button class="visit-btn active" onclick="pickVisit(this,'new')">New Patient</button>
+          <button class="visit-btn" onclick="pickVisit(this,'follow_up')">Follow-up</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Priority</label>
+        <div class="toggle-group">
+          <button class="prio-btn" onclick="pickPrio(this,'normal')" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>
+          <button class="prio-btn" onclick="pickPrio(this,'urgent')">Urgent</button>
+          <button class="prio-btn" onclick="pickPrio(this,'emergency')">Emergency</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Assign Doctor *</label>
+        <select class="form-select" id="r-doctor">
+          <option value="">Select a doctor...</option>
+          <optgroup label="General Practice">
+            <option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>
+            <option value="dr.ezzine">Dr. Fatima Ezzine</option>
+            <option value="dr.chebara">Dr. Bachir Chebara</option>
+            <option value="dr.ouali">Dr. Ouali Souad</option>
+            <option value="dr.gherbi">Dr. Fathi Gherbi</option>
+          </optgroup>
+          <optgroup label="Pediatrics">
+            <option value="dr.slimani">Dr. Omar Slimani</option>
+          </optgroup>
+          <optgroup label="Ophthalmology">
+            <option value="dr.hariti">Dr. Hariti Amar</option>
+          </optgroup>
+          <optgroup label="Dentistry">
+            <option value="dr.mansour">Dr. Mansour Manel</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Reason for Visit</label>
+        <textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea>
+      </div>
+      <button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="margin-top:0">Register Patient</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
