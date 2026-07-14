@@ -491,24 +491,21 @@ function loadPage(page){
 // ═══════════════
 function pickGender(btn,val){
   selGender=val;
-  document.getElementById('g-male').className='toggle-btn';
-  document.getElementById('g-female').className='toggle-btn';
+  // Reset ALL siblings in the same group
+  var group=btn.parentElement.querySelectorAll('button');
+  for(var i=0;i<group.length;i++){group[i].className='toggle-btn';group[i].style.cssText='';}
   btn.className='toggle-btn active';
 }
 function pickVisit(btn,val){
   selVisit=val;
-  document.getElementById('v-new').className='visit-btn';
-  document.getElementById('v-follow_up').className='visit-btn';
+  var group=btn.parentElement.querySelectorAll('button');
+  for(var i=0;i<group.length;i++){group[i].className='visit-btn';group[i].style.cssText='';}
   btn.className='visit-btn active';
 }
 function pickPrio(btn,val){
   selPrio=val;
-  var n=document.getElementById('p-normal');
-  var ug=document.getElementById('p-urgent');
-  var e=document.getElementById('p-emergency');
-  n.className='prio-btn'; n.style.cssText='';
-  ug.className='prio-btn'; ug.style.cssText='';
-  e.className='prio-btn'; e.style.cssText='';
+  var group=btn.parentElement.querySelectorAll('button');
+  for(var i=0;i<group.length;i++){group[i].className='prio-btn';group[i].style.cssText='';}
   btn.className='prio-btn active';
   if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
   if(val==='urgent')   {btn.style.borderColor='#F0A500';btn.style.background='#FFF8E7';btn.style.color='#F0A500';}
