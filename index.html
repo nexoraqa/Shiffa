@@ -510,9 +510,47 @@
     @media (max-width: 640px) {
       .sidebar { display: none; }
       .top-header { padding: 0 16px; }
-      .main-content { padding: 16px; }
+      .main-content { padding: 16px; padding-bottom: 90px; }
       .welcome-title { font-size: 18px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-card { padding: 14px; }
+      .stat-value { font-size: 20px; }
+      .mobile-nav { display: block; }
     }
+
+    /* ── MOBILE BOTTOM NAV ── */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid #D6E8DE;
+      padding: 8px 0 20px;
+      z-index: 200;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    }
+    .mobile-nav-inner {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .mobile-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 10px;
+      color: #8FA89D;
+      font-size: 10px;
+      font-weight: 600;
+      min-width: 50px;
+    }
+    .mobile-nav-btn .nav-icon { font-size: 22px; line-height: 1; }
+    .mobile-nav-btn.active { color: #1B6B4A; background: #E8F5EF; }
   </style>
 </head>
 
@@ -650,6 +688,14 @@
     </main>
 
   </div>
+
+  <!-- ── MOBILE BOTTOM NAV ── -->
+  <nav class="mobile-nav" id="mobile-nav">
+    <div class="mobile-nav-inner" id="mobile-nav-inner">
+      <!-- Injected by JavaScript based on role -->
+    </div>
+  </nav>
+
 </div>
 
 
@@ -792,11 +838,38 @@ function showDashboard(user) {
 
   // Load default dashboard content
   loadContent('dashboard');
+
+  // Build mobile bottom nav
+  buildMobileNav(user, navs[user.role] || navs.receptionist);
 }
 
 // ─────────────────────────────────────────
 // MAKE ROLE BADGE HTML
 // ─────────────────────────────────────────
+// ─────────────────────────────────────────
+// BUILD MOBILE BOTTOM NAV
+// ─────────────────────────────────────────
+function buildMobileNav(user, items) {
+  const nav = document.getElementById('mobile-nav-inner');
+  if (!nav) return;
+  nav.innerHTML = items.map(([icon, id, label]) =>
+    `<button class="mobile-nav-btn ${id === 'dashboard' ? 'active' : '"}"
+      onclick="setMobileNav('\''  + id + '\'', this)">
+      <span class="nav-icon">${icon}</span>
+      <span>${label}</span>
+    </button>`
+  ).join('');
+}
+
+function setMobileNav(id, btn) {
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadContent(id);
+  // Scroll to top
+  document.getElementById('main-content').scrollTop = 0;
+}
+
 function makeBadge(role) {
   const config = {
     superadmin:   { cls:'badge-superadmin',   icon:'👑', label:'Super Admin'   },
