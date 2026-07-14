@@ -853,20 +853,18 @@ function buildMobileNav(user, items) {
   const nav = document.getElementById('mobile-nav-inner');
   if (!nav) return;
   nav.innerHTML = items.map(([icon, id, label]) =>
-    `<button class="mobile-nav-btn ${id === 'dashboard' ? 'active' : '"}"
-      onclick="setMobileNav('\''  + id + '\'', this)">
-      <span class="nav-icon">${icon}</span>
-      <span>${label}</span>
-    </button>`
+    '<button class="mobile-nav-btn ' + (id === 'dashboard' ? 'active' : '') + '" ' +
+    'onclick="mobileNav(this, \'' + id + '\')"> ' +
+    '<span class="nav-icon">' + icon + '</span>' +
+    '<span>' + label + '</span>' +
+    '</button>'
   ).join('');
 }
 
-function setMobileNav(id, btn) {
+function mobileNav(btn, id) {
   document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   loadContent(id);
-  // Scroll to top
   document.getElementById('main-content').scrollTop = 0;
 }
 
@@ -1063,11 +1061,11 @@ function loadContent(section) {
           <div>
             <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Gender *</label>
             <div style="display:flex;gap:8px">
-              <button onclick="selectGender('male',this)" id="btn-male"
+              <button onclick="genderClick(this,'male')" id="btn-male"
                 style="flex:1;padding:10px;border:1.5px solid #D6E8DE;border-radius:10px;background:white;font-size:13px;font-weight:600;cursor:pointer">
                 👨 Male
               </button>
-              <button onclick="selectGender('female',this)" id="btn-female"
+              <button onclick="genderClick(this,'female')" id="btn-female"
                 style="flex:1;padding:10px;border:1.5px solid #D6E8DE;border-radius:10px;background:white;font-size:13px;font-weight:600;cursor:pointer">
                 👩 Female
               </button>
@@ -1078,11 +1076,11 @@ function loadContent(section) {
           <div>
             <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Visit Type *</label>
             <div style="display:flex;gap:8px">
-              <button onclick="selectVisitType('new',this)" id="btn-new"
+              <button onclick="visitClick(this,'new')" id="btn-new"
                 style="flex:1;padding:12px;border:2px solid #1B6B4A;border-radius:12px;background:#E8F5EF;color:#1B6B4A;font-size:13px;font-weight:700;cursor:pointer;text-align:center">
                 🆕<br>New Patient
               </button>
-              <button onclick="selectVisitType('follow_up',this)" id="btn-followup"
+              <button onclick="visitClick(this,'follow_up')" id="btn-followup"
                 style="flex:1;padding:12px;border:1.5px solid #D6E8DE;border-radius:12px;background:white;color:#4A5E54;font-size:13px;font-weight:600;cursor:pointer;text-align:center">
                 🔄<br>Follow-up
               </button>
@@ -1105,15 +1103,15 @@ function loadContent(section) {
           <div>
             <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Priority</label>
             <div style="display:flex;gap:8px">
-              <button onclick="selectPriority('normal',this)"
+              <button onclick="priorityClick(this,'normal')"
                 style="flex:1;padding:8px;border:2px solid #1B6B4A;border-radius:8px;background:#E8F5EF;color:#1B6B4A;font-size:12px;font-weight:700;cursor:pointer">
                 🟢 Normal
               </button>
-              <button onclick="selectPriority('urgent',this)"
+              <button onclick="priorityClick(this,'urgent')"
                 style="flex:1;padding:8px;border:1.5px solid #D6E8DE;border-radius:8px;background:white;color:#4A5E54;font-size:12px;font-weight:600;cursor:pointer">
                 🟡 Urgent
               </button>
-              <button onclick="selectPriority('emergency',this)"
+              <button onclick="priorityClick(this,'emergency')"
                 style="flex:1;padding:8px;border:1.5px solid #D6E8DE;border-radius:8px;background:white;color:#4A5E54;font-size:12px;font-weight:600;cursor:pointer">
                 🔴 Emergency
               </button>
@@ -1169,7 +1167,7 @@ function loadContent(section) {
 // ─────────────────────────────────────────
 // HELPER: Select Gender
 // ─────────────────────────────────────────
-function selectGender(gender, btn) {
+function genderClick(btn,gender) {
   window._selectedGender = gender;
   ['btn-male','btn-female'].forEach(id => {
     const b = document.getElementById(id);
@@ -1183,7 +1181,7 @@ function selectGender(gender, btn) {
 // ─────────────────────────────────────────
 // HELPER: Select Visit Type
 // ─────────────────────────────────────────
-function selectVisitType(type, btn) {
+function visitClick(btn,type) {
   window._selectedVisitType = type;
   ['btn-new','btn-followup'].forEach(id => {
     const b = document.getElementById(id);
@@ -1198,7 +1196,7 @@ function selectVisitType(type, btn) {
 // ─────────────────────────────────────────
 // HELPER: Select Priority
 // ─────────────────────────────────────────
-function selectPriority(priority, btn) {
+function priorityClick(btn,priority) {
   window._selectedPriority = priority;
   btn.parentElement.querySelectorAll('button').forEach(b => {
     b.style.border = '1.5px solid #D6E8DE'; b.style.background = 'white'; b.style.color = '#4A5E54';
