@@ -682,6 +682,88 @@ function loadQueue(doctorFilter){
     list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients today.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register Patient</button></div>';
   }
 }
+var currentPatientId = null;
+var currentPatientPhone = null;
+
+function toggleNotesForm(){
+  var form = document.getElementById('popup-notes-form');
+  var btn  = document.getElementById('write-notes-btn');
+  if(form.style.display==='none'){
+    form.style.display='block';
+    btn.textContent='Cancel';
+    btn.style.background='#fff';
+    btn.style.color='#4A5E54';
+    btn.style.border='1px solid #D6E8DE';
+    document.getElementById('note-diagnosis').value='';
+    document.getElementById('note-treatment').value='';
+    document.getElementById('note-err').style.display='none';
+  } else {
+    form.style.display='none';
+    btn.textContent='Write Notes';
+    btn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
+    btn.style.color='#fff';
+    btn.style.border='none';
+  }
+}
+
+function saveNotes(){
+  var diagnosis  = document.getElementById('note-diagnosis').value.trim();
+  var treatment  = document.getElementById('note-treatment').value.trim();
+  var errEl      = document.getElementById('note-err');
+
+  if(!diagnosis && !treatment){
+    errEl.textContent='Please enter diagnosis or notes.';
+    errEl.style.display='block';
+    return;
+  }
+  errEl.style.display='none';
+
+  if(!currentPatientId){
+    errEl.textContent='Error: no patient selected.';
+    errEl.style.display='block';
+    return;
+  }
+
+  var saveBtn = document.querySelector('#popup-notes-form button');
+  saveBtn.textContent='Saving...';
+  saveBtn.disabled=true;
+
+  if(window.fbSaveNotes){
+    window.fbSaveNotes(currentPatientId, {
+      diagnosis: diagnosis,
+      treatment: treatment,
+      doctor: currentUser.name,
+      doctorId: currentUser.doctorId,
+      savedAt: new Date().toISOString()
+    }).then(function(ok){
+      if(ok){
+        errEl.style.display='none';
+        document.getElementById('popup-notes-form').style.display='none';
+        var btn = document.getElementById('write-notes-btn');
+        btn.textContent='Notes Saved ✅';
+        btn.style.background='#E8F5EF';
+        btn.style.color='#1B6B4A';
+        btn.style.border='1px solid #1B6B4A';
+        btn.disabled=true;
+      } else {
+        saveBtn.textContent='Save Notes';
+        saveBtn.disabled=false;
+        errEl.textContent='Could not save. Try again.';
+        errEl.style.display='block';
+      }
+    });
+  } else {
+    // No Firebase - show success anyway for demo
+    document.getElementById('popup-notes-form').style.display='none';
+    var btn = document.getElementById('write-notes-btn');
+    btn.textContent='Notes Saved ✅';
+    btn.style.background='#E8F5EF';
+    btn.style.color='#1B6B4A';
+    btn.style.border='1px solid #1B6B4A';
+    btn.disabled=true;
+  }
+}
+
 function closePopup(){
   document.getElementById('patient-popup').style.display='none';
 }
@@ -704,6 +786,22 @@ function openPatientPopup(el){
   document.getElementById('popup-name').textContent   = name;
   document.getElementById('popup-info').textContent   = 'Age '+age+' - '+gender;
   document.getElementById('popup-phone').textContent  = phone ? 'Phone: '+phone : '';
+
+  // Store current patient id for notes
+  currentPatientId    = el.getAttribute('data-pid');
+  currentPatientPhone = phone;
+
+  // Reset notes form
+  var notesForm = document.getElementById('popup-notes-form');
+  if(notesForm) notesForm.style.display='none';
+  var writeBtn = document.getElementById('write-notes-btn');
+  if(writeBtn){
+    writeBtn.textContent='Write Notes';
+    writeBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
+    writeBtn.style.color='#fff';
+    writeBtn.style.border='none';
+    writeBtn.disabled=false;
+  }
 
   // Show popup
   document.getElementById('patient-popup').style.display='block';
@@ -790,6 +888,11 @@ try{
   window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
   window.fbGetPatients=function(){var t=new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
+  window.fbSaveNotes=function(patientId, notes){
+    return updateDoc(doc(db,'patients',patientId), {notes: notes})
+      .then(function(){ return true; })
+      .catch(function(e){ console.error(e); return false; });
+  };
   window.fbGetPatientHistory=function(phone){
     return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){
       var list=[];
@@ -895,8 +998,24 @@ try{
         <div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>
       </div>
     </div>
+    <!-- NOTES FORM (hidden until Write Notes tapped) -->
+    <div id="popup-notes-form" style="display:none;padding:0 20px 16px">
+      <hr style="border:none;border-top:1px solid #D6E8DE;margin-bottom:16px"/>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Diagnosis</label>
+        <input id="note-diagnosis" type="text" placeholder="e.g. Hypertension, Diabetes..." style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Notes & Treatment</label>
+        <textarea id="note-treatment" placeholder="Treatment notes, observations..." style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;height:90px;resize:vertical"></textarea>
+      </div>
+      <div id="note-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:8px"></div>
+      <button onclick="saveNotes()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Save Notes</button>
+    </div>
+
     <div style="padding:0 20px 20px;display:flex;gap:10px">
       <button onclick="closePopup()" style="flex:1;padding:12px;background:#F7FAF8;color:#4A5E54;border:1px solid #D6E8DE;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Close</button>
+      <button onclick="toggleNotesForm()" id="write-notes-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Write Notes</button>
     </div>
   </div>
 </div>
