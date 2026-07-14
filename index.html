@@ -863,10 +863,11 @@ function openPatientPopup(el){
   var historyEl = document.getElementById('popup-history');
   historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>';
 
-  if(window.fbGetPatientHistory && phone){
+  if(window.fbGetPatientHistory && (phone || currentPatientId)){
     // Load visits AND notes at same time
+    // Use phone to find all visits by this patient across all doctors
     Promise.all([
-      window.fbGetPatientHistory(phone),
+      phone ? window.fbGetPatientHistory(phone) : window.fbGetPatientHistory2(currentPatientId),
       window.fbGetNotes ? window.fbGetNotes(currentPatientId) : Promise.resolve([])
     ]).then(function(results){
       var visits = results[0];
@@ -945,9 +946,26 @@ function renderQueue(patients){
   }
   var pOrder={emergency:0,urgent:1,normal:2};
   patients.sort(function(a,b){return (pOrder[a.priority]!==undefined?pOrder[a.priority]:99)-(pOrder[b.priority]!==undefined?pOrder[b.priority]:99);});
-  var html='';
+
+  // Count by status
+  var cWaiting=0, cProgress=0, cDone=0;
   for(var i=0;i<patients.length;i++){
-    var p=patients[i];
+    if(patients[i].status==='waiting') cWaiting++;
+    else if(patients[i].status==='inprogress') cProgress++;
+    else if(patients[i].status==='done') cDone++;
+  }
+
+  // Counter bar
+  var html='<div style="display:flex;gap:10px;margin-bottom:16px">';
+  html+='<div style="flex:1;background:#FFF8E7;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:#F0A500">'+cWaiting+'</div><div style="font-size:11px;color:#8FA89D;margin-top:2px">⏳ Waiting</div></div>';
+  html+='<div style="flex:1;background:#E8F5EF;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:#1B6B4A">'+cProgress+'</div><div style="font-size:11px;color:#8FA89D;margin-top:2px">🩺 In Progress</div></div>';
+  html+='<div style="flex:1;background:#F0F0F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:#8FA89D">'+cDone+'</div><div style="font-size:11px;color:#8FA89D;margin-top:2px">✅ Done</div></div>';
+  html+='</div>';
+
+  // Only show active patients (not done)
+  var active = patients.filter(function(p){ return p.status !== 'done'; });
+  for(var i=0;i<active.length;i++){
+    var p = active[i];
     var pc={emergency:['#D64045','#FDECEA','🔴 EMERGENCY'],urgent:['#F0A500','#FFF8E7','🟡 URGENT'],normal:['#1B6B4A','#E8F5EF','🟢 NORMAL']};
     var c=pc[p.priority]||pc.normal;
     var s=STATUS_DATA[p.status]||STATUS_DATA.waiting;
@@ -980,7 +998,12 @@ try{
   window.fbGetPatients=function(){var t=new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
   window.fbGetNotes=function(patientId){
-    return getDocs(query(collection(db,'notes'),where('patientId','==',patientId)))
+    // Search by phone if available (cross-doctor), fallback to patientId
+    var phone = currentPatientPhone || '';
+    var q = phone
+      ? query(collection(db,'notes'), where('patientPhone','==',phone))
+      : query(collection(db,'notes'), where('patientId','==',patientId));
+    return getDocs(q)
       .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
       .catch(function(e){console.error(e);return[];});
   };
@@ -990,9 +1013,19 @@ try{
       .catch(function(e){console.error(e);return false;});
   };
   window.fbSaveNotes=function(patientId, notesData){
-    return addDoc(collection(db,'notes'), Object.assign({patientId:patientId, savedAt:new Date().toISOString()}, notesData, {createdAt:serverTimestamp()}))
-      .then(function(){ return true; })
+    // Also save phone so other doctors can find this note
+    var phone = notesData.patientPhone || currentPatientPhone || '';
+    return addDoc(collection(db,'notes'), Object.assign(
+      {patientId:patientId, patientPhone:phone, savedAt:new Date().toISOString()},
+      notesData,
+      {createdAt:serverTimestamp()}
+    )).then(function(){ return true; })
       .catch(function(e){ console.error('fbSaveNotes error:',e); return false; });
+  };
+  window.fbGetPatientHistory2=function(patientId){
+    return getDocs(query(collection(db,'patients'),where('patientId','==',patientId)))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
   };
   window.fbGetPatientHistory=function(phone){
     return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){
