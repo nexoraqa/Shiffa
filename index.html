@@ -206,6 +206,17 @@ var USERS = [
 ];
 
 var currentUser = null;
+
+var ALL_DOCTORS = [
+  {id:'dr.belouadah', name:'Dr. Abdelmadjid Belouadah', specialty:'General Practice'},
+  {id:'dr.ezzine',    name:'Dr. Fatima Ezzine',         specialty:'General Practice'},
+  {id:'dr.chebara',   name:'Dr. Bachir Chebara',        specialty:'General Practice'},
+  {id:'dr.ouali',     name:'Dr. Ouali Souad',           specialty:'General Practice'},
+  {id:'dr.gherbi',    name:'Dr. Fathi Gherbi',          specialty:'General Practice'},
+  {id:'dr.slimani',   name:'Dr. Omar Slimani',          specialty:'Pediatrics'},
+  {id:'dr.hariti',    name:'Dr. Hariti Amar',           specialty:'Ophthalmology'},
+  {id:'dr.mansour',   name:'Dr. Mansour Manel',         specialty:'Dentistry'}
+];
 var selGender   = '';
 var selVisit    = 'new';
 var selPrio     = 'normal';
@@ -331,17 +342,6 @@ function loadPage(page){
 
   // REGISTER PAGE
   
-var ALL_DOCTORS = [
-  {id:'dr.belouadah', name:'Dr. Abdelmadjid Belouadah', specialty:'General Practice'},
-  {id:'dr.ezzine',    name:'Dr. Fatima Ezzine',         specialty:'General Practice'},
-  {id:'dr.chebara',   name:'Dr. Bachir Chebara',        specialty:'General Practice'},
-  {id:'dr.ouali',     name:'Dr. Ouali Souad',           specialty:'General Practice'},
-  {id:'dr.gherbi',    name:'Dr. Fathi Gherbi',          specialty:'General Practice'},
-  {id:'dr.slimani',   name:'Dr. Omar Slimani',          specialty:'Pediatrics'},
-  {id:'dr.hariti',    name:'Dr. Hariti Amar',           specialty:'Ophthalmology'},
-  {id:'dr.mansour',   name:'Dr. Mansour Manel',         specialty:'Dentistry'}
-];
-
 function populateDoctorSelect(selectId){
   var sel = document.getElementById(selectId);
   if(!sel) return;
