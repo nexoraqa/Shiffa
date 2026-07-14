@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Shifaa 🌿 Smart Clinic Management</title>
+<title>Shifaa - Smart Clinic Management</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
 :root{
@@ -96,9 +96,6 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .form-error{display:none;background:var(--red-l);border:1px solid var(--red);border-radius:10px;padding:10px 14px;color:var(--red);font-size:13px;font-weight:500;margin-bottom:12px}
 .success-wrap{text-align:center;padding:40px 20px}
-.success-icon{font-size:52px;margin-bottom:14px}
-.success-title{font-size:21px;font-weight:800;color:var(--dark);margin-bottom:6px}
-.success-sub{font-size:14px;color:var(--light);margin-bottom:22px}
 .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn-outline{padding:11px 20px;background:var(--green-xl);color:var(--green);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
 .btn-filled{padding:11px 20px;background:linear-gradient(135deg,var(--green),var(--green-l));color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
@@ -111,6 +108,7 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .mnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:10px;color:var(--light);font-size:10px;font-weight:600;min-width:54px}
 .mnav-btn .mi{font-size:22px;line-height:1}
 .mnav-btn.active{color:var(--green);background:var(--green-xl)}
+.search-box{background:var(--green-xl);border-radius:12px;padding:18px;margin-bottom:16px}
 @media(max-width:640px){
   .sidebar{display:none}
   .top-header{padding:0 14px}
@@ -122,11 +120,11 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login-page">
   <div class="logo-circle">🌿</div>
   <div class="logo-title">Shifaa</div>
-  <div class="logo-sub">Smart Clinic Management · شفاء</div>
-
+  <div class="logo-sub">Smart Clinic Management - شفاء</div>
   <div class="login-card">
     <h2>Welcome back 👋</h2>
     <p>Sign in to your Shifaa account</p>
@@ -138,34 +136,35 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
     <div class="field">
       <label>Password</label>
       <div class="pass-wrap">
-        <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password"/>
+        <input type="password" id="inp-pass" placeholder="Password" autocomplete="current-password"/>
         <button class="eye-btn" onclick="togglePass()">👁️</button>
       </div>
     </div>
-    <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In →</button>
+    <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
     <div class="test-accounts">
-      <p>🧪 Test Accounts — click Use to fill in:</p>
+      <p>Test Accounts:</p>
       <div class="test-row">
         <div><span class="test-info">👑 Super Admin</span><span class="test-user">@admin</span></div>
-        <button class="btn-use" onclick="fillUser('admin','admin123')">Use →</button>
+        <button class="btn-use" onclick="fillUser('admin','admin123')">Use</button>
       </div>
       <div class="test-row">
         <div><span class="test-info">🏥 Clinic Admin</span><span class="test-user">@clinicadmin</span></div>
-        <button class="btn-use" onclick="fillUser('clinicadmin','clinic123')">Use →</button>
+        <button class="btn-use" onclick="fillUser('clinicadmin','clinic123')">Use</button>
       </div>
       <div class="test-row">
         <div><span class="test-info">👨‍⚕️ Doctor</span><span class="test-user">@dr.belouadah</span></div>
-        <button class="btn-use" onclick="fillUser('dr.belouadah','doctor123')">Use →</button>
+        <button class="btn-use" onclick="fillUser('dr.belouadah','doctor123')">Use</button>
       </div>
       <div class="test-row">
         <div><span class="test-info">🧑‍💼 Receptionist</span><span class="test-user">@sara.recep</span></div>
-        <button class="btn-use" onclick="fillUser('sara.recep','recep123')">Use →</button>
+        <button class="btn-use" onclick="fillUser('sara.recep','recep123')">Use</button>
       </div>
     </div>
   </div>
-  <div class="footer-txt">🇩🇿 Made for Algeria · Shifaa v1.0</div>
+  <div class="footer-txt">Made for Algeria - Shifaa v1.0</div>
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboard-page">
   <header class="top-header">
     <div class="hdr-logo">
@@ -200,86 +199,203 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
   </nav>
 </div>
 
+<!-- REGISTER PAGE (separate hidden div for clean HTML) -->
+<div id="reg-search-step" style="display:none">
+  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
+  <div class="table-card" style="max-width:540px">
+    <p style="font-size:13px;color:#4A5E54;margin-bottom:16px">Search by phone number first:</p>
+    <div class="form-field">
+      <label class="form-label">Phone Number</label>
+      <div style="display:flex;gap:10px">
+        <input class="form-input" id="search-phone" type="tel" placeholder="0555 123 456" style="flex:1"/>
+        <button onclick="searchPatient()" style="padding:11px 18px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
+      </div>
+    </div>
+    <div id="search-result"></div>
+  </div>
+</div>
+
+<div id="reg-returning-step" style="display:none">
+  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
+  <div class="table-card" style="max-width:540px">
+    <div id="returning-info"></div>
+    <div class="form-field">
+      <label class="form-label">Priority</label>
+      <div class="toggle-group">
+        <button class="prio-btn" id="rp-normal" onclick="pickRetPrio(this,'normal')" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>
+        <button class="prio-btn" id="rp-urgent" onclick="pickRetPrio(this,'urgent')">Urgent</button>
+        <button class="prio-btn" id="rp-emergency" onclick="pickRetPrio(this,'emergency')">Emergency</button>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Doctor</label>
+      <select class="form-select" id="ret-doctor">
+        <option value="">Select doctor...</option>
+        <option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>
+        <option value="dr.ezzine">Dr. Fatima Ezzine</option>
+        <option value="dr.chebara">Dr. Bachir Chebara</option>
+        <option value="dr.slimani">Dr. Omar Slimani</option>
+        <option value="dr.hariti">Dr. Hariti Amar</option>
+        <option value="dr.mansour">Dr. Mansour Manel</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Reason for Visit</label>
+      <textarea class="form-textarea" id="ret-reason" placeholder="Reason for visit..."></textarea>
+    </div>
+    <div id="ret-err" class="form-error"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="showRegSearch()" style="padding:13px 16px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Back</button>
+      <button onclick="submitReturning()" style="flex:1;padding:13px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Add to Queue</button>
+    </div>
+  </div>
+</div>
+
+<div id="reg-new-step" style="display:none">
+  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
+  <div class="table-card" style="max-width:540px">
+    <div style="background:#E8F5EF;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+      <span style="font-size:13px;font-weight:600;color:#1B6B4A">New patient - fill in the details below</span>
+    </div>
+    <div class="form-error" id="form-err"></div>
+    <div class="form-field">
+      <label class="form-label">Full Name *</label>
+      <input class="form-input" id="r-name" type="text" placeholder="e.g. Bensalem Khaled"/>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">Age *</label>
+        <input class="form-input" id="r-age" type="number" placeholder="45"/>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Phone *</label>
+        <input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Gender *</label>
+      <div class="toggle-group">
+        <button class="toggle-btn" id="g-male"   onclick="pickGender(this,'male')">Male</button>
+        <button class="toggle-btn" id="g-female" onclick="pickGender(this,'female')">Female</button>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Visit Type</label>
+      <div class="toggle-group">
+        <button class="visit-btn active" id="v-new"      onclick="pickVisit(this,'new')">New Patient</button>
+        <button class="visit-btn"        id="v-follow_up" onclick="pickVisit(this,'follow_up')">Follow-up</button>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Priority</label>
+      <div class="toggle-group">
+        <button class="prio-btn" id="p-normal"    onclick="pickPrio(this,'normal')"    style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>
+        <button class="prio-btn" id="p-urgent"    onclick="pickPrio(this,'urgent')">Urgent</button>
+        <button class="prio-btn" id="p-emergency" onclick="pickPrio(this,'emergency')">Emergency</button>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Assign Doctor *</label>
+      <select class="form-select" id="r-doctor">
+        <option value="">Select a doctor...</option>
+        <optgroup label="General Practice">
+          <option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>
+          <option value="dr.ezzine">Dr. Fatima Ezzine</option>
+          <option value="dr.chebara">Dr. Bachir Chebara</option>
+          <option value="dr.ouali">Dr. Ouali Souad</option>
+          <option value="dr.gherbi">Dr. Fathi Gherbi</option>
+        </optgroup>
+        <optgroup label="Pediatrics">
+          <option value="dr.slimani">Dr. Omar Slimani</option>
+        </optgroup>
+        <optgroup label="Ophthalmology">
+          <option value="dr.hariti">Dr. Hariti Amar</option>
+        </optgroup>
+        <optgroup label="Dentistry">
+          <option value="dr.mansour">Dr. Mansour Manel</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Reason for Visit</label>
+      <textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="showRegSearch()" style="padding:13px 16px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Back</button>
+      <button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="flex:1;margin-top:0">Register Patient</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ═══════════════════════
-// USERS
-// ═══════════════════════
 var USERS = [
-  {id:'u1',username:'admin',      password:'admin123', role:'superadmin',  name:'Super Admin',           avatar:'👑', clinicName:'Shifaa Platform'},
-  {id:'u2',username:'clinicadmin',password:'clinic123',role:'clinicadmin', name:'Clinique Bou Saada',    avatar:'🏥', clinicName:'Clinique Bou Saada'},
-  {id:'u3',username:'dr.belouadah',password:'doctor123',role:'doctor',     name:'Dr. Abdelmadjid Belouadah',avatar:'👨‍⚕️',clinicName:'Clinique Bou Saada',specialty:'General Practice'},
-  {id:'u4',username:'sara.recep', password:'recep123', role:'receptionist',name:'Sara Bouzida',          avatar:'🧑‍💼',clinicName:'Clinique Bou Saada'}
+  {id:'u1',username:'admin',       password:'admin123', role:'superadmin',  name:'Super Admin',              avatar:'👑',clinicName:'Shifaa Platform'},
+  {id:'u2',username:'clinicadmin', password:'clinic123',role:'clinicadmin', name:'Clinique Bou Saada',       avatar:'🏥',clinicName:'Clinique Bou Saada'},
+  {id:'u3',username:'dr.belouadah',password:'doctor123',role:'doctor',      name:'Dr. Abdelmadjid Belouadah',avatar:'👨‍⚕️',clinicName:'Clinique Bou Saada',specialty:'General Practice'},
+  {id:'u4',username:'sara.recep',  password:'recep123', role:'receptionist',name:'Sara Bouzida',             avatar:'🧑‍💼',clinicName:'Clinique Bou Saada'}
 ];
 
 var currentUser = null;
-var selGender = '';
-var selVisit  = 'new';
-var selPrio   = 'normal';
+var selGender   = '';
+var selVisit    = 'new';
+var selPrio     = 'normal';
+var selRetPrio  = 'normal';
+var retPatient  = null;
 
-// ═══════════════════════
 // LOGIN
-// ═══════════════════════
 function fillUser(u,p){
   document.getElementById('inp-user').value = u;
   document.getElementById('inp-pass').value = p;
   document.getElementById('error-box').style.display = 'none';
 }
-
 function togglePass(){
-  var i = document.getElementById('inp-pass');
-  var b = document.querySelector('.eye-btn');
+  var i=document.getElementById('inp-pass');
   i.type = i.type==='password'?'text':'password';
-  b.textContent = i.type==='password'?'👁️':'🙈';
 }
-
 function showError(msg){
-  var b = document.getElementById('error-box');
-  b.textContent = '⚠️ '+msg;
-  b.style.display = 'block';
+  var b=document.getElementById('error-box');
+  b.textContent='Warning: '+msg;
+  b.style.display='block';
 }
-
 function doLogin(){
-  var u = document.getElementById('inp-user').value.trim().toLowerCase();
-  var p = document.getElementById('inp-pass').value;
-  var btn = document.getElementById('login-btn');
-  document.getElementById('error-box').style.display = 'none';
-  if(!u||!p){ showError('Please enter your username and password.'); return; }
-  btn.textContent = 'Signing in...';
-  btn.disabled = true;
+  var u=document.getElementById('inp-user').value.trim().toLowerCase();
+  var p=document.getElementById('inp-pass').value;
+  var btn=document.getElementById('login-btn');
+  document.getElementById('error-box').style.display='none';
+  if(!u||!p){showError('Please enter username and password.');return;}
+  btn.textContent='Signing in...';
+  btn.disabled=true;
   setTimeout(function(){
-    var user = null;
+    var user=null;
     for(var i=0;i<USERS.length;i++){
-      if(USERS[i].username===u && USERS[i].password===p){ user=USERS[i]; break; }
+      if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
     }
-    if(user){ currentUser=user; showDashboard(user); }
-    else{ showError('Wrong username or password.'); btn.textContent='Sign In →'; btn.disabled=false; }
+    if(user){currentUser=user;showDashboard(user);}
+    else{showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;}
   },600);
 }
-
 function doLogout(){
   currentUser=null;
   document.getElementById('dashboard-page').style.display='none';
   document.getElementById('login-page').style.display='flex';
   document.getElementById('inp-user').value='';
   document.getElementById('inp-pass').value='';
-  document.getElementById('login-btn').textContent='Sign In →';
+  document.getElementById('login-btn').textContent='Sign In';
   document.getElementById('login-btn').disabled=false;
   document.getElementById('error-box').style.display='none';
 }
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser)doLogin();});
 
-document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&!currentUser) doLogin(); });
-
-// ═══════════════════════
 // DASHBOARD
-// ═══════════════════════
-var NAV = {
-  superadmin:  [['📊','dashboard','Overview'],['🏥','clinics','All Clinics'],['👨‍⚕️','doctors','Doctors'],['👥','patients','Patients'],['📈','reports','Reports']],
-  clinicadmin: [['📊','dashboard','Overview'],['👨‍⚕️','doctors','My Doctors'],['👥','patients','Patients'],['📈','reports','Reports']],
-  doctor:      [['📊','dashboard','Dashboard'],['🔢','queue','My Queue'],['👥','patients','My Patients'],['📝','notes','Notes']],
-  receptionist:[['📊','dashboard','Overview'],['➕','register','Register'],['🔢','queue','Queue']]
+var NAV={
+  superadmin:  [['Overview','dashboard'],['Clinics','clinics'],['Doctors','doctors'],['Patients','patients'],['Reports','reports']],
+  clinicadmin: [['Overview','dashboard'],['My Doctors','doctors'],['Patients','patients'],['Reports','reports']],
+  doctor:      [['Dashboard','dashboard'],['My Queue','queue'],['My Patients','patients'],['Notes','notes']],
+  receptionist:[['Overview','dashboard'],['Register','register'],['Queue','queue']]
 };
-var ROLE_COLORS = {superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100'};
-var ROLE_DESCS  = {superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management'};
+var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100'};
+var ROLE_DESCS={superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management'};
+var ICONS={dashboard:'📊',clinics:'🏥',doctors:'👨‍⚕️',patients:'👥',reports:'📈',queue:'🔢',register:'➕',notes:'📝'};
 
 function makeBadge(role){
   var c={superadmin:{cls:'badge-superadmin',icon:'👑',label:'Super Admin'},clinicadmin:{cls:'badge-clinicadmin',icon:'🏥',label:'Clinic Admin'},doctor:{cls:'badge-doctor',icon:'👨‍⚕️',label:'Doctor'},receptionist:{cls:'badge-receptionist',icon:'🧑‍💼',label:'Receptionist'}};
@@ -305,7 +421,7 @@ function buildNav(user){
   var items=NAV[user.role]||NAV.receptionist;
   var sh='',mh='';
   for(var i=0;i<items.length;i++){
-    var icon=items[i][0],id=items[i][1],lbl=items[i][2];
+    var lbl=items[i][0],id=items[i][1],icon=ICONS[id]||'📄';
     var act=id==='dashboard';
     sh+='<button class="nav-btn'+(act?' active':'')+'" id="snav-'+id+'" onclick="goPage(\''+id+'\')">'+icon+' '+lbl+'</button>';
     mh+='<button class="mnav-btn'+(act?' active':'')+'" id="mnav-'+id+'" onclick="goPage(\''+id+'\')"><span class="mi">'+icon+'</span><span>'+lbl+'</span></button>';
@@ -315,355 +431,158 @@ function buildNav(user){
 }
 
 function goPage(id){
-  var sb=document.querySelectorAll('.nav-btn');
-  for(var i=0;i<sb.length;i++) sb[i].classList.remove('active');
-  var mb=document.querySelectorAll('.mnav-btn');
-  for(var i=0;i<mb.length;i++) mb[i].classList.remove('active');
+  var sbtns=document.querySelectorAll('.nav-btn');
+  for(var i=0;i<sbtns.length;i++) sbtns[i].classList.remove('active');
+  var mbtns=document.querySelectorAll('.mnav-btn');
+  for(var i=0;i<mbtns.length;i++) mbtns[i].classList.remove('active');
   var s=document.getElementById('snav-'+id);
   var m=document.getElementById('mnav-'+id);
   if(s) s.classList.add('active');
   if(m) m.classList.add('active');
-  loadPage(id);
+
+  // Hide register sub-steps
+  document.getElementById('reg-search-step').style.display='none';
+  document.getElementById('reg-returning-step').style.display='none';
+  document.getElementById('reg-new-step').style.display='none';
+
+  if(id==='register'){
+    showRegSearch();
+    document.getElementById('main-content').innerHTML='';
+  } else {
+    loadPage(id);
+  }
   document.getElementById('main-content').scrollTop=0;
 }
 
-// ═══════════════════════
-// PAGES
-// ═══════════════════════
-function loadPage(page){
-  var main=document.getElementById('main-content');
-  var u=currentUser;
-  var color=ROLE_COLORS[u.role]||'#1B6B4A';
-  var hour=new Date().getHours();
-  var greet=hour<12?'morning':hour<17?'afternoon':'evening';
-  var dateStr=new Date().toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  var fname=u.name.split(' ')[0];
-  var subs={superadmin:'Full platform overview',clinicadmin:'Managing '+u.clinicName,doctor:(u.specialty||'Doctor')+' - '+u.clinicName,receptionist:'Reception - '+u.clinicName};
-  var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'! 👋</div><div class="w-sub">'+(subs[u.role]||'')+'</div></div>';
-
-  if(page==='register'){
-    selGender=''; selVisit='new'; selPrio='normal';
-    main.innerHTML=
-      '<h2 style="color:#0F1F17;margin-bottom:18px">➕ Register Patient</h2>'+
-      '<div class="table-card" style="max-width:540px">'+
-
-        '<!-- STEP 1: PHONE SEARCH -->'+
-        '<div id="search-step">'+
-          '<p style="font-size:13px;color:#4A5E54;margin-bottom:16px">First, search by phone number to check if patient already exists.</p>'+
-          '<div class="form-field">'+
-            '<label class="form-label">📱 Phone Number</label>'+
-            '<div style="display:flex;gap:10px">'+
-              '<input class="form-input" id="search-phone" type="tel" placeholder="e.g. 0555 123 456" style="flex:1"/>'+
-              '<button onclick="searchPatient()" style="padding:11px 18px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">🔍 Search</button>'+
-            '</div>'+
-          '</div>'+
-          '<div id="search-result"></div>'+
-        '</div>'+
-
-        '<!-- STEP 2A: RETURNING PATIENT -->'+
-        '<div id="returning-step" style="display:none">'+
-          '<div id="returning-card"></div>'+
-        '</div>'+
-
-        '<!-- STEP 2B: NEW PATIENT FORM -->'+
-        '<div id="new-patient-step" style="display:none">'+
-          '<div style="background:#E8F5EF;border-radius:10px;padding:12px 14px;margin-bottom:18px;display:flex;align-items:center;gap:8px">'+
-            '<span style="font-size:18px">🆕</span>'+
-            '<span style="font-size:13px;font-weight:600;color:#1B6B4A">New patient — fill in the details below</span>'+
-          '</div>'+
-          '<div class="form-error" id="form-err"></div>'+
-          '<div class="form-field"><label class="form-label">Full Name *</label><input class="form-input" id="r-name" type="text" placeholder="e.g. Bensalem Khaled"/></div>'+
-          '<div class="form-row">'+
-            '<div class="form-field"><label class="form-label">Age *</label><input class="form-input" id="r-age" type="number" placeholder="45"/></div>'+
-            '<div class="form-field"><label class="form-label">Phone *</label><input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/></div>'+
-          '</div>'+
-          '<div class="form-field"><label class="form-label">Gender *</label>'+
-            '<div class="toggle-group">'+
-              '<button class="toggle-btn" id="g-male" onclick="pickGender(\"male\")">👨 Male</button>'+
-              '<button class="toggle-btn" id="g-female" onclick="pickGender(\"female\")">👩 Female</button>'+
-            '</div></div>'+
-          '<div class="form-field"><label class="form-label">Visit Type</label>'+
-            '<div class="toggle-group">'+
-              '<button class="visit-btn active" id="v-new" onclick="pickVisit(\"new\")">🆕 New Patient</button>'+
-              '<button class="visit-btn" id="v-follow_up" onclick="pickVisit(\"follow_up\")">🔄 Follow-up</button>'+
-            '</div></div>'+
-          '<div class="form-field"><label class="form-label">Priority</label>'+
-            '<div class="toggle-group">'+
-              '<button class="prio-btn" id="p-normal" onclick="pickPrio(\"normal\")" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">🟢 Normal</button>'+
-              '<button class="prio-btn" id="p-urgent" onclick="pickPrio(\"urgent\")">🟡 Urgent</button>'+
-              '<button class="prio-btn" id="p-emergency" onclick="pickPrio(\"emergency\")">🔴 Emergency</button>'+
-            '</div></div>'+
-          '<div class="form-field"><label class="form-label">Assign Doctor *</label>'+
-            '<select class="form-select" id="r-doctor">'+
-              '<option value="">Select a doctor...</option>'+
-              '<optgroup label="General Practice">'+
-                '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>'+
-                '<option value="dr.ezzine">Dr. Fatima Ezzine</option>'+
-                '<option value="dr.chebara">Dr. Bachir Chebara</option>'+
-                '<option value="dr.ouali">Dr. Ouali Souad</option>'+
-                '<option value="dr.gherbi">Dr. Fathi Gherbi</option>'+
-              '</optgroup>'+
-              '<optgroup label="Pediatrics">'+
-                '<option value="dr.slimani">Dr. Omar Slimani</option>'+
-              '</optgroup>'+
-              '<optgroup label="Ophthalmology">'+
-                '<option value="dr.hariti">Dr. Hariti Amar</option>'+
-              '</optgroup>'+
-              '<optgroup label="Dentistry">'+
-                '<option value="dr.mansour">Dr. Mansour Manel</option>'+
-              '</optgroup>'+
-            '</select></div>'+
-          '<div class="form-field"><label class="form-label">Reason for Visit</label><textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea></div>'+
-          '<div style="display:flex;gap:10px">'+
-            '<button onclick="goPage(\"register\")" style="padding:13px 20px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">← Back</button>'+
-            '<button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="flex:1;margin-top:0">✅ Register Patient</button>'+
-          '</div>'+
-        '</div>'+
-
-      '</div>';
-
-    // Auto focus phone search
-    setTimeout(function(){ var el=document.getElementById('search-phone'); if(el) el.focus(); },100);
-    return;
-  }
-
-  if(page==='queue'){
-    main.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h2 style="color:#0F1F17;margin:0">🔢 Today\'s Queue</h2><button onclick="loadQueue()" style="background:var(--green-xl);color:var(--green);border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">🔄 Refresh</button></div><div id="queue-list"><div class="empty-state"><div style="font-size:32px">⏳</div><p>Loading patients...</p></div></div>';
-    loadQueue();
-    return;
-  }
-
-  if(u.role==='superadmin'){
-    main.innerHTML=banner+
-      '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🏥</div><div><div class="stat-val">5</div><div class="stat-lbl">Total Clinics</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">👨‍⚕️</div><div><div class="stat-val">23</div><div class="stat-lbl">Total Doctors</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">1,204</div><div class="stat-lbl">Total Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📋</div><div><div class="stat-val">87</div><div class="stat-lbl">Today Visits</div></div></div>'+
-      '</div>'+
-      '<div class="table-card"><h3>🏥 All Clinics</h3>'+
-        makeRow('Clinique Bou Saada - M\'Sila','Active','#1B6B4A','#E8F5EF')+
-        makeRow('Clinique El Amal - M\'Sila','Active','#1B6B4A','#E8F5EF')+
-        makeRow('Clinique Al Nour - Sidi Aissa','Active','#1B6B4A','#E8F5EF')+
-        makeRow('Clinique El Hayat - Magra','Active','#1B6B4A','#E8F5EF')+
-      '</div>';
-    return;
-  }
-
-  if(u.role==='clinicadmin'){
-    main.innerHTML=banner+
-      '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val">8</div><div class="stat-lbl">My Doctors</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">34</div><div class="stat-lbl">Today Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val">12</div><div class="stat-lbl">New Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">🔄</div><div><div class="stat-val">22</div><div class="stat-lbl">Follow-ups</div></div></div>'+
-      '</div>'+
-      '<div class="table-card"><h3>👨‍⚕️ Doctors in My Clinic</h3>'+
-        makeRow('Dr. Abdelmadjid Belouadah','General - 12 today','#F0A500','#FFF8E7')+
-        makeRow('Dr. Fatima Ezzine','General - 9 today','#F0A500','#FFF8E7')+
-        makeRow('Dr. Omar Slimani','Pediatrics - 8 today','#F0A500','#FFF8E7')+
-        makeRow('Dr. Hariti Amar','Ophthalmology - 5 today','#F0A500','#FFF8E7')+
-      '</div>';
-    return;
-  }
-
-  if(u.role==='doctor'){
-    main.innerHTML=banner+
-      '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Waiting</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🩺</div><div><div class="stat-val">1</div><div class="stat-lbl">In Progress</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val">14</div><div class="stat-lbl">Total Today</div></div></div>'+
-      '</div>'+
-      '<div class="table-card"><h3>🔢 My Queue Right Now</h3>'+
-        makeQRow('Bensalem Khaled',52,'new','inprogress','High blood pressure')+
-        makeQRow('Boudaoud Fatima',38,'follow_up','waiting','Diabetes follow-up')+
-        makeQRow('Zerrouki Mohand',61,'follow_up','waiting','Back pain')+
-        makeQRow('Brahimi Lila',27,'new','waiting','General checkup')+
-      '</div>';
-    return;
-  }
-
-  if(u.role==='receptionist'){
-    main.innerHTML=banner+
-      '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val">14</div><div class="stat-lbl">Registered Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Still Waiting</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#E6510020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val">6</div><div class="stat-lbl">New Patients</div></div></div>'+
-      '</div>'+
-      '<div class="table-card"><h3>📋 Today\'s Queue - All Doctors</h3>'+
-        makeRow('Bensalem Khaled - Dr. Belouadah - New','🩺 With Doctor','#1B6B4A','#E8F5EF')+
-        makeRow('Boudaoud Fatima - Dr. Belouadah - Follow-up','⏳ Waiting','#F0A500','#FFF8E7')+
-        makeRow('Brahimi Lila - Dr. Slimani - New','✅ Done','#8FA89D','#F0F0F0')+
-        makeRow('Zerrouki Mohand - Dr. Belouadah - Follow-up','⏳ Waiting','#F0A500','#FFF8E7')+
-      '</div>';
-    return;
-  }
+// REGISTER STEPS
+function showRegSearch(){
+  document.getElementById('reg-search-step').style.display='block';
+  document.getElementById('reg-returning-step').style.display='none';
+  document.getElementById('reg-new-step').style.display='none';
+  document.getElementById('main-content').innerHTML='';
+  // Move register divs into main content
+  var mc=document.getElementById('main-content');
+  mc.appendChild(document.getElementById('reg-search-step'));
+  document.getElementById('search-phone').value='';
+  document.getElementById('search-result').innerHTML='';
+  setTimeout(function(){document.getElementById('search-phone').focus();},100);
 }
 
-function makeRow(name,status,sc,sbg){
-  return '<div class="table-row"><div><div class="row-name">'+name+'</div></div><span class="status-pill" style="color:'+sc+';background:'+sbg+'">'+status+'</span></div>';
+function showRegNew(prefillPhone){
+  var mc=document.getElementById('main-content');
+  document.getElementById('reg-search-step').style.display='none';
+  document.getElementById('reg-returning-step').style.display='none';
+  document.getElementById('reg-new-step').style.display='block';
+  mc.appendChild(document.getElementById('reg-new-step'));
+  selGender=''; selVisit='new'; selPrio='normal';
+  document.getElementById('r-name').value='';
+  document.getElementById('r-age').value='';
+  document.getElementById('r-phone').value=prefillPhone||'';
+  document.getElementById('r-reason').value='';
+  document.getElementById('r-doctor').value='';
+  document.getElementById('form-err').style.display='none';
+  var btn=document.getElementById('reg-btn');
+  btn.textContent='Register Patient'; btn.disabled=false;
+  // Reset gender buttons
+  document.getElementById('g-male').className='toggle-btn';
+  document.getElementById('g-female').className='toggle-btn';
+  // Reset visit buttons
+  document.getElementById('v-new').className='visit-btn active';
+  document.getElementById('v-follow_up').className='visit-btn';
+  // Reset prio buttons
+  document.getElementById('p-normal').className='prio-btn';
+  document.getElementById('p-normal').style.cssText='border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A';
+  document.getElementById('p-urgent').className='prio-btn';
+  document.getElementById('p-urgent').style.cssText='';
+  document.getElementById('p-emergency').className='prio-btn';
+  document.getElementById('p-emergency').style.cssText='';
 }
 
-function makeQRow(name,age,type,status,reason){
-  var tc=type==='new'?'type-new':'type-followup';
-  var tl=type==='new'?'NEW':'FOLLOW-UP';
-  var sc=status==='inprogress'?'#1B6B4A':'#F0A500';
-  var sbg=status==='inprogress'?'#E8F5EF':'#FFF8E7';
-  var sl=status==='inprogress'?'🩺 In Progress':'⏳ Waiting';
-  return '<div class="table-row"><div><div style="display:flex;align-items:center;gap:7px"><span class="row-name">'+name+'</span><span class="'+tc+'">'+tl+'</span></div><div class="row-sub">Age '+age+' - '+reason+'</div></div><span class="status-pill" style="color:'+sc+';background:'+sbg+'">'+sl+'</span></div>';
+function showRegReturning(patient){
+  retPatient=patient;
+  selRetPrio='normal';
+  var mc=document.getElementById('main-content');
+  document.getElementById('reg-search-step').style.display='none';
+  document.getElementById('reg-new-step').style.display='none';
+  document.getElementById('reg-returning-step').style.display='block';
+  mc.appendChild(document.getElementById('reg-returning-step'));
+  document.getElementById('returning-info').innerHTML=
+    '<div style="background:#E8F5EF;border-radius:10px;padding:14px;margin-bottom:16px;border:2px solid #1B6B4A">'+
+    '<div style="font-weight:800;font-size:16px;color:#0F1F17;margin-bottom:4px">'+patient.name+'</div>'+
+    '<div style="font-size:12px;color:#4A5E54">Age '+patient.age+' - '+patient.gender+' - '+patient.phone+'</div>'+
+    '<div style="font-size:12px;color:#1B6B4A;margin-top:6px;font-weight:600">Patient already exists - adding to queue</div>'+
+    '</div>';
+  document.getElementById('ret-doctor').value='';
+  document.getElementById('ret-reason').value='';
+  document.getElementById('ret-err').style.display='none';
+  // Reset prio buttons
+  document.getElementById('rp-normal').style.cssText='border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A';
+  document.getElementById('rp-urgent').style.cssText='';
+  document.getElementById('rp-emergency').style.cssText='';
 }
 
-// ═══════════════════════
-// FORM HELPERS
-// ═══════════════════════
-function pickGender(val){
-  selGender=val;
-  document.getElementById('g-male').className='toggle-btn'+(val==='male'?' active':'');
-  document.getElementById('g-female').className='toggle-btn'+(val==='female'?' active':'');
-}
-
-function pickVisit(val){
-  selVisit=val;
-  document.getElementById('v-new').className='visit-btn'+(val==='new'?' active':'');
-  document.getElementById('v-follow_up').className='visit-btn'+(val==='follow_up'?' active':'');
-}
-
-function pickPrio(val){
-  selPrio=val;
-  var n=document.getElementById('p-normal');
-  var ug=document.getElementById('p-urgent');
-  var e=document.getElementById('p-emergency');
-  n.className='prio-btn'; n.style.cssText='';
-  ug.className='prio-btn'; ug.style.cssText='';
-  e.className='prio-btn'; e.style.cssText='';
-  if(val==='normal'){n.className='prio-btn active';n.style.borderColor='#1B6B4A';n.style.background='#E8F5EF';n.style.color='#1B6B4A';}
-  if(val==='urgent'){ug.className='prio-btn active';ug.style.borderColor='#F0A500';ug.style.background='#FFF8E7';ug.style.color='#F0A500';}
-  if(val==='emergency'){e.className='prio-btn active';e.style.borderColor='#D64045';e.style.background='#FDECEA';e.style.color='#D64045';}
-}
-
-// ═══════════════════════
-// REGISTER PATIENT
-// ═══════════════════════
-// ═══════════════════════
-// SEARCH PATIENT BY PHONE
-// ═══════════════════════
-var retPatient = null;
-
+// SEARCH
 function searchPatient(){
-  var rawPhone = document.getElementById('search-phone').value.trim();
-  var phone    = rawPhone.replace(/ /g,'');
-  var result   = document.getElementById('search-result');
-
-  if(!phone || phone.length < 8){
-    result.innerHTML = '<div style="background:#FDECEA;border:1px solid #D64045;border-radius:10px;padding:10px 14px;margin-top:12px;color:#D64045;font-size:13px;font-weight:500">Please enter a valid phone number.</div>';
+  var rawPhone=document.getElementById('search-phone').value.trim();
+  var phone=rawPhone.replace(/ /g,'');
+  var result=document.getElementById('search-result');
+  if(!phone||phone.length<8){
+    result.innerHTML='<div style="background:#FDECEA;border:1px solid #D64045;border-radius:10px;padding:10px 14px;margin-top:12px;color:#D64045;font-size:13px;font-weight:500">Please enter a valid phone number (min 8 digits).</div>';
     return;
   }
-
-  result.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Searching...</div>';
-
+  result.innerHTML='<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Searching...</div>';
   if(window.fbFindPatient){
     window.fbFindPatient(phone).then(function(patient){
-      if(patient){
-        retPatient = patient;
-        document.getElementById('search-step').style.display    = 'none';
-        document.getElementById('returning-step').style.display = 'block';
-        renderReturningCard(patient);
-      } else {
-        result.innerHTML = '';
-        document.getElementById('search-step').style.display      = 'none';
-        document.getElementById('new-patient-step').style.display = 'block';
-        var ph = document.getElementById('r-phone');
-        if(ph) ph.value = rawPhone;
-      }
+      if(patient){showRegReturning(patient);}
+      else{result.innerHTML='';showRegNew(rawPhone);}
     });
   } else {
-    result.innerHTML = '';
-    document.getElementById('search-step').style.display      = 'none';
-    document.getElementById('new-patient-step').style.display = 'block';
+    result.innerHTML='';
+    showRegNew(rawPhone);
   }
 }
 
-function renderReturningCard(p){
-  document.getElementById('returning-card').innerHTML =
-    '<div style="background:#E8F5EF;border-radius:14px;padding:20px;border:2px solid #1B6B4A;margin-bottom:16px">' +
-    '<div style="font-weight:800;font-size:17px;color:#0F1F17;margin-bottom:4px">' + p.name + '</div>' +
-    '<div style="font-size:12px;color:#4A5E54;margin-bottom:14px">Age ' + p.age + ' - ' + p.gender + ' - ' + p.phone + '</div>' +
-    '<div style="font-size:13px;font-weight:600;color:#1B6B4A;margin-bottom:12px">Patient found! Add to today queue?</div>' +
-    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-    '<button onclick="showReturnForm()" style="flex:1;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add to Queue</button>' +
-    '<button onclick="goPage(\"register\")" style="padding:12px 16px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Back</button>' +
-    '</div></div>';
+// FORM HELPERS
+function pickGender(btn,val){
+  selGender=val;
+  document.getElementById('g-male').className='toggle-btn';
+  document.getElementById('g-female').className='toggle-btn';
+  btn.className='toggle-btn active';
 }
-
-function showReturnForm(){
-  var p = retPatient;
-  if(!p) return;
-  selRetPrio = 'normal';
-  document.getElementById('returning-card').innerHTML =
-    '<div style="background:#fff;border-radius:14px;padding:20px;border:1px solid #D6E8DE">' +
-    '<div style="font-weight:700;font-size:15px;color:#0F1F17;margin-bottom:4px">' + p.name + '</div>' +
-    '<div style="font-size:12px;color:#8FA89D;margin-bottom:16px">Age ' + p.age + '</div>' +
-    '<div class="form-field"><label class="form-label">Priority</label>' +
-    '<div class="toggle-group">' +
-    '<button class="prio-btn" id="rp-normal" onclick="pickRetPrio(\"normal\")" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>' +
-    '<button class="prio-btn" id="rp-urgent" onclick="pickRetPrio(\"urgent\")">Urgent</button>' +
-    '<button class="prio-btn" id="rp-emergency" onclick="pickRetPrio(\"emergency\")">Emergency</button>' +
-    '</div></div>' +
-    '<div class="form-field"><label class="form-label">Doctor *</label>' +
-    '<select class="form-select" id="ret-doctor">' +
-    '<option value="">Select doctor...</option>' +
-    '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>' +
-    '<option value="dr.ezzine">Dr. Fatima Ezzine</option>' +
-    '<option value="dr.slimani">Dr. Omar Slimani</option>' +
-    '<option value="dr.hariti">Dr. Hariti Amar</option>' +
-    '<option value="dr.mansour">Dr. Mansour Manel</option>' +
-    '</select></div>' +
-    '<div class="form-field"><label class="form-label">Reason</label>' +
-    '<textarea class="form-textarea" id="ret-reason" placeholder="Reason for visit..."></textarea></div>' +
-    '<div id="ret-err" class="form-error"></div>' +
-    '<button onclick="submitReturning()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Add to Queue</button>' +
-    '</div>';
+function pickVisit(btn,val){
+  selVisit=val;
+  document.getElementById('v-new').className='visit-btn';
+  document.getElementById('v-follow_up').className='visit-btn';
+  btn.className='visit-btn active';
 }
-
-var selRetPrio = 'normal';
-function pickRetPrio(val){
-  selRetPrio = val;
-  var n = document.getElementById('rp-normal');
-  var u = document.getElementById('rp-urgent');
-  var e = document.getElementById('rp-emergency');
-  if(!n) return;
+function pickPrio(btn,val){
+  selPrio=val;
+  var n=document.getElementById('p-normal');
+  var u=document.getElementById('p-urgent');
+  var e=document.getElementById('p-emergency');
   n.className='prio-btn'; n.style.cssText='';
   u.className='prio-btn'; u.style.cssText='';
   e.className='prio-btn'; e.style.cssText='';
-  if(val==='normal')    { n.className='prio-btn active'; n.style.borderColor='#1B6B4A'; n.style.background='#E8F5EF'; n.style.color='#1B6B4A'; }
-  if(val==='urgent')    { u.className='prio-btn active'; u.style.borderColor='#F0A500'; u.style.background='#FFF8E7'; u.style.color='#F0A500'; }
-  if(val==='emergency') { e.className='prio-btn active'; e.style.borderColor='#D64045'; e.style.background='#FDECEA'; e.style.color='#D64045'; }
+  btn.className='prio-btn active';
+  if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
+  if(val==='urgent')   {btn.style.borderColor='#F0A500';btn.style.background='#FFF8E7';btn.style.color='#F0A500';}
+  if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
+}
+function pickRetPrio(btn,val){
+  selRetPrio=val;
+  var n=document.getElementById('rp-normal');
+  var u=document.getElementById('rp-urgent');
+  var e=document.getElementById('rp-emergency');
+  n.className='prio-btn'; n.style.cssText='';
+  u.className='prio-btn'; u.style.cssText='';
+  e.className='prio-btn'; e.style.cssText='';
+  btn.className='prio-btn active';
+  if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
+  if(val==='urgent')   {btn.style.borderColor='#F0A500';btn.style.background='#FFF8E7';btn.style.color='#F0A500';}
+  if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
 }
 
-function submitReturning(){
-  var p      = retPatient;
-  var doctor = document.getElementById('ret-doctor').value;
-  var reason = document.getElementById('ret-reason').value.trim();
-  var err    = document.getElementById('ret-err');
-  if(!doctor){ err.textContent='Please select a doctor.'; err.style.display='block'; return; }
-  err.style.display='none';
-  var data = {
-    patientId: p.id, name: p.name, age: p.age,
-    visitType: 'follow_up', priority: selRetPrio,
-    doctor: doctor, reason: reason,
-    visitDate: new Date().toISOString().split('T')[0],
-    status: 'waiting', clinicId: 'clinic_001',
-    createdAt: new Date().toISOString()
-  };
-  if(window.fbSave){
-    window.fbSave(data).then(function(id){ if(id) showSuccess(p.name); });
-  } else {
-    showSuccess(p.name);
-  }
-}
-
+// SUBMIT NEW PATIENT
 function submitPatient(){
   var name=document.getElementById('r-name').value.trim();
   var age=document.getElementById('r-age').value;
@@ -678,36 +597,92 @@ function submitPatient(){
   }
   err.style.display='none';
   var btn=document.getElementById('reg-btn');
-  btn.textContent='Saving...';
-  btn.disabled=true;
-  var data={name:name,age:parseInt(age),phone:phone,gender:selGender,visitType:selVisit,priority:selPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
+  btn.textContent='Saving...'; btn.disabled=true;
+  var data={name:name,age:parseInt(age),phone:phone.replace(/ /g,''),gender:selGender,visitType:selVisit,priority:selPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
   if(window.fbSave){
-    window.fbSave(data).then(function(id){
-      if(id){ showSuccess(name); }
-      else{ btn.textContent='✅ Register Patient'; btn.disabled=false; err.textContent='Could not save. Check connection.'; err.style.display='block'; }
-    });
+    window.fbSave(data).then(function(id){if(id)showSuccess(name);else{btn.textContent='Register Patient';btn.disabled=false;err.textContent='Could not save. Check connection.';err.style.display='block';}});
   } else {
-    setTimeout(function(){ showSuccess(name); },400);
+    setTimeout(function(){showSuccess(name);},400);
   }
 }
 
-function showSuccess(name){
-  var card=document.querySelector('.table-card');
-  if(!card) return;
-  card.innerHTML='<div class="success-wrap"><div class="success-icon">✅</div><div class="success-title">'+name+' Registered!</div><div class="success-sub">Patient added to today\'s queue.</div><div class="btn-row"><button class="btn-outline" onclick="goPage(\'queue\')">👥 View Queue</button><button class="btn-filled" onclick="goPage(\'register\')">➕ Register Another</button></div></div>';
+// SUBMIT RETURNING PATIENT
+function submitReturning(){
+  var p=retPatient;
+  var doctor=document.getElementById('ret-doctor').value;
+  var reason=document.getElementById('ret-reason').value.trim();
+  var err=document.getElementById('ret-err');
+  if(!doctor){err.textContent='Please select a doctor.';err.style.display='block';return;}
+  err.style.display='none';
+  var data={patientId:p.id,name:p.name,age:p.age,visitType:'follow_up',priority:selRetPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
+  if(window.fbSave){
+    window.fbSave(data).then(function(id){if(id)showSuccess(p.name);});
+  } else {
+    showSuccess(p.name);
+  }
 }
 
-// ═══════════════════════
+// SUCCESS
+function showSuccess(name){
+  var mc=document.getElementById('main-content');
+  document.getElementById('reg-search-step').style.display='none';
+  document.getElementById('reg-returning-step').style.display='none';
+  document.getElementById('reg-new-step').style.display='none';
+  mc.innerHTML=
+    '<div style="text-align:center;padding:60px 20px">'+
+    '<div style="font-size:52px;margin-bottom:14px">✅</div>'+
+    '<div style="font-size:21px;font-weight:800;color:#0F1F17;margin-bottom:6px">'+name+' Registered!</div>'+
+    '<div style="font-size:14px;color:#8FA89D;margin-bottom:22px">Patient added to queue successfully.</div>'+
+    '<div class="btn-row">'+
+    '<button class="btn-outline" onclick="goPage(\'queue\')">View Queue</button>'+
+    '<button class="btn-filled" onclick="goPage(\'register\')">Register Another</button>'+
+    '</div></div>';
+}
+
+// PAGES
+function loadPage(page){
+  var mc=document.getElementById('main-content');
+  var u=currentUser;
+  var color=ROLE_COLORS[u.role]||'#1B6B4A';
+  var hour=new Date().getHours();
+  var greet=hour<12?'morning':hour<17?'afternoon':'evening';
+  var dateStr=new Date().toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var fname=u.name.split(' ')[0];
+  var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'!</div><div class="w-sub">'+(u.specialty||u.clinicName||'')+'</div></div>';
+
+  if(page==='queue'){
+    mc.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h2 style="color:#0F1F17;margin:0">Queue</h2><button onclick="loadQueue()" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">Refresh</button></div><div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
+    loadQueue();
+    return;
+  }
+
+  if(u.role==='superadmin'){
+    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🏥</div><div><div class="stat-val">5</div><div class="stat-lbl">Clinics</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#1565C020">👨‍⚕️</div><div><div class="stat-val">23</div><div class="stat-lbl">Doctors</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">1,204</div><div class="stat-lbl">Patients</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📋</div><div><div class="stat-val">87</div><div class="stat-lbl">Today</div></div></div></div>';
+    return;
+  }
+  if(u.role==='clinicadmin'){
+    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val">8</div><div class="stat-lbl">Doctors</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">34</div><div class="stat-lbl">Today</div></div></div></div>';
+    return;
+  }
+  if(u.role==='doctor'){
+    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Waiting</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🩺</div><div><div class="stat-val">1</div><div class="stat-lbl">In Progress</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#1565C020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done</div></div></div></div>';
+    return;
+  }
+  if(u.role==='receptionist'){
+    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val">14</div><div class="stat-lbl">Registered</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Waiting</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#E6510020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done</div></div></div></div>';
+    return;
+  }
+}
+
 // QUEUE
-// ═══════════════════════
 var STATUS_CYCLE={waiting:'inprogress',inprogress:'done',done:'waiting'};
-var STATUS_LABELS={waiting:['#F0A500','#FFF8E7','⏳ Waiting'],inprogress:['#1B6B4A','#E8F5EF','🩺 In Progress'],done:['#8FA89D','#F0F0F0','✅ Done']};
+var STATUS_DATA={waiting:['#F0A500','#FFF8E7','Waiting'],inprogress:['#1B6B4A','#E8F5EF','In Progress'],done:['#8FA89D','#F0F0F0','Done']};
 
 function cycleStatus(pid,btn){
   var label=btn.textContent.trim();
-  var cur=label.indexOf('Progress')>-1?'inprogress':label.indexOf('Done')>-1?'done':'waiting';
+  var cur=label==='In Progress'?'inprogress':label==='Done'?'done':'waiting';
   var next=STATUS_CYCLE[cur]||'waiting';
-  var s=STATUS_LABELS[next];
+  var s=STATUS_DATA[next];
   btn.style.background=s[1]; btn.style.color=s[0]; btn.textContent=s[2];
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
 }
@@ -716,9 +691,9 @@ function loadQueue(){
   var list=document.getElementById('queue-list');
   if(!list) return;
   if(window.fbGetPatients){
-    window.fbGetPatients().then(function(patients){ renderQueue(patients); });
+    window.fbGetPatients().then(function(pts){renderQueue(pts);});
   } else {
-    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients yet. Register the first patient!</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">➕ Register Patient</button></div>';
+    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients yet.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register Patient</button></div>';
   }
 }
 
@@ -726,24 +701,24 @@ function renderQueue(patients){
   var list=document.getElementById('queue-list');
   if(!list) return;
   if(!patients||patients.length===0){
-    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients registered today yet.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">➕ Register First Patient</button></div>';
+    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients today.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register First Patient</button></div>';
     return;
   }
   var pOrder={emergency:0,urgent:1,normal:2};
-  patients.sort(function(a,b){ return (pOrder[a.priority]!==undefined?pOrder[a.priority]:99)-(pOrder[b.priority]!==undefined?pOrder[b.priority]:99); });
+  patients.sort(function(a,b){return (pOrder[a.priority]!==undefined?pOrder[a.priority]:99)-(pOrder[b.priority]!==undefined?pOrder[b.priority]:99);});
   var html='';
   for(var i=0;i<patients.length;i++){
     var p=patients[i];
-    var pc={emergency:['#D64045','#FDECEA','🔴'],urgent:['#F0A500','#FFF8E7','🟡'],normal:['#1B6B4A','#E8F5EF','🟢']};
+    var pc={emergency:['#D64045','#FDECEA','EMERGENCY'],urgent:['#F0A500','#FFF8E7','URGENT'],normal:['#1B6B4A','#E8F5EF','NORMAL']};
     var c=pc[p.priority]||pc.normal;
-    var s=STATUS_LABELS[p.status]||STATUS_LABELS.waiting;
+    var s=STATUS_DATA[p.status]||STATUS_DATA.waiting;
     var tc=p.visitType==='new'?'type-new':'type-followup';
     var tl=p.visitType==='new'?'NEW':'FOLLOW-UP';
     html+='<div class="queue-item" style="border-left:4px solid '+c[0]+'">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
     html+='<div style="flex:1"><div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">';
     html+='<span style="font-weight:800;font-size:15px">#'+(i+1)+' '+p.name+'</span>';
-    html+='<span style="background:'+c[1]+';color:'+c[0]+';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">'+c[2]+' '+p.priority.toUpperCase()+'</span>';
+    html+='<span style="background:'+c[1]+';color:'+c[0]+';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">'+c[2]+'</span>';
     html+='<span class="'+tc+'">'+tl+'</span></div>';
     html+='<div style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
     html+='<button onclick="cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
@@ -753,63 +728,23 @@ function renderQueue(patients){
 }
 </script>
 
-<!-- Firebase loads separately — if it fails, login still works -->
 <script type="module">
 try {
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-  const { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-
-  const config = {
-    apiKey: "AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",
-    authDomain: "shiffa-fcae0.firebaseapp.com",
-    projectId: "shiffa-fcae0",
-    storageBucket: "shiffa-fcae0.firebasestorage.app",
-    messagingSenderId: "48392150056",
-    appId: "1:48392150056:web:3c89b803c4c8220298e91d"
-  };
-
-  const app = initializeApp(config);
-  const db  = getFirestore(app);
-
-  window.fbSave = function(data) {
-    return addDoc(collection(db,'patients'), Object.assign({},data,{createdAt:serverTimestamp()}))
-      .then(function(r){ return r.id; })
-      .catch(function(e){ console.error(e); return null; });
-  };
-
-  window.fbGetPatients = function() {
-    const today = new Date().toISOString().split('T')[0];
-    return getDocs(query(collection(db,'patients'), where('visitDate','==',today)))
-      .then(function(snap){ const list=[]; snap.forEach(function(d){ list.push(Object.assign({id:d.id},d.data())); }); return list; })
-      .catch(function(e){ console.error(e); return []; });
-  };
-
-  window.fbUpdateStatus = function(pid, status) {
-    return updateDoc(doc(db,'patients',pid), {status:status})
-      .catch(function(e){ console.error(e); });
-  };
-
-  window.fbFindPatient = function(phone) {
-    return getDocs(query(collection(db,'patients'), where('phone','==',phone)))
-      .then(function(snap){
-        if(snap.empty) return null;
-        var d = snap.docs[0];
-        return Object.assign({id:d.id}, d.data());
-      })
-      .catch(function(e){ console.error(e); return null; });
-  };
-
-  // Show connected badge
-  const badge = document.createElement('div');
-  badge.style.cssText = 'position:fixed;bottom:80px;right:16px;background:#1B6B4A;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
-  badge.textContent = '🔥 Firebase Connected!';
+  const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+  const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const config={apiKey:"AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",authDomain:"shiffa-fcae0.firebaseapp.com",projectId:"shiffa-fcae0",storageBucket:"shiffa-fcae0.firebasestorage.app",messagingSenderId:"48392150056",appId:"1:48392150056:web:3c89b803c4c8220298e91d"};
+  const app=initializeApp(config);
+  const db=getFirestore(app);
+  window.fbSave=function(data){return addDoc(collection(db,'patients'),Object.assign({},data,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
+  window.fbGetPatients=function(){var today=new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',today))).then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;}).catch(function(e){console.error(e);return[];});};
+  window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
+  window.fbFindPatient=function(phone){return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){if(snap.empty)return null;var d=snap.docs[0];return Object.assign({id:d.id},d.data());}).catch(function(e){console.error(e);return null;});};
+  var badge=document.createElement('div');
+  badge.style.cssText='position:fixed;bottom:80px;right:16px;background:#1B6B4A;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+  badge.textContent='Firebase Connected!';
   document.body.appendChild(badge);
-  setTimeout(function(){ badge.remove(); }, 4000);
-
-} catch(e) {
-  // Firebase failed silently — login and app still work without it
-  console.warn('Firebase not available:', e.message);
-}
+  setTimeout(function(){badge.remove();},4000);
+} catch(e){console.warn('Firebase not available:',e.message);}
 </script>
 
 </body>
