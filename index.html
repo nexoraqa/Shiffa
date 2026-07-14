@@ -157,6 +157,14 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
         <div><span class="test-info">🧑‍💼 Receptionist</span><span class="test-user">@sara.recep</span></div>
         <button class="btn-use" onclick="fillUser('sara.recep','recep123')">Use</button>
       </div>
+      <div class="test-row">
+        <div><span class="test-info">👨‍⚕️ Dr. Slimani</span><span class="test-user">@dr.slimani</span></div>
+        <button class="btn-use" onclick="fillUser('dr.slimani','slimani123')">Use</button>
+      </div>
+      <div class="test-row">
+        <div><span class="test-info">🧑‍💼 Amina (Recep)</span><span class="test-user">@amina.recep</span></div>
+        <button class="btn-use" onclick="fillUser('amina.recep','amina123')">Use</button>
+      </div>
     </div>
   </div>
   <div class="footer-txt">Made for Algeria - Shifaa v1.0</div>
@@ -202,7 +210,9 @@ var USERS = [
   {id:'u1',username:'admin',       password:'admin123', role:'superadmin',  name:'Super Admin',              avatar:'👑',clinicName:'Shifaa Platform',   cabinetName:'Shifaa Platform',   doctorId:null},
   {id:'u2',username:'clinicadmin', password:'clinic123',role:'clinicadmin', name:'Clinique Bou Saada',       avatar:'🏥',clinicName:'Clinique Bou Saada',cabinetName:'Clinique Bou Saada',doctorId:null},
   {id:'u3',username:'dr.belouadah',password:'doctor123',role:'doctor',      name:'Dr. Abdelmadjid Belouadah',avatar:'👨‍⚕️',clinicName:'Cabinet Dr. Belouadah',cabinetName:'Cabinet Dr. Belouadah',specialty:'Medecin Generaliste',city:'Bou Saada, M Sila',doctorId:'dr.belouadah'},
-  {id:'u4',username:'sara.recep',  password:'recep123', role:'receptionist',name:'Sara Bouzida',             avatar:'🧑‍💼',clinicName:'Cabinet Dr. Belouadah',cabinetName:'Cabinet Dr. Belouadah',doctorId:'dr.belouadah'}
+  {id:'u4',username:'sara.recep',  password:'recep123', role:'receptionist',name:'Sara Bouzida',             avatar:'🧑‍💼',clinicName:'Cabinet Dr. Belouadah',cabinetName:'Cabinet Dr. Belouadah',doctorId:'dr.belouadah'},
+  {id:'u5',username:'dr.slimani',  password:'slimani123',role:'doctor',      name:'Dr. Omar Slimani',          avatar:'👨‍⚕️',clinicName:'Cabinet Dr. Slimani',cabinetName:'Cabinet Dr. Slimani',specialty:'Pediatrics',city:'Bou Saada - MSila',doctorId:'dr.slimani'},
+  {id:'u6',username:'amina.recep', password:'amina123',  role:'receptionist',name:'Amina Khelil',              avatar:'🧑‍💼',clinicName:'Cabinet Dr. Slimani',cabinetName:'Cabinet Dr. Slimani',doctorId:'dr.slimani'}
 ];
 
 var currentUser = null;
