@@ -982,5 +982,175 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 
+<!-- ═══════════════════════════════════════════
+  🔥 FIREBASE CONNECTION
+  
+  📚 LESSON: What is this doing?
+  
+  We import Firebase from the internet.
+  Think of it like calling a friend:
+  "Hey Firebase! Come help us save data!"
+  
+  type="module" means this is modern JS
+  that can import from other places.
+  
+  We use YOUR real keys here so Firebase
+  knows this is YOUR Shifaa project.
+═══════════════════════════════════════════ -->
+<script type="module">
+
+// ── Step 1: Import Firebase tools we need ──
+// Like opening a toolbox and picking tools
+import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc,
+         getDocs, query, where,
+         orderBy, serverTimestamp }               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword,
+         signInWithEmailAndPassword,
+         signOut, onAuthStateChanged }            from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ── Step 2: YOUR Firebase Keys ──
+// 📚 These tell Firebase: "This is Shifaa's project"
+// Like your home address — unique to you!
+const firebaseConfig = {
+  apiKey:            "AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7I_abc",
+  authDomain:        "shiffa-fcae0.firebaseapp.com",
+  projectId:         "shiffa-fcae0",
+  storageBucket:     "shiffa-fcae0.firebasestorage.app",
+  messagingSenderId: "48392150056",
+  appId:             "1:48392150056:web:3c89b803c4c82202"
+};
+
+// ── Step 3: Start Firebase ──
+// Like turning on the engine 🚗
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);   // database
+const auth = getAuth(app);       // login system
+
+// ══════════════════════════════════════════
+// 📚 LESSON: What is Firestore?
+//
+// Firestore = your cloud database
+// db = our shortcut to reach it
+//
+// To SAVE something:
+//   addDoc(collection(db, "patients"), data)
+//   → "add a document to the patients folder"
+//
+// To GET something:
+//   getDocs(collection(db, "patients"))
+//   → "get all documents from patients folder"
+// ══════════════════════════════════════════
+
+// ─────────────────────────────────────────
+// 💾 SAVE PATIENT TO FIREBASE
+// Called when receptionist registers patient
+// ─────────────────────────────────────────
+window.savePatientToFirebase = async function(patientData) {
+  try {
+    // Add patient to "patients" collection in Firebase
+    const docRef = await addDoc(collection(db, "patients"), {
+      ...patientData,
+      createdAt: serverTimestamp(), // automatic timestamp
+      status: "waiting",
+      clinicId: "clinic_001",      // will be dynamic later
+    });
+    console.log("✅ Patient saved! ID:", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("❌ Error saving patient:", error);
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────
+// 📋 GET TODAY'S PATIENTS FROM FIREBASE
+// Called when doctor opens their queue
+// ─────────────────────────────────────────
+window.getTodaysPatients = async function() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const q = query(
+      collection(db, "patients"),
+      where("visitDate", "==", today),
+      orderBy("createdAt")
+    );
+    const snapshot = await getDocs(q);
+    const patients = [];
+    snapshot.forEach(doc => {
+      patients.push({ id: doc.id, ...doc.data() });
+    });
+    console.log("✅ Got patients:", patients.length);
+    return patients;
+  } catch (error) {
+    console.error("❌ Error getting patients:", error);
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────
+// 🔐 FIREBASE AUTH — Real Login
+// This replaces our fake USERS list
+// with real Firebase accounts
+// ─────────────────────────────────────────
+window.firebaseLogin = async function(email, password) {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    console.log("✅ Logged in:", result.user.email);
+    return result.user;
+  } catch (error) {
+    console.error("❌ Login error:", error.message);
+    return null;
+  }
+}
+
+window.firebaseLogout = async function() {
+  try {
+    await signOut(auth);
+    console.log("✅ Logged out");
+  } catch (error) {
+    console.error("❌ Logout error:", error);
+  }
+}
+
+// ─────────────────────────────────────────
+// 📚 LESSON: What is async/await?
+//
+// Firebase operations take TIME.
+// They go to the internet and come back.
+//
+// async = "this function takes time"
+// await = "wait here until it comes back"
+//
+// Like ordering food:
+// await = "I'll wait for my order"
+// Without it = you'd leave before food arrives! 🍕
+// ─────────────────────────────────────────
+
+// ── Firebase is ready! ──
+console.log("🌿 Shifaa connected to Firebase!");
+console.log("📦 Database:", db.app.options.projectId);
+
+// Show connection status on page
+const statusDiv = document.createElement('div');
+statusDiv.style.cssText = `
+  position: fixed; bottom: 20px; right: 20px;
+  background: #1B6B4A; color: white;
+  padding: 10px 16px; border-radius: 10px;
+  font-size: 12px; font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 9999; animation: fadeOut 3s forwards 2s;
+`;
+statusDiv.innerHTML = '🔥 Firebase Connected!';
+document.body.appendChild(statusDiv);
+
+const style = document.createElement('style');
+style.textContent = `@keyframes fadeOut { to { opacity: 0; } }`;
+document.head.appendChild(style);
+
+setTimeout(() => statusDiv.remove(), 5000);
+
+</script>
+
 </body>
 </html>
