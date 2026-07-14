@@ -832,9 +832,11 @@ function showDashboard(user) {
   };
 
   const items = navs[user.role] || navs.receptionist;
-  document.getElementById('nav-items').innerHTML = items.map(([icon, id, label]) =>
-    `<button class="nav-btn ${id === 'dashboard' ? 'active' : ''}" onclick="setNav('${id}', this)">${icon} ${label}</button>`
-  ).join('');
+  document.getElementById('nav-items').innerHTML = items.map(function(item) {
+    var icon = item[0], id = item[1], label = item[2];
+    var activeClass = (id === 'dashboard') ? 'active' : '';
+    return '<button class="nav-btn ' + activeClass + '" data-nav="' + id + '" onclick="navClick(this)">' + icon + ' ' + label + '</button>';
+  }).join('');
 
   // Load default dashboard content
   loadContent('dashboard');
@@ -850,23 +852,28 @@ function showDashboard(user) {
 // BUILD MOBILE BOTTOM NAV
 // ─────────────────────────────────────────
 function buildMobileNav(user, items) {
-  const nav = document.getElementById('mobile-nav-inner');
+  var nav = document.getElementById('mobile-nav-inner');
   if (!nav) return;
-  nav.innerHTML = items.map(([icon, id, label]) =>
-    '<button class="mobile-nav-btn ' + (id === 'dashboard' ? 'active' : '') + '" ' +
-    'onclick="mobileNav(this, \'' + id + '\')"> ' +
-    '<span class="nav-icon">' + icon + '</span>' +
-    '<span>' + label + '</span>' +
-    '</button>'
-  ).join('');
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var icon = items[i][0], id = items[i][1], label = items[i][2];
+    var cls = (id === 'dashboard') ? 'active' : '';
+    html += '<button class="mobile-nav-btn ' + cls + '" data-nav="' + id + '" onclick="mobileNavClick(this)">';
+    html += '<span class="nav-icon">' + icon + '</span>';
+    html += '<span>' + label + '</span></button>';
+  }
+  nav.innerHTML = html;
 }
 
-function mobileNav(btn, id) {
-  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+function mobileNavClick(btn) {
+  var id = btn.getAttribute('data-nav');
+  var btns = document.querySelectorAll('.mobile-nav-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
   btn.classList.add('active');
   loadContent(id);
   document.getElementById('main-content').scrollTop = 0;
 }
+
 
 function makeBadge(role) {
   const config = {
@@ -882,9 +889,16 @@ function makeBadge(role) {
 // ─────────────────────────────────────────
 // NAVIGATE between sidebar sections
 // ─────────────────────────────────────────
-function setNav(id, btn) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+function navClick(btn) {
+  var id = btn.getAttribute('data-nav');
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
+  loadContent(id);
+}
+
+function setNav(id, btn) {
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
   loadContent(id);
 }
 
