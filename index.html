@@ -330,12 +330,59 @@ function loadPage(page){
   var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'! 👋</div><div class="w-sub">'+sub+'</div></div>';
 
   // REGISTER PAGE
-  if(page==='register'){
+  
+var ALL_DOCTORS = [
+  {id:'dr.belouadah', name:'Dr. Abdelmadjid Belouadah', specialty:'General Practice'},
+  {id:'dr.ezzine',    name:'Dr. Fatima Ezzine',         specialty:'General Practice'},
+  {id:'dr.chebara',   name:'Dr. Bachir Chebara',        specialty:'General Practice'},
+  {id:'dr.ouali',     name:'Dr. Ouali Souad',           specialty:'General Practice'},
+  {id:'dr.gherbi',    name:'Dr. Fathi Gherbi',          specialty:'General Practice'},
+  {id:'dr.slimani',   name:'Dr. Omar Slimani',          specialty:'Pediatrics'},
+  {id:'dr.hariti',    name:'Dr. Hariti Amar',           specialty:'Ophthalmology'},
+  {id:'dr.mansour',   name:'Dr. Mansour Manel',         specialty:'Dentistry'}
+];
+
+function populateDoctorSelect(selectId){
+  var sel = document.getElementById(selectId);
+  if(!sel) return;
+  var u = currentUser;
+  // If user is linked to specific doctor → show only that doctor
+  if(u.doctorId){
+    var doc = null;
+    for(var i=0;i<ALL_DOCTORS.length;i++){
+      if(ALL_DOCTORS[i].id === u.doctorId){ doc = ALL_DOCTORS[i]; break; }
+    }
+    if(doc){
+      sel.innerHTML = '<option value="'+doc.id+'">'+doc.name+'</option>';
+      sel.value = doc.id; // auto-select
+      return;
+    }
+  }
+  // Otherwise show all doctors grouped by specialty
+  var groups = {};
+  for(var i=0;i<ALL_DOCTORS.length;i++){
+    var d = ALL_DOCTORS[i];
+    if(!groups[d.specialty]) groups[d.specialty] = [];
+    groups[d.specialty].push(d);
+  }
+  var html = '<option value="">Select a doctor...</option>';
+  for(var spec in groups){
+    html += '<optgroup label="'+spec+'">';
+    for(var j=0;j<groups[spec].length;j++){
+      html += '<option value="'+groups[spec][j].id+'">'+groups[spec][j].name+'</option>';
+    }
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
+}
+
+if(page==='register'){
     selGender=''; selVisit='new'; selPrio='normal';
     mc.innerHTML = document.getElementById('reg-template').innerHTML;
     setTimeout(function(){
       var sp=document.getElementById('search-phone');
       if(sp){sp.focus();sp.onkeydown=function(e){if(e.key==='Enter')searchByPhone();};}
+      populateDoctorSelect('r-doctor');
     },50);
     return;
   }
@@ -500,6 +547,7 @@ function addReturnPatient(){
   var p = retPatient;
   if(!p) return;
   selRetPrio = 'normal';
+  setTimeout(function(){populateDoctorSelect('ret-doctor');},50);
   document.getElementById('search-result').innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #D6E8DE;margin-top:4px">'+
     '<div style="font-weight:700;font-size:15px;color:#0F1F17;margin-bottom:12px">'+p.name+' - Add to queue</div>'+
@@ -512,12 +560,6 @@ function addReturnPatient(){
     '<div class="form-field"><label class="form-label">Assign Doctor *</label>'+
     '<select class="form-select" id="ret-doctor">'+
     '<option value="">Select a doctor...</option>'+
-    '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>'+
-    '<option value="dr.ezzine">Dr. Fatima Ezzine</option>'+
-    '<option value="dr.chebara">Dr. Bachir Chebara</option>'+
-    '<option value="dr.slimani">Dr. Omar Slimani</option>'+
-    '<option value="dr.hariti">Dr. Hariti Amar</option>'+
-    '<option value="dr.mansour">Dr. Mansour Manel</option>'+
     '</select></div>'+
     '<div class="form-field"><label class="form-label">Reason</label>'+
     '<input class="form-input" id="ret-reason" type="text" placeholder="Reason for visit..."/></div>'+
@@ -735,22 +777,6 @@ try{
         <label class="form-label">Assign Doctor *</label>
         <select class="form-select" id="r-doctor">
           <option value="">Select a doctor...</option>
-          <optgroup label="General Practice">
-            <option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>
-            <option value="dr.ezzine">Dr. Fatima Ezzine</option>
-            <option value="dr.chebara">Dr. Bachir Chebara</option>
-            <option value="dr.ouali">Dr. Ouali Souad</option>
-            <option value="dr.gherbi">Dr. Fathi Gherbi</option>
-          </optgroup>
-          <optgroup label="Pediatrics">
-            <option value="dr.slimani">Dr. Omar Slimani</option>
-          </optgroup>
-          <optgroup label="Ophthalmology">
-            <option value="dr.hariti">Dr. Hariti Amar</option>
-          </optgroup>
-          <optgroup label="Dentistry">
-            <option value="dr.mansour">Dr. Mansour Manel</option>
-          </optgroup>
         </select>
       </div>
       <div class="form-field">
