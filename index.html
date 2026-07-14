@@ -95,7 +95,6 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .prio-btn{flex:1;padding:8px 4px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--mid)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .form-error{display:none;background:var(--red-l);border:1px solid var(--red);border-radius:10px;padding:10px 14px;color:var(--red);font-size:13px;font-weight:500;margin-bottom:12px}
-.success-wrap{text-align:center;padding:40px 20px}
 .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn-outline{padding:11px 20px;background:var(--green-xl);color:var(--green);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
 .btn-filled{padding:11px 20px;background:linear-gradient(135deg,var(--green),var(--green-l));color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
@@ -108,7 +107,6 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .mnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:10px;color:var(--light);font-size:10px;font-weight:600;min-width:54px}
 .mnav-btn .mi{font-size:22px;line-height:1}
 .mnav-btn.active{color:var(--green);background:var(--green-xl)}
-.search-box{background:var(--green-xl);border-radius:12px;padding:18px;margin-bottom:16px}
 @media(max-width:640px){
   .sidebar{display:none}
   .top-header{padding:0 14px}
@@ -199,134 +197,6 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
   </nav>
 </div>
 
-<!-- REGISTER PAGE (separate hidden div for clean HTML) -->
-<div id="reg-search-step" style="display:none">
-  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
-  <div class="table-card" style="max-width:540px">
-    <p style="font-size:13px;color:#4A5E54;margin-bottom:16px">Search by phone number first:</p>
-    <div class="form-field">
-      <label class="form-label">Phone Number</label>
-      <div style="display:flex;gap:10px">
-        <input class="form-input" id="search-phone" type="tel" placeholder="0555 123 456" style="flex:1"/>
-        <button onclick="searchPatient()" style="padding:11px 18px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
-      </div>
-    </div>
-    <div id="search-result"></div>
-  </div>
-</div>
-
-<div id="reg-returning-step" style="display:none">
-  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
-  <div class="table-card" style="max-width:540px">
-    <div id="returning-info"></div>
-    <div class="form-field">
-      <label class="form-label">Priority</label>
-      <div class="toggle-group">
-        <button class="prio-btn" id="rp-normal" onclick="pickRetPrio(this,'normal')" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>
-        <button class="prio-btn" id="rp-urgent" onclick="pickRetPrio(this,'urgent')">Urgent</button>
-        <button class="prio-btn" id="rp-emergency" onclick="pickRetPrio(this,'emergency')">Emergency</button>
-      </div>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Doctor</label>
-      <select class="form-select" id="ret-doctor">
-        <option value="">Select doctor...</option>
-        <option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>
-        <option value="dr.ezzine">Dr. Fatima Ezzine</option>
-        <option value="dr.chebara">Dr. Bachir Chebara</option>
-        <option value="dr.slimani">Dr. Omar Slimani</option>
-        <option value="dr.hariti">Dr. Hariti Amar</option>
-        <option value="dr.mansour">Dr. Mansour Manel</option>
-      </select>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Reason for Visit</label>
-      <textarea class="form-textarea" id="ret-reason" placeholder="Reason for visit..."></textarea>
-    </div>
-    <div id="ret-err" class="form-error"></div>
-    <div style="display:flex;gap:10px">
-      <button onclick="showRegSearch()" style="padding:13px 16px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Back</button>
-      <button onclick="submitReturning()" style="flex:1;padding:13px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Add to Queue</button>
-    </div>
-  </div>
-</div>
-
-<div id="reg-new-step" style="display:none">
-  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
-  <div class="table-card" style="max-width:540px">
-    <div style="background:#E8F5EF;border-radius:10px;padding:12px 14px;margin-bottom:16px">
-      <span style="font-size:13px;font-weight:600;color:#1B6B4A">New patient - fill in the details below</span>
-    </div>
-    <div class="form-error" id="form-err"></div>
-    <div class="form-field">
-      <label class="form-label">Full Name *</label>
-      <input class="form-input" id="r-name" type="text" placeholder="e.g. Bensalem Khaled"/>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label class="form-label">Age *</label>
-        <input class="form-input" id="r-age" type="number" placeholder="45"/>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Phone *</label>
-        <input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/>
-      </div>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Gender *</label>
-      <div class="toggle-group">
-        <button class="toggle-btn" id="g-male"   onclick="pickGender(this,'male')">Male</button>
-        <button class="toggle-btn" id="g-female" onclick="pickGender(this,'female')">Female</button>
-      </div>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Visit Type</label>
-      <div class="toggle-group">
-        <button class="visit-btn active" id="v-new"      onclick="pickVisit(this,'new')">New Patient</button>
-        <button class="visit-btn"        id="v-follow_up" onclick="pickVisit(this,'follow_up')">Follow-up</button>
-      </div>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Priority</label>
-      <div class="toggle-group">
-        <button class="prio-btn" id="p-normal"    onclick="pickPrio(this,'normal')"    style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>
-        <button class="prio-btn" id="p-urgent"    onclick="pickPrio(this,'urgent')">Urgent</button>
-        <button class="prio-btn" id="p-emergency" onclick="pickPrio(this,'emergency')">Emergency</button>
-      </div>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Assign Doctor *</label>
-      <select class="form-select" id="r-doctor">
-        <option value="">Select a doctor...</option>
-        <optgroup label="General Practice">
-          <option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>
-          <option value="dr.ezzine">Dr. Fatima Ezzine</option>
-          <option value="dr.chebara">Dr. Bachir Chebara</option>
-          <option value="dr.ouali">Dr. Ouali Souad</option>
-          <option value="dr.gherbi">Dr. Fathi Gherbi</option>
-        </optgroup>
-        <optgroup label="Pediatrics">
-          <option value="dr.slimani">Dr. Omar Slimani</option>
-        </optgroup>
-        <optgroup label="Ophthalmology">
-          <option value="dr.hariti">Dr. Hariti Amar</option>
-        </optgroup>
-        <optgroup label="Dentistry">
-          <option value="dr.mansour">Dr. Mansour Manel</option>
-        </optgroup>
-      </select>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Reason for Visit</label>
-      <textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button onclick="showRegSearch()" style="padding:13px 16px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Back</button>
-      <button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="flex:1;margin-top:0">Register Patient</button>
-    </div>
-  </div>
-</div>
-
 <script>
 var USERS = [
   {id:'u1',username:'admin',       password:'admin123', role:'superadmin',  name:'Super Admin',              avatar:'👑',clinicName:'Shifaa Platform'},
@@ -339,22 +209,23 @@ var currentUser = null;
 var selGender   = '';
 var selVisit    = 'new';
 var selPrio     = 'normal';
-var selRetPrio  = 'normal';
 var retPatient  = null;
 
+// ═══════════════
 // LOGIN
+// ═══════════════
 function fillUser(u,p){
-  document.getElementById('inp-user').value = u;
-  document.getElementById('inp-pass').value = p;
-  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('inp-user').value=u;
+  document.getElementById('inp-pass').value=p;
+  document.getElementById('error-box').style.display='none';
 }
 function togglePass(){
   var i=document.getElementById('inp-pass');
-  i.type = i.type==='password'?'text':'password';
+  i.type=i.type==='password'?'text':'password';
 }
 function showError(msg){
   var b=document.getElementById('error-box');
-  b.textContent='Warning: '+msg;
+  b.textContent=msg;
   b.style.display='block';
 }
 function doLogin(){
@@ -386,16 +257,17 @@ function doLogout(){
 }
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser)doLogin();});
 
+// ═══════════════
 // DASHBOARD
+// ═══════════════
 var NAV={
-  superadmin:  [['Overview','dashboard'],['Clinics','clinics'],['Doctors','doctors'],['Patients','patients'],['Reports','reports']],
-  clinicadmin: [['Overview','dashboard'],['My Doctors','doctors'],['Patients','patients'],['Reports','reports']],
-  doctor:      [['Dashboard','dashboard'],['My Queue','queue'],['My Patients','patients'],['Notes','notes']],
-  receptionist:[['Overview','dashboard'],['Register','register'],['Queue','queue']]
+  superadmin:  [['📊 Overview','dashboard'],['🏥 Clinics','clinics'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
+  clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
+  doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes']],
+  receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue']]
 };
 var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100'};
 var ROLE_DESCS={superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management'};
-var ICONS={dashboard:'📊',clinics:'🏥',doctors:'👨‍⚕️',patients:'👥',reports:'📈',queue:'🔢',register:'➕',notes:'📝'};
 
 function makeBadge(role){
   var c={superadmin:{cls:'badge-superadmin',icon:'👑',label:'Super Admin'},clinicadmin:{cls:'badge-clinicadmin',icon:'🏥',label:'Clinic Admin'},doctor:{cls:'badge-doctor',icon:'👨‍⚕️',label:'Doctor'},receptionist:{cls:'badge-receptionist',icon:'🧑‍💼',label:'Receptionist'}};
@@ -421,10 +293,10 @@ function buildNav(user){
   var items=NAV[user.role]||NAV.receptionist;
   var sh='',mh='';
   for(var i=0;i<items.length;i++){
-    var lbl=items[i][0],id=items[i][1],icon=ICONS[id]||'📄';
-    var act=id==='dashboard';
-    sh+='<button class="nav-btn'+(act?' active':'')+'" id="snav-'+id+'" onclick="goPage(\''+id+'\')">'+icon+' '+lbl+'</button>';
-    mh+='<button class="mnav-btn'+(act?' active':'')+'" id="mnav-'+id+'" onclick="goPage(\''+id+'\')"><span class="mi">'+icon+'</span><span>'+lbl+'</span></button>';
+    var lbl=items[i][0],id=items[i][1];
+    var act=(id==='dashboard');
+    sh+='<button class="nav-btn'+(act?' active':'')+'" id="snav-'+id+'" onclick="goPage(\''+id+'\')">'+lbl+'</button>';
+    mh+='<button class="mnav-btn'+(act?' active':'')+'" id="mnav-'+id+'" onclick="goPage(\''+id+'\')"><span class="mi">'+lbl.split(' ')[0]+'</span><span>'+lbl.split(' ').slice(1).join(' ')+'</span></button>';
   }
   document.getElementById('sidebar-nav').innerHTML=sh;
   document.getElementById('mobile-nav').innerHTML=mh;
@@ -439,110 +311,156 @@ function goPage(id){
   var m=document.getElementById('mnav-'+id);
   if(s) s.classList.add('active');
   if(m) m.classList.add('active');
-
-  // Hide register sub-steps
-  document.getElementById('reg-search-step').style.display='none';
-  document.getElementById('reg-returning-step').style.display='none';
-  document.getElementById('reg-new-step').style.display='none';
-
-  if(id==='register'){
-    showRegSearch();
-    document.getElementById('main-content').innerHTML='';
-  } else {
-    loadPage(id);
-  }
+  loadPage(id);
   document.getElementById('main-content').scrollTop=0;
 }
 
-// REGISTER STEPS
-function showRegSearch(){
-  document.getElementById('reg-search-step').style.display='block';
-  document.getElementById('reg-returning-step').style.display='none';
-  document.getElementById('reg-new-step').style.display='none';
-  document.getElementById('main-content').innerHTML='';
-  // Move register divs into main content
+// ═══════════════
+// PAGES
+// ═══════════════
+function loadPage(page){
   var mc=document.getElementById('main-content');
-  mc.appendChild(document.getElementById('reg-search-step'));
-  document.getElementById('search-phone').value='';
-  document.getElementById('search-result').innerHTML='';
-  setTimeout(function(){document.getElementById('search-phone').focus();},100);
-}
+  var u=currentUser;
+  var color=ROLE_COLORS[u.role]||'#1B6B4A';
+  var hour=new Date().getHours();
+  var greet=hour<12?'morning':hour<17?'afternoon':'evening';
+  var dateStr=new Date().toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var fname=u.name.split(' ')[0];
+  var sub=u.specialty?u.specialty+' - '+u.clinicName:u.clinicName||'';
+  var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'! 👋</div><div class="w-sub">'+sub+'</div></div>';
 
-function showRegNew(prefillPhone){
-  var mc=document.getElementById('main-content');
-  document.getElementById('reg-search-step').style.display='none';
-  document.getElementById('reg-returning-step').style.display='none';
-  document.getElementById('reg-new-step').style.display='block';
-  mc.appendChild(document.getElementById('reg-new-step'));
-  selGender=''; selVisit='new'; selPrio='normal';
-  document.getElementById('r-name').value='';
-  document.getElementById('r-age').value='';
-  document.getElementById('r-phone').value=prefillPhone||'';
-  document.getElementById('r-reason').value='';
-  document.getElementById('r-doctor').value='';
-  document.getElementById('form-err').style.display='none';
-  var btn=document.getElementById('reg-btn');
-  btn.textContent='Register Patient'; btn.disabled=false;
-  // Reset gender buttons
-  document.getElementById('g-male').className='toggle-btn';
-  document.getElementById('g-female').className='toggle-btn';
-  // Reset visit buttons
-  document.getElementById('v-new').className='visit-btn active';
-  document.getElementById('v-follow_up').className='visit-btn';
-  // Reset prio buttons
-  document.getElementById('p-normal').className='prio-btn';
-  document.getElementById('p-normal').style.cssText='border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A';
-  document.getElementById('p-urgent').className='prio-btn';
-  document.getElementById('p-urgent').style.cssText='';
-  document.getElementById('p-emergency').className='prio-btn';
-  document.getElementById('p-emergency').style.cssText='';
-}
-
-function showRegReturning(patient){
-  retPatient=patient;
-  selRetPrio='normal';
-  var mc=document.getElementById('main-content');
-  document.getElementById('reg-search-step').style.display='none';
-  document.getElementById('reg-new-step').style.display='none';
-  document.getElementById('reg-returning-step').style.display='block';
-  mc.appendChild(document.getElementById('reg-returning-step'));
-  document.getElementById('returning-info').innerHTML=
-    '<div style="background:#E8F5EF;border-radius:10px;padding:14px;margin-bottom:16px;border:2px solid #1B6B4A">'+
-    '<div style="font-weight:800;font-size:16px;color:#0F1F17;margin-bottom:4px">'+patient.name+'</div>'+
-    '<div style="font-size:12px;color:#4A5E54">Age '+patient.age+' - '+patient.gender+' - '+patient.phone+'</div>'+
-    '<div style="font-size:12px;color:#1B6B4A;margin-top:6px;font-weight:600">Patient already exists - adding to queue</div>'+
-    '</div>';
-  document.getElementById('ret-doctor').value='';
-  document.getElementById('ret-reason').value='';
-  document.getElementById('ret-err').style.display='none';
-  // Reset prio buttons
-  document.getElementById('rp-normal').style.cssText='border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A';
-  document.getElementById('rp-urgent').style.cssText='';
-  document.getElementById('rp-emergency').style.cssText='';
-}
-
-// SEARCH
-function searchPatient(){
-  var rawPhone=document.getElementById('search-phone').value.trim();
-  var phone=rawPhone.replace(/ /g,'');
-  var result=document.getElementById('search-result');
-  if(!phone||phone.length<8){
-    result.innerHTML='<div style="background:#FDECEA;border:1px solid #D64045;border-radius:10px;padding:10px 14px;margin-top:12px;color:#D64045;font-size:13px;font-weight:500">Please enter a valid phone number (min 8 digits).</div>';
+  // REGISTER PAGE
+  if(page==='register'){
+    selGender=''; selVisit='new'; selPrio='normal';
+    mc.innerHTML=
+      '<h2 style="color:#0F1F17;margin-bottom:18px">➕ Register Patient</h2>'+
+      '<div class="table-card" style="max-width:540px">'+
+        '<div class="form-error" id="form-err"></div>'+
+        '<div class="form-field"><label class="form-label">Full Name *</label><input class="form-input" id="r-name" type="text" placeholder="e.g. Bensalem Khaled"/></div>'+
+        '<div class="form-row">'+
+          '<div class="form-field"><label class="form-label">Age *</label><input class="form-input" id="r-age" type="number" placeholder="45"/></div>'+
+          '<div class="form-field"><label class="form-label">Phone *</label><input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/></div>'+
+        '</div>'+
+        '<div class="form-field"><label class="form-label">Gender *</label>'+
+          '<div class="toggle-group">'+
+            '<button class="toggle-btn" id="g-male" onclick="pickGender(this,\'male\')">👨 Male</button>'+
+            '<button class="toggle-btn" id="g-female" onclick="pickGender(this,\'female\')">👩 Female</button>'+
+          '</div></div>'+
+        '<div class="form-field"><label class="form-label">Visit Type</label>'+
+          '<div class="toggle-group">'+
+            '<button class="visit-btn active" id="v-new" onclick="pickVisit(this,\'new\')">🆕 New Patient</button>'+
+            '<button class="visit-btn" id="v-follow_up" onclick="pickVisit(this,\'follow_up\')">🔄 Follow-up</button>'+
+          '</div></div>'+
+        '<div class="form-field"><label class="form-label">Priority</label>'+
+          '<div class="toggle-group">'+
+            '<button class="prio-btn" id="p-normal" onclick="pickPrio(this,\'normal\')" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">🟢 Normal</button>'+
+            '<button class="prio-btn" id="p-urgent" onclick="pickPrio(this,\'urgent\')">🟡 Urgent</button>'+
+            '<button class="prio-btn" id="p-emergency" onclick="pickPrio(this,\'emergency\')">🔴 Emergency</button>'+
+          '</div></div>'+
+        '<div class="form-field"><label class="form-label">Assign Doctor *</label>'+
+          '<select class="form-select" id="r-doctor">'+
+            '<option value="">Select a doctor...</option>'+
+            '<optgroup label="General Practice">'+
+              '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah</option>'+
+              '<option value="dr.ezzine">Dr. Fatima Ezzine</option>'+
+              '<option value="dr.chebara">Dr. Bachir Chebara</option>'+
+              '<option value="dr.ouali">Dr. Ouali Souad</option>'+
+              '<option value="dr.gherbi">Dr. Fathi Gherbi</option>'+
+            '</optgroup>'+
+            '<optgroup label="Pediatrics">'+
+              '<option value="dr.slimani">Dr. Omar Slimani</option>'+
+            '</optgroup>'+
+            '<optgroup label="Ophthalmology">'+
+              '<option value="dr.hariti">Dr. Hariti Amar</option>'+
+            '</optgroup>'+
+            '<optgroup label="Dentistry">'+
+              '<option value="dr.mansour">Dr. Mansour Manel</option>'+
+            '</optgroup>'+
+          '</select></div>'+
+        '<div class="form-field"><label class="form-label">Reason for Visit</label><textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea></div>'+
+        '<button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="margin-top:0">✅ Register Patient</button>'+
+      '</div>';
     return;
   }
-  result.innerHTML='<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Searching...</div>';
-  if(window.fbFindPatient){
-    window.fbFindPatient(phone).then(function(patient){
-      if(patient){showRegReturning(patient);}
-      else{result.innerHTML='';showRegNew(rawPhone);}
-    });
-  } else {
-    result.innerHTML='';
-    showRegNew(rawPhone);
+
+  // QUEUE PAGE
+  if(page==='queue'){
+    mc.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">'+
+      '<h2 style="color:#0F1F17;margin:0">🔢 Today\'s Queue</h2>'+
+      '<button onclick="loadQueue()" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
+      '</div><div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
+    loadQueue();
+    return;
   }
+
+  // OVERVIEW PAGES
+  if(u.role==='superadmin'){
+    mc.innerHTML=banner+
+      '<div class="stats-grid">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🏥</div><div><div class="stat-val">5</div><div class="stat-lbl">Total Clinics</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">👨‍⚕️</div><div><div class="stat-val">23</div><div class="stat-lbl">Total Doctors</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">1,204</div><div class="stat-lbl">Total Patients</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📋</div><div><div class="stat-val">87</div><div class="stat-lbl">Today Visits</div></div></div>'+
+      '</div>'+
+      '<div class="table-card"><h3>🏥 All Clinics</h3>'+
+        '<div class="table-row"><div><div class="row-name">Clinique Bou Saada</div><div class="row-sub">M\'Sila</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">Active</span></div>'+
+        '<div class="table-row"><div><div class="row-name">Clinique El Amal</div><div class="row-sub">M\'Sila</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">Active</span></div>'+
+        '<div class="table-row"><div><div class="row-name">Clinique Sidi Aissa</div><div class="row-sub">M\'Sila</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">Active</span></div>'+
+      '</div>';
+    return;
+  }
+  if(u.role==='clinicadmin'){
+    mc.innerHTML=banner+
+      '<div class="stats-grid">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val">8</div><div class="stat-lbl">My Doctors</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">34</div><div class="stat-lbl">Today Patients</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val">12</div><div class="stat-lbl">New Patients</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">🔄</div><div><div class="stat-val">22</div><div class="stat-lbl">Follow-ups</div></div></div>'+
+      '</div>'+
+      '<div class="table-card"><h3>👨‍⚕️ Doctors</h3>'+
+        '<div class="table-row"><div><div class="row-name">Dr. Abdelmadjid Belouadah</div><div class="row-sub">General Practice</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">12 today</span></div>'+
+        '<div class="table-row"><div><div class="row-name">Dr. Omar Slimani</div><div class="row-sub">Pediatrics</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">9 today</span></div>'+
+        '<div class="table-row"><div><div class="row-name">Dr. Hariti Amar</div><div class="row-sub">Ophthalmology</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">5 today</span></div>'+
+      '</div>';
+    return;
+  }
+  if(u.role==='doctor'){
+    mc.innerHTML=banner+
+      '<div class="stats-grid">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Waiting</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🩺</div><div><div class="stat-val">1</div><div class="stat-lbl">In Progress</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done Today</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val">14</div><div class="stat-lbl">Total Today</div></div></div>'+
+      '</div>'+
+      '<div class="table-card"><h3>🔢 My Queue</h3>'+
+        '<div class="table-row" style="border-left:3px solid #1B6B4A;padding-left:10px"><div><div style="display:flex;gap:7px;align-items:center"><span class="row-name">Bensalem Khaled</span><span class="type-new">NEW</span></div><div class="row-sub">Age 52 - High blood pressure</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">🩺 In Progress</span></div>'+
+        '<div class="table-row"><div><div style="display:flex;gap:7px;align-items:center"><span class="row-name">Boudaoud Fatima</span><span class="type-followup">FOLLOW-UP</span></div><div class="row-sub">Age 38 - Diabetes follow-up</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">⏳ Waiting</span></div>'+
+        '<div class="table-row"><div><div style="display:flex;gap:7px;align-items:center"><span class="row-name">Zerrouki Mohand</span><span class="type-followup">FOLLOW-UP</span></div><div class="row-sub">Age 61 - Back pain</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">⏳ Waiting</span></div>'+
+      '</div>';
+    return;
+  }
+  if(u.role==='receptionist'){
+    mc.innerHTML=banner+
+      '<div class="stats-grid">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val">14</div><div class="stat-lbl">Registered Today</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Still Waiting</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#E6510020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val">6</div><div class="stat-lbl">New Patients</div></div></div>'+
+      '</div>'+
+      '<div class="table-card"><h3>📋 Today\'s Queue</h3>'+
+        '<div class="table-row"><div><div class="row-name">Bensalem Khaled</div><div class="row-sub">Dr. Belouadah - New</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">🩺 With Doctor</span></div>'+
+        '<div class="table-row"><div><div class="row-name">Boudaoud Fatima</div><div class="row-sub">Dr. Belouadah - Follow-up</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">⏳ Waiting</span></div>'+
+        '<div class="table-row"><div><div class="row-name">Brahimi Lila</div><div class="row-sub">Dr. Slimani - New</div></div><span class="status-pill" style="color:#8FA89D;background:#F0F0F0">✅ Done</span></div>'+
+      '</div>';
+    return;
+  }
+  mc.innerHTML='<p style="color:#8FA89D;padding:40px;text-align:center">Coming soon...</p>';
 }
 
+// ═══════════════
 // FORM HELPERS
+// ═══════════════
 function pickGender(btn,val){
   selGender=val;
   document.getElementById('g-male').className='toggle-btn';
@@ -558,23 +476,10 @@ function pickVisit(btn,val){
 function pickPrio(btn,val){
   selPrio=val;
   var n=document.getElementById('p-normal');
-  var u=document.getElementById('p-urgent');
+  var ug=document.getElementById('p-urgent');
   var e=document.getElementById('p-emergency');
   n.className='prio-btn'; n.style.cssText='';
-  u.className='prio-btn'; u.style.cssText='';
-  e.className='prio-btn'; e.style.cssText='';
-  btn.className='prio-btn active';
-  if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
-  if(val==='urgent')   {btn.style.borderColor='#F0A500';btn.style.background='#FFF8E7';btn.style.color='#F0A500';}
-  if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
-}
-function pickRetPrio(btn,val){
-  selRetPrio=val;
-  var n=document.getElementById('rp-normal');
-  var u=document.getElementById('rp-urgent');
-  var e=document.getElementById('rp-emergency');
-  n.className='prio-btn'; n.style.cssText='';
-  u.className='prio-btn'; u.style.cssText='';
+  ug.className='prio-btn'; ug.style.cssText='';
   e.className='prio-btn'; e.style.cssText='';
   btn.className='prio-btn active';
   if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
@@ -582,7 +487,9 @@ function pickRetPrio(btn,val){
   if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
 }
 
-// SUBMIT NEW PATIENT
+// ═══════════════
+// REGISTER
+// ═══════════════
 function submitPatient(){
   var name=document.getElementById('r-name').value.trim();
   var age=document.getElementById('r-age').value;
@@ -600,103 +507,49 @@ function submitPatient(){
   btn.textContent='Saving...'; btn.disabled=true;
   var data={name:name,age:parseInt(age),phone:phone.replace(/ /g,''),gender:selGender,visitType:selVisit,priority:selPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
   if(window.fbSave){
-    window.fbSave(data).then(function(id){if(id)showSuccess(name);else{btn.textContent='Register Patient';btn.disabled=false;err.textContent='Could not save. Check connection.';err.style.display='block';}});
+    window.fbSave(data).then(function(id){
+      if(id){showSuccess(name);}
+      else{btn.textContent='Register Patient';btn.disabled=false;err.textContent='Could not save.';err.style.display='block';}
+    });
   } else {
     setTimeout(function(){showSuccess(name);},400);
   }
 }
-
-// SUBMIT RETURNING PATIENT
-function submitReturning(){
-  var p=retPatient;
-  var doctor=document.getElementById('ret-doctor').value;
-  var reason=document.getElementById('ret-reason').value.trim();
-  var err=document.getElementById('ret-err');
-  if(!doctor){err.textContent='Please select a doctor.';err.style.display='block';return;}
-  err.style.display='none';
-  var data={patientId:p.id,name:p.name,age:p.age,visitType:'follow_up',priority:selRetPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
-  if(window.fbSave){
-    window.fbSave(data).then(function(id){if(id)showSuccess(p.name);});
-  } else {
-    showSuccess(p.name);
-  }
-}
-
-// SUCCESS
 function showSuccess(name){
-  var mc=document.getElementById('main-content');
-  document.getElementById('reg-search-step').style.display='none';
-  document.getElementById('reg-returning-step').style.display='none';
-  document.getElementById('reg-new-step').style.display='none';
-  mc.innerHTML=
+  document.getElementById('main-content').innerHTML=
     '<div style="text-align:center;padding:60px 20px">'+
     '<div style="font-size:52px;margin-bottom:14px">✅</div>'+
     '<div style="font-size:21px;font-weight:800;color:#0F1F17;margin-bottom:6px">'+name+' Registered!</div>'+
-    '<div style="font-size:14px;color:#8FA89D;margin-bottom:22px">Patient added to queue successfully.</div>'+
+    '<div style="font-size:14px;color:#8FA89D;margin-bottom:22px">Patient added to queue.</div>'+
     '<div class="btn-row">'+
     '<button class="btn-outline" onclick="goPage(\'queue\')">View Queue</button>'+
     '<button class="btn-filled" onclick="goPage(\'register\')">Register Another</button>'+
     '</div></div>';
 }
 
-// PAGES
-function loadPage(page){
-  var mc=document.getElementById('main-content');
-  var u=currentUser;
-  var color=ROLE_COLORS[u.role]||'#1B6B4A';
-  var hour=new Date().getHours();
-  var greet=hour<12?'morning':hour<17?'afternoon':'evening';
-  var dateStr=new Date().toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  var fname=u.name.split(' ')[0];
-  var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'!</div><div class="w-sub">'+(u.specialty||u.clinicName||'')+'</div></div>';
-
-  if(page==='queue'){
-    mc.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h2 style="color:#0F1F17;margin:0">Queue</h2><button onclick="loadQueue()" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">Refresh</button></div><div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
-    loadQueue();
-    return;
-  }
-
-  if(u.role==='superadmin'){
-    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🏥</div><div><div class="stat-val">5</div><div class="stat-lbl">Clinics</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#1565C020">👨‍⚕️</div><div><div class="stat-val">23</div><div class="stat-lbl">Doctors</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">1,204</div><div class="stat-lbl">Patients</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📋</div><div><div class="stat-val">87</div><div class="stat-lbl">Today</div></div></div></div>';
-    return;
-  }
-  if(u.role==='clinicadmin'){
-    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val">8</div><div class="stat-lbl">Doctors</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">34</div><div class="stat-lbl">Today</div></div></div></div>';
-    return;
-  }
-  if(u.role==='doctor'){
-    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Waiting</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🩺</div><div><div class="stat-val">1</div><div class="stat-lbl">In Progress</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#1565C020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done</div></div></div></div>';
-    return;
-  }
-  if(u.role==='receptionist'){
-    mc.innerHTML=banner+'<div class="stats-grid"><div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val">14</div><div class="stat-lbl">Registered</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Waiting</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#E6510020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done</div></div></div></div>';
-    return;
-  }
-}
-
+// ═══════════════
 // QUEUE
+// ═══════════════
 var STATUS_CYCLE={waiting:'inprogress',inprogress:'done',done:'waiting'};
-var STATUS_DATA={waiting:['#F0A500','#FFF8E7','Waiting'],inprogress:['#1B6B4A','#E8F5EF','In Progress'],done:['#8FA89D','#F0F0F0','Done']};
+var STATUS_DATA={waiting:['#F0A500','#FFF8E7','⏳ Waiting'],inprogress:['#1B6B4A','#E8F5EF','🩺 In Progress'],done:['#8FA89D','#F0F0F0','✅ Done']};
 
 function cycleStatus(pid,btn){
   var label=btn.textContent.trim();
-  var cur=label==='In Progress'?'inprogress':label==='Done'?'done':'waiting';
+  var cur=label.indexOf('Progress')>-1?'inprogress':label.indexOf('Done')>-1?'done':'waiting';
   var next=STATUS_CYCLE[cur]||'waiting';
   var s=STATUS_DATA[next];
   btn.style.background=s[1]; btn.style.color=s[0]; btn.textContent=s[2];
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
 }
-
 function loadQueue(){
   var list=document.getElementById('queue-list');
   if(!list) return;
   if(window.fbGetPatients){
     window.fbGetPatients().then(function(pts){renderQueue(pts);});
   } else {
-    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients yet.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register Patient</button></div>';
+    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients today.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register Patient</button></div>';
   }
 }
-
 function renderQueue(patients){
   var list=document.getElementById('queue-list');
   if(!list) return;
@@ -709,17 +562,19 @@ function renderQueue(patients){
   var html='';
   for(var i=0;i<patients.length;i++){
     var p=patients[i];
-    var pc={emergency:['#D64045','#FDECEA','EMERGENCY'],urgent:['#F0A500','#FFF8E7','URGENT'],normal:['#1B6B4A','#E8F5EF','NORMAL']};
+    var pc={emergency:['#D64045','#FDECEA','🔴 EMERGENCY'],urgent:['#F0A500','#FFF8E7','🟡 URGENT'],normal:['#1B6B4A','#E8F5EF','🟢 NORMAL']};
     var c=pc[p.priority]||pc.normal;
     var s=STATUS_DATA[p.status]||STATUS_DATA.waiting;
     var tc=p.visitType==='new'?'type-new':'type-followup';
     var tl=p.visitType==='new'?'NEW':'FOLLOW-UP';
     html+='<div class="queue-item" style="border-left:4px solid '+c[0]+'">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-    html+='<div style="flex:1"><div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">';
+    html+='<div style="flex:1">';
+    html+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">';
     html+='<span style="font-weight:800;font-size:15px">#'+(i+1)+' '+p.name+'</span>';
     html+='<span style="background:'+c[1]+';color:'+c[0]+';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">'+c[2]+'</span>';
-    html+='<span class="'+tc+'">'+tl+'</span></div>';
+    html+='<span class="'+tc+'">'+tl+'</span>';
+    html+='</div>';
     html+='<div style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
     html+='<button onclick="cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
     html+='</div></div></div>';
@@ -729,23 +584,21 @@ function renderQueue(patients){
 </script>
 
 <script type="module">
-try {
+try{
   const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
   const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
   const config={apiKey:"AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",authDomain:"shiffa-fcae0.firebaseapp.com",projectId:"shiffa-fcae0",storageBucket:"shiffa-fcae0.firebasestorage.app",messagingSenderId:"48392150056",appId:"1:48392150056:web:3c89b803c4c8220298e91d"};
   const app=initializeApp(config);
   const db=getFirestore(app);
-  window.fbSave=function(data){return addDoc(collection(db,'patients'),Object.assign({},data,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
-  window.fbGetPatients=function(){var today=new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',today))).then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;}).catch(function(e){console.error(e);return[];});};
+  window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
+  window.fbGetPatients=function(){var t=new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
-  window.fbFindPatient=function(phone){return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){if(snap.empty)return null;var d=snap.docs[0];return Object.assign({id:d.id},d.data());}).catch(function(e){console.error(e);return null;});};
-  var badge=document.createElement('div');
-  badge.style.cssText='position:fixed;bottom:80px;right:16px;background:#1B6B4A;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
-  badge.textContent='Firebase Connected!';
-  document.body.appendChild(badge);
-  setTimeout(function(){badge.remove();},4000);
-} catch(e){console.warn('Firebase not available:',e.message);}
+  var b=document.createElement('div');
+  b.style.cssText='position:fixed;bottom:80px;right:16px;background:#1B6B4A;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999';
+  b.textContent='🔥 Firebase Connected!';
+  document.body.appendChild(b);
+  setTimeout(function(){b.remove();},4000);
+}catch(e){console.warn('Firebase:',e.message);}
 </script>
-
 </body>
 </html>
