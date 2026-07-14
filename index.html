@@ -158,7 +158,7 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 
     <div class="field">
       <label>Username</label>
-      <input type="text" id="inp-user" placeholder="e.g. dr.karim" autocomplete="username"/>
+      <input type="text" id="inp-user" placeholder="e.g. dr.belouadah" autocomplete="username"/>
     </div>
 
     <div class="field">
@@ -239,9 +239,9 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 // ═══════════════════════════
 var USERS = [
   {id:'u1', username:'admin',       password:'admin123',  role:'superadmin',   name:'Super Admin',         avatar:'👑'},
-  {id:'u2', username:'clinicadmin', password:'clinic123', role:'clinicadmin',  name:'عيادة بوسعادة المركزية', avatar:'🏥', clinicName:'عيادة بوسعادة المركزية'},
-  {id:'u3', username:'dr.belouadah', password:'doctor123', role:'doctor',       name:'Dr. Abdelmadjid Belouadah', avatar:'👨‍⚕️', clinicName:'عيادة بوسعادة', specialty:'طب عام — General Practice'},
-  {id:'u4', username:'sara.recep',   password:'recep123',  role:'receptionist', name:'Sara Bouzida',              avatar:'🧑‍💼', clinicName:'عيادة بوسعادة'}
+  {id:'u2', username:'clinicadmin', password:'clinic123', role:'clinicadmin',  name:'Clinique Bou Saada', avatar:'🏥', clinicName:'Clinique Bou Saada'},
+  {id:'u3', username:'dr.belouadah', password:'doctor123', role:'doctor',       name:'Dr. Abdelmadjid Belouadah', avatar:'👨‍⚕️', clinicName:'Clinique Bou Saada', specialty:'General Practice'},
+  {id:'u4', username:'sara.recep',   password:'recep123',  role:'receptionist', name:'Sara Bouzida',              avatar:'🧑‍💼', clinicName:'Clinique Bou Saada'}
 ];
 
 var currentUser = null;
@@ -477,21 +477,21 @@ function loadPage(page) {
           '<label class="form-label">Assign Doctor *</label>' +
           '<select class="form-select" id="r-doctor">' +
             '<option value="">Select a doctor...</option>' +
-            '<optgroup label="طب عام — General Practice">' +
-            '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah — طب عام</option>' +
-            '<option value="dr.ezzine">Dr. Fatima Ezzine — طب عام</option>' +
-            '<option value="dr.chebara">Dr. Bachir Chebara — طب عام</option>' +
-            '<option value="dr.ouali">Dr. Ouali Souad — طب عام</option>' +
-            '<option value="dr.gherbi">Dr. Fathi Gherbi — طب عام</option>' +
+            '<optgroup label="General Practice">' +
+            '<option value="dr.belouadah">Dr. Abdelmadjid Belouadah — General</option>' +
+            '<option value="dr.ezzine">Dr. Fatima Ezzine — General</option>' +
+            '<option value="dr.chebara">Dr. Bachir Chebara — General</option>' +
+            '<option value="dr.ouali">Dr. Ouali Souad — General</option>' +
+            '<option value="dr.gherbi">Dr. Fathi Gherbi — General</option>' +
             '</optgroup>' +
-            '<optgroup label="طب الأطفال — Pediatrics">' +
-            '<option value="dr.slimani">Dr. Omar Slimani — طب الأطفال</option>' +
+            '<optgroup label="Pediatrics">' +
+            '<option value="dr.slimani">Dr. Omar Slimani — Pediatrics</option>' +
             '</optgroup>' +
-            '<optgroup label="طب العيون — Ophthalmology">' +
-            '<option value="dr.hariti">Dr. Hariti Amar — طب وجراحة العيون</option>' +
+            '<optgroup label="Ophthalmology">' +
+            '<option value="dr.hariti">Dr. Hariti Amar — Ophthalmology</option>' +
             '</optgroup>' +
-            '<optgroup label="طب الأسنان — Dentistry">' +
-            '<option value="dr.mansour">Dr. Mansour Manel — طب وجراحة الأسنان</option>' +
+            '<optgroup label="Dentistry">' +
+            '<option value="dr.mansour">Dr. Mansour Manel — Dentistry</option>' +
             '</optgroup>' +
           '</select>' +
         '</div>' +
@@ -757,7 +757,7 @@ function renderQueue(patients) {
   }
 
   var pOrder = {emergency:0, urgent:1, normal:2};
-  patients.sort(function(a,b) { return (pOrder[a.priority]||99) - (pOrder[b.priority]||99); });
+  patients.sort(function(a,b) { return (pOrder[a.priority]!==undefined?pOrder[a.priority]:99) - (pOrder[b.priority]!==undefined?pOrder[b.priority]:99); });
 
   var html = '';
   for (var i = 0; i < patients.length; i++) {
@@ -793,12 +793,12 @@ import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12
 import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 var config = {
-  apiKey:            "AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7I_abc",
+  apiKey:            "AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",
   authDomain:        "shiffa-fcae0.firebaseapp.com",
   projectId:         "shiffa-fcae0",
   storageBucket:     "shiffa-fcae0.firebasestorage.app",
   messagingSenderId: "48392150056",
-  appId:             "1:48392150056:web:3c89b803c4c82202"
+  appId:             "1:48392150056:web:3c89b803c4c8220298e91d"
 };
 
 var app = initializeApp(config);
