@@ -547,7 +547,14 @@ function addReturnPatient(){
   var p = retPatient;
   if(!p) return;
   selRetPrio = 'normal';
-  setTimeout(function(){populateDoctorSelect('ret-doctor');},50);
+
+  // Get doctor info from logged-in user
+  var docId   = currentUser.doctorId || '';
+  var docName = '';
+  for(var i=0;i<ALL_DOCTORS.length;i++){
+    if(ALL_DOCTORS[i].id===docId){ docName=ALL_DOCTORS[i].name; break; }
+  }
+
   document.getElementById('search-result').innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #D6E8DE;margin-top:4px">'+
     '<div style="font-weight:700;font-size:15px;color:#0F1F17;margin-bottom:12px">'+p.name+' - Add to queue</div>'+
@@ -557,10 +564,10 @@ function addReturnPatient(){
     '<button class="prio-btn" onclick="pickRetPrio(this)" data-val="urgent">Urgent</button>'+
     '<button class="prio-btn" onclick="pickRetPrio(this)" data-val="emergency">Emergency</button>'+
     '</div></div>'+
-    '<div class="form-field"><label class="form-label">Assign Doctor *</label>'+
-    '<select class="form-select" id="ret-doctor">'+
-    '<option value="">Select a doctor...</option>'+
-    '</select></div>'+
+    '<div class="form-field"><label class="form-label">Doctor</label>'+
+    '<div style="padding:11px 14px;background:#E8F5EF;border-radius:10px;font-size:14px;font-weight:600;color:#1B6B4A">'+docName+'</div>'+
+    '<input type="hidden" id="ret-doctor" value="'+docId+'"/>'+
+    '</div>'+
     '<div class="form-field"><label class="form-label">Reason</label>'+
     '<input class="form-input" id="ret-reason" type="text" placeholder="Reason for visit..."/></div>'+
     '<div id="ret-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:8px"></div>'+
