@@ -351,42 +351,7 @@ function loadPage(page){
   var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'! 👋</div><div class="w-sub">'+sub+'</div></div>';
 
   // REGISTER PAGE
-  
-function populateDoctorSelect(selectId){
-  var sel = document.getElementById(selectId);
-  if(!sel) return;
-  var u = currentUser;
-  // If user is linked to specific doctor → show only that doctor
-  if(u.doctorId){
-    var doc = null;
-    for(var i=0;i<ALL_DOCTORS.length;i++){
-      if(ALL_DOCTORS[i].id === u.doctorId){ doc = ALL_DOCTORS[i]; break; }
-    }
-    if(doc){
-      sel.innerHTML = '<option value="'+doc.id+'">'+doc.name+'</option>';
-      sel.value = doc.id; // auto-select
-      return;
-    }
-  }
-  // Otherwise show all doctors grouped by specialty
-  var groups = {};
-  for(var i=0;i<ALL_DOCTORS.length;i++){
-    var d = ALL_DOCTORS[i];
-    if(!groups[d.specialty]) groups[d.specialty] = [];
-    groups[d.specialty].push(d);
-  }
-  var html = '<option value="">Select a doctor...</option>';
-  for(var spec in groups){
-    html += '<optgroup label="'+spec+'">';
-    for(var j=0;j<groups[spec].length;j++){
-      html += '<option value="'+groups[spec][j].id+'">'+groups[spec][j].name+'</option>';
-    }
-    html += '</optgroup>';
-  }
-  sel.innerHTML = html;
-}
-
-if(page==='register'){
+  if(page==='register'){
     selGender=''; selVisit='new'; selPrio='normal';
     mc.innerHTML = document.getElementById('reg-template').innerHTML;
     setTimeout(function(){
