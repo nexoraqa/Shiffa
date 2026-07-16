@@ -716,6 +716,14 @@ function cycleStatus(pid,btn){
   var s=STATUS_DATA[next];
   btn.setAttribute('data-status',next);
   btn.style.background=s[1]; btn.style.color=s[0]; btn.textContent=s[2];
+  // Update cached list instantly so counter bar refreshes without Firebase round-trip
+  if(window._allQueuePatients){
+    for(var i=0;i<window._allQueuePatients.length;i++){
+      if(window._allQueuePatients[i].id===pid){ window._allQueuePatients[i].status=next; break; }
+    }
+    renderQueue(window._allQueuePatients);
+  }
+  // Persist to Firebase in background
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
 }
 function loadQueue(doctorFilter){
@@ -725,11 +733,12 @@ function loadQueue(doctorFilter){
     var date = window.queueDate || new Date().toISOString().split('T')[0];
     window.fbGetPatients(date).then(function(pts){
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
-      if(window.queueFilter){ pts=pts.filter(function(p){return p.status===window.queueFilter;}); }
+      window._allQueuePatients = pts;
+      window._queueDoctorFilter = doctorFilter;
       renderQueue(pts);
     });
   } else {
-    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients.</p></div>';
+    list.innerHTML='<div class="empty-state"><div style="font-size:40px">\U0001f3e5</div><p>No patients.</p></div>';
   }
 }
 
@@ -757,11 +766,14 @@ function updateQueueDateLabel(){
 function filterQueueBtn(el){
   var status = el.getAttribute('data-f');
   window.queueFilter = (window.queueFilter===status) ? null : status;
-  loadQueue(currentUser.doctorId);
+  // Use cached list for instant render — no Firebase call needed
+  if(window._allQueuePatients){ renderQueue(window._allQueuePatients); }
+  else { loadQueue(currentUser.doctorId || null); }
 }
 function filterQueue(status){
   window.queueFilter = (window.queueFilter===status) ? null : status;
-  loadQueue(currentUser.doctorId);
+  if(window._allQueuePatients){ renderQueue(window._allQueuePatients); }
+  else { loadQueue(currentUser.doctorId || null); }
 }
 
 var currentPatientId = null;
@@ -1257,7 +1269,8 @@ function openPatientPopup(el){
 function renderQueue(patients){
   var list=document.getElementById('queue-list');
   if(!list) return;
-  if(!patients||patients.length===0){
+  // Only show big empty state when NO patients at all today AND no filter active
+  if((!patients||patients.length===0) && !window.queueFilter){
     list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients today.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register First Patient</button></div>';
     return;
   }
