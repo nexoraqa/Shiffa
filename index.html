@@ -970,29 +970,18 @@ function printSavedRx(rx){
   var u = currentUser;
   var pname = document.getElementById('popup-name').textContent;
   var pinfo = document.getElementById('popup-info').textContent;
-  var today = new Date().toLocaleDateString('en-DZ',{day:'2-digit',month:'2-digit',year:'numeric'});
-
-  var medsHtml = '';
-  if(rx.medicines){
-    for(var j=0;j<rx.medicines.length;j++){
-      medsHtml += '<div style="margin-bottom:12px;padding-left:10px">';
-      medsHtml += '<div style="font-weight:600;font-size:15px">'+(j+1)+'. '+rx.medicines[j].med+'</div>';
-      if(rx.medicines[j].dose) medsHtml += '<div style="font-size:13px;color:#444;margin-top:3px">'+rx.medicines[j].dose+'</div>';
-      medsHtml += '</div>';
-    }
-  }
-
-
   var today_fr = new Date().toLocaleDateString('fr-DZ',{day:'2-digit',month:'long',year:'numeric'});
-  var patAge   = currentPatientAge || '';
   var patAddr  = currentPatientAddress || '';
+  var notes    = rx.notes || '';
 
+  // Use rx.medicines from Firebase — NOT medicines from the form
+  var medicines = rx.medicines || [];
   var medsRows = '';
   for(var j=0;j<medicines.length;j++){
     medsRows +=
       '<tr>'+
-      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:14px;font-weight:600;color:#0F1F17">'+(j+1)+'. '+medicines[j].med+'</td>'+
-      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:13px;color:#444">'+( medicines[j].dose||'' )+'</td>'+
+      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:14px;font-weight:600;color:#0F1F17">'+(j+1)+'. '+(medicines[j].med||'')+'</td>'+
+      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:13px;color:#444">'+(medicines[j].dose||'')+'</td>'+
       '</tr>';
   }
 
@@ -1074,7 +1063,7 @@ function printSavedRx(rx){
 
     (notes?
       '<div class="instructions-box">'+
-        '<div class="inst-label">Instructions & Conseils</div>'+
+        '<div class="inst-label">Instructions &amp; Conseils</div>'+
         '<div class="inst-text">'+notes+'</div>'+
       '</div>'
     :'')+
@@ -1084,18 +1073,14 @@ function printSavedRx(rx){
         '<div class="sig-line"></div>'+
         '<div class="sig-label-f">Signature du médecin</div>'+
       '</div>'+
-      '<div class="sig-area">'+
-        '<div class="stamp-circle">Cachet</div>'+
-        '<div class="sig-label-f" style="text-align:center">Cachet officiel</div>'+
-      '</div>'+
     '</div>'+
 
     '</body></html>';
 
   var win = window.open('','_blank','width=720,height=900');
+  if(!win){ alert("Veuillez autoriser les popups pour imprimer."); return; }
   win.document.write(rxHtml);
   win.document.close();
-
 }
 
 function toggleRxForm(){
@@ -1314,15 +1299,12 @@ function saveAndPrintRx(){
         '<div class="sig-line"></div>'+
         '<div class="sig-label-f">Signature du médecin</div>'+
       '</div>'+
-      '<div class="sig-area">'+
-        '<div class="stamp-circle">Cachet</div>'+
-        '<div class="sig-label-f" style="text-align:center">Cachet officiel</div>'+
-      '</div>'+
     '</div>'+
 
     '</body></html>';
 
   var win = window.open('','_blank','width=720,height=900');
+  if(!win){ alert("Veuillez autoriser les popups pour imprimer."); return; }
   win.document.write(rxHtml);
   win.document.close();
 
