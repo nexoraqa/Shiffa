@@ -789,6 +789,124 @@ function saveNotes(){
   }
 }
 
+function toggleRxForm(){
+  var form = document.getElementById('popup-rx-form');
+  var btn  = document.getElementById('rx-btn');
+  if(form.style.display==='none'){
+    form.style.display='block';
+    btn.textContent='Cancel';
+    btn.style.background='#fff';
+    btn.style.color='#4A5E54';
+    btn.style.border='1px solid #D6E8DE';
+    document.getElementById('rx-notes').value='';
+    // Reset to one empty medicine line
+    document.getElementById('rx-medicines').innerHTML=
+      '<div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">'+
+      '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+      '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+      '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>'+
+      '</div>';
+  } else {
+    form.style.display='none';
+    btn.textContent='Prescription';
+    btn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
+    btn.style.color='#fff';
+    btn.style.border='none';
+  }
+}
+
+function addRxLine(){
+  var div = document.createElement('div');
+  div.className='rx-line';
+  div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
+  div.innerHTML=
+    '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+    '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+    '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
+  document.getElementById('rx-medicines').appendChild(div);
+}
+
+function removeRxLine(btn){
+  var lines = document.querySelectorAll('.rx-line');
+  if(lines.length > 1) btn.parentElement.remove();
+}
+
+function previewPrescription(){
+  // Gather medicines
+  var lines = document.querySelectorAll('.rx-line');
+  var medicines = [];
+  for(var i=0;i<lines.length;i++){
+    var inputs = lines[i].querySelectorAll('input');
+    var med  = inputs[0].value.trim();
+    var dose = inputs[1].value.trim();
+    if(med) medicines.push({med:med, dose:dose});
+  }
+  if(medicines.length===0){
+    alert('Please add at least one medicine.');
+    return;
+  }
+
+  var u       = currentUser;
+  var pname   = document.getElementById('popup-name').textContent;
+  var pinfo   = document.getElementById('popup-info').textContent;
+  var notes   = document.getElementById('rx-notes').value.trim();
+  var today   = new Date().toLocaleDateString('en-DZ',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  var medsHtml = '';
+  for(var j=0;j<medicines.length;j++){
+    medsHtml += '<div style="margin-bottom:12px;padding-left:10px">';
+    medsHtml += '<div style="font-weight:600;font-size:15px">'+(j+1)+'. '+medicines[j].med+'</div>';
+    if(medicines[j].dose) medsHtml += '<div style="font-size:13px;color:#444;margin-top:3px">'+medicines[j].dose+'</div>';
+    medsHtml += '</div>';
+  }
+
+  var rxHtml =
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"/>'+
+    '<title>Prescription - '+pname+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:20px;color:#000}'+
+    '.header{text-align:center;border-bottom:2px solid #1B6B4A;padding-bottom:16px;margin-bottom:20px}'+
+    '.clinic-name{font-size:22px;font-weight:900;color:#1B6B4A}'+
+    '.doctor-name{font-size:17px;font-weight:700;margin-top:4px}'+
+    '.doctor-info{font-size:13px;color:#555;margin-top:3px}'+
+    '.patient-section{background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between}'+
+    '.label{font-size:12px;color:#888;margin-bottom:2px}'+
+    '.value{font-size:14px;font-weight:600}'+
+    '.rx-title{font-size:14px;font-weight:700;color:#1B6B4A;border-bottom:1px solid #D6E8DE;padding-bottom:8px;margin-bottom:14px}'+
+    '.footer{margin-top:40px;display:flex;justify-content:space-between;padding-top:20px;border-top:1px solid #ddd}'+
+    '.sig-box{text-align:center;width:45%}'+
+    '.sig-line{border-top:1px solid #000;margin-top:40px;margin-bottom:6px}'+
+    '.sig-label{font-size:12px;color:#555}'+
+    '.stamp-box{width:100px;height:100px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:12px;margin:0 auto 6px}'+
+    '@media print{.no-print{display:none}body{margin:20px}}'+
+    '</style></head><body>'+
+    '<div class="no-print" style="margin-bottom:20px;text-align:center">'+
+    '<button onclick="window.print()" style="padding:12px 30px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">🖨️ Print Prescription</button>'+
+    '&nbsp;&nbsp;<button onclick="window.close()" style="padding:12px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer">Close</button>'+
+    '</div>'+
+    '<div class="header">'+
+    '<div class="clinic-name">🌿 Shifaa</div>'+
+    '<div class="doctor-name">'+u.name+'</div>'+
+    '<div class="doctor-info">'+(u.specialty||'')+(u.city?' - '+u.city:'')+'</div>'+
+    '</div>'+
+    '<div class="patient-section">'+
+    '<div><div class="label">Patient</div><div class="value">'+pname+'</div><div style="font-size:12px;color:#555;margin-top:2px">'+pinfo+'</div></div>'+
+    '<div><div class="label">Date</div><div class="value">'+today+'</div></div>'+
+    '</div>'+
+    '<div class="rx-title">Rp/ Prescription</div>'+
+    medsHtml+
+    (notes?'<div style="margin-top:16px;padding:12px;background:#f9f9f9;border-radius:8px;font-size:13px"><b>Instructions:</b> '+notes+'</div>':'')+
+    '<div class="footer">'+
+    '<div class="sig-box"><div class="sig-line"></div><div class="sig-label">Doctor Signature</div></div>'+
+    '<div class="sig-box"><div class="stamp-box">STAMP</div><div class="sig-label">Official Stamp</div></div>'+
+    '</div>'+
+    '</body></html>';
+
+  var win = window.open('','_blank','width=680,height=800');
+  win.document.write(rxHtml);
+  win.document.close();
+}
+
 function closePopup(){
   document.getElementById('patient-popup').style.display='none';
 }
@@ -1119,9 +1237,29 @@ try{
       <button onclick="saveNotes()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Save Notes</button>
     </div>
 
-    <div style="padding:0 20px 20px;display:flex;gap:10px">
-      <button onclick="closePopup()" style="flex:1;padding:12px;background:#F7FAF8;color:#4A5E54;border:1px solid #D6E8DE;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Close</button>
-      <button onclick="toggleNotesForm()" id="write-notes-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Write Notes</button>
+    <!-- PRESCRIPTION FORM (hidden until Generate Prescription tapped) -->
+    <div id="popup-rx-form" style="display:none;padding:0 20px 16px">
+      <hr style="border:none;border-top:1px solid #D6E8DE;margin-bottom:16px"/>
+      <div style="font-weight:700;font-size:14px;color:#0F1F17;margin-bottom:12px">Prescription</div>
+      <div id="rx-medicines">
+        <div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>
+          <input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>
+          <button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>
+        </div>
+      </div>
+      <button onclick="addRxLine()" style="width:100%;padding:9px;background:#F7FAF8;color:#1B6B4A;border:1.5px dashed #1B6B4A;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">+ Add Medicine</button>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Instructions / Notes</label>
+        <textarea id="rx-notes" placeholder="e.g. Rest for 3 days, avoid cold water..." style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;height:70px;resize:vertical"></textarea>
+      </div>
+      <button onclick="previewPrescription()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Preview & Print</button>
+    </div>
+
+    <div style="padding:0 20px 20px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="closePopup()" style="flex:1;padding:12px;background:#F7FAF8;color:#4A5E54;border:1px solid #D6E8DE;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Close</button>
+      <button onclick="toggleNotesForm()" id="write-notes-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Write Notes</button>
+      <button onclick="toggleRxForm()" id="rx-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Prescription</button>
     </div>
   </div>
 </div>
