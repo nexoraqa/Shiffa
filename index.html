@@ -1159,30 +1159,52 @@ function openPatientPopup(el){
     writeBtn.disabled=false;
   }
 
-  // Show/hide sections based on role
+  // Show/hide sections based on role AND status
   var histSection = document.querySelector('#patient-popup .popup-history-section');
   var notesBtn    = document.getElementById('write-notes-btn');
   var rxBtn       = document.getElementById('rx-btn');
-  if(isRecep){
-    // Receptionist: hide notes button and history
-    if(notesBtn) notesBtn.style.display='none';
-    if(histSection) histSection.style.display='none';
-    // Load saved prescription for this patient
-    if(window.fbGetRx && currentPatientPhone){
-      window.fbGetRx(currentPatientPhone).then(function(rxList){
-        if(rxList.length > 0){
-          var rx = rxList[rxList.length-1]; // latest prescription
-          var rxBtn2 = document.getElementById('rx-btn');
-          if(rxBtn2){
-            rxBtn2.textContent='🖨️ Print Prescription';
-            rxBtn2.onclick=function(){ printSavedRx(rx); };
-          }
-        }
-      });
-    }
-  } else {
+
+  if(isDoctor){
+    // Doctor: show notes + history always
     if(notesBtn) notesBtn.style.display='';
     if(histSection) histSection.style.display='';
+    // Prescription button: only when patient is In Progress
+    if(rxBtn){
+      if(status === 'inprogress'){
+        rxBtn.style.display='';
+        rxBtn.textContent='Prescription';
+        rxBtn.onclick=function(){ toggleRxForm(); };
+      } else {
+        rxBtn.style.display='none';
+      }
+    }
+  } else if(isRecep){
+    // Receptionist: hide notes, history, and prescription write button
+    if(notesBtn) notesBtn.style.display='none';
+    if(histSection) histSection.style.display='none';
+    // Print button: only when patient is Done
+    if(rxBtn){
+      if(status === 'done'){
+        rxBtn.style.display='';
+        rxBtn.textContent='🖨️ Print Prescription';
+        // Load saved prescription then hook print
+        if(window.fbGetRx && currentPatientPhone){
+          window.fbGetRx(currentPatientPhone).then(function(rxList){
+            var rxBtn2 = document.getElementById('rx-btn');
+            if(rxBtn2 && rxList.length > 0){
+              var rx = rxList[rxList.length-1];
+              rxBtn2.onclick=function(){ printSavedRx(rx); };
+            } else if(rxBtn2){
+              rxBtn2.textContent='No Prescription Yet';
+              rxBtn2.disabled=true;
+              rxBtn2.style.opacity='0.5';
+            }
+          });
+        }
+      } else {
+        rxBtn.style.display='none';
+      }
+    }
   }
 
   // Show popup
