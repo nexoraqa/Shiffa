@@ -876,10 +876,11 @@ function toggleNotesForm(){
 
 function loadExistingNotes(){
   if(!currentPatientId) return;
-  if(window.fbGetNotes){
-    window.fbGetNotes(currentPatientId).then(function(notes){
+  // Load note saved for THIS specific patient visit (by patientId)
+  if(window.fbGetNotesByPatientId){
+    window.fbGetNotesByPatientId(currentPatientId).then(function(notes){
       if(notes && notes.length > 0){
-        var n = notes[notes.length-1];
+        var n = notes[0]; // only one note per patient (upsert)
         document.getElementById('note-diagnosis').value = n.diagnosis||'';
         document.getElementById('note-treatment').value = n.treatment||'';
       } else {
@@ -918,9 +919,9 @@ function saveNotes(){
     var timeout = setTimeout(function(){
       if(!saved){
         saved = true;
-        document.getElementById('popup-notes-form').style.display='none';
-        var btn = document.getElementById('write-notes-btn');
-        if(btn){ btn.textContent='Notes Saved ✅'; btn.style.background='#E8F5EF'; btn.style.color='#1B6B4A'; btn.style.border='1px solid #1B6B4A'; btn.disabled=true; }
+        // Timeout fallback — just reset save button, keep form open
+        saveBtn.textContent='Save Notes';
+        saveBtn.disabled=false;
       }
     }, 5000);
 
@@ -935,9 +936,17 @@ function saveNotes(){
       if(saved) return;
       saved = true;
       clearTimeout(timeout);
-      document.getElementById('popup-notes-form').style.display='none';
-      var btn = document.getElementById('write-notes-btn');
-      if(btn){ btn.textContent='Notes Saved ✅'; btn.style.background='#E8F5EF'; btn.style.color='#1B6B4A'; btn.style.border='1px solid #1B6B4A'; btn.disabled=true; }
+      // Show saved confirmation but keep form OPEN and button active for editing
+      saveBtn.textContent='✅ Saved — click again to update';
+      saveBtn.disabled=false;
+      saveBtn.style.background='#E8F5EF';
+      saveBtn.style.color='#1B6B4A';
+      // Reset button back to normal after 2 seconds so doctor knows he can save again
+      setTimeout(function(){
+        saveBtn.textContent='Save Notes';
+        saveBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
+        saveBtn.style.color='#fff';
+      }, 2000);
     }).catch(function(e){
       if(saved) return;
       saved = true;
@@ -948,14 +957,9 @@ function saveNotes(){
       errEl.style.display='block';
     });
   } else {
-    // No Firebase - show success anyway for demo
-    document.getElementById('popup-notes-form').style.display='none';
-    var btn = document.getElementById('write-notes-btn');
-    btn.textContent='Notes Saved ✅';
-    btn.style.background='#E8F5EF';
-    btn.style.color='#1B6B4A';
-    btn.style.border='1px solid #1B6B4A';
-    btn.disabled=true;
+    saveBtn.textContent='✅ Saved';
+    saveBtn.disabled=false;
+    setTimeout(function(){ saveBtn.textContent='Save Notes'; },2000);
   }
 }
 
@@ -1171,28 +1175,25 @@ function saveAndPrintRx(){
       patientPhone: currentPatientPhone||'',
       savedAt: new Date().toISOString()
     }).then(function(id){
-      document.getElementById('popup-rx-form').style.display='none';
-      var rxBtn3 = document.getElementById('rx-btn');
-      if(rxBtn3){
-        rxBtn3.textContent='Prescription Saved ✅';
-        rxBtn3.style.background='#E3F0FF';
-        rxBtn3.style.color='#1565C0';
-        rxBtn3.style.border='1px solid #1565C0';
-        rxBtn3.disabled=true;
+      // Keep form OPEN so doctor can keep editing — just confirm saved
+      if(rxBtn2){
+        rxBtn2.textContent='✅ Saved — click again to update';
+        rxBtn2.disabled=false;
+        rxBtn2.style.background='#E3F0FF';
+        rxBtn2.style.color='#1565C0';
+        setTimeout(function(){
+          rxBtn2.textContent='Save Prescription';
+          rxBtn2.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
+          rxBtn2.style.color='#fff';
+        }, 2000);
       }
     }).catch(function(){
       if(rxBtn2){ rxBtn2.textContent='Save Prescription'; rxBtn2.disabled=false; }
     });
   } else {
-    // No Firebase - show saved anyway
-    document.getElementById('popup-rx-form').style.display='none';
-    var rxBtn4 = document.getElementById('rx-btn');
-    if(rxBtn4){
-      rxBtn4.textContent='Prescription Saved ✅';
-      rxBtn4.style.background='#E3F0FF';
-      rxBtn4.style.color='#1565C0';
-      rxBtn4.style.border='1px solid #1565C0';
-      rxBtn4.disabled=true;
+    if(rxBtn2){
+      rxBtn2.textContent='✅ Saved';
+      setTimeout(function(){ rxBtn2.textContent='Save Prescription'; },2000);
     }
   }
 }
@@ -1298,31 +1299,34 @@ function openPatientPopup(el){
     if(rf) rf.style.display='none';
 
     // Print button: ONLY when patient is Done
+    // First: kill onclick so it can NEVER open the prescription form
+    if(rxBtn) rxBtn.onclick=function(){ return false; };
     if(rxBtn){
       if(status==='done'){
         rxBtn.style.display='';
-        rxBtn.textContent='🖨️ Print Prescription';
+        rxBtn.textContent='⏳ Loading...';
         rxBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
         rxBtn.style.color='#fff';
         rxBtn.style.border='none';
-        rxBtn.disabled=false;
-        // Load prescription by patientId and hook print button
+        rxBtn.disabled=true;
         if(window.fbGetRx && currentPatientId){
           window.fbGetRx(currentPatientId).then(function(rxList){
             var rxBtn2=document.getElementById('rx-btn');
             if(!rxBtn2) return;
             if(rxList && rxList.length>0){
               var rx=rxList[rxList.length-1];
-              rxBtn2.onclick=function(){ printSavedRx(rx); };
+              rxBtn2.textContent='🖨️ Print Prescription';
+              rxBtn2.disabled=false;
+              rxBtn2.onclick=function(e){ e.stopPropagation(); printSavedRx(rx); };
             } else {
               rxBtn2.textContent='No Prescription Yet';
               rxBtn2.disabled=true;
               rxBtn2.style.opacity='0.5';
+              rxBtn2.onclick=function(){ return false; };
             }
           });
         }
       } else {
-        // Waiting or In Progress — no print button for receptionist
         rxBtn.style.display='none';
       }
     }
@@ -1529,8 +1533,14 @@ try{
   window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
   window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
+  // Get notes by patientId (for THIS specific visit - used by doctor writing notes)
+  window.fbGetNotesByPatientId=function(patientId){
+    return getDocs(query(collection(db,'notes'),where('patientId','==',patientId)))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+  // Get notes by phone (for visit history - cross-doctor view)
   window.fbGetNotes=function(patientId){
-    // Search by phone if available (cross-doctor), fallback to patientId
     var phone = currentPatientPhone || '';
     var q = phone
       ? query(collection(db,'notes'), where('patientPhone','==',phone))
@@ -1545,14 +1555,17 @@ try{
       .catch(function(e){console.error(e);return false;});
   };
   window.fbSaveNotes=function(patientId, notesData){
-    // Also save phone so other doctors can find this note
     var phone = notesData.patientPhone || currentPatientPhone || '';
-    return addDoc(collection(db,'notes'), Object.assign(
-      {patientId:patientId, patientPhone:phone, savedAt:new Date().toISOString()},
-      notesData,
-      {createdAt:serverTimestamp()}
-    )).then(function(){ return true; })
-      .catch(function(e){ console.error('fbSaveNotes error:',e); return false; });
+    // Check if note already exists for this patient → update it, don't duplicate
+    var q = query(collection(db,'notes'), where('patientId','==',patientId));
+    return getDocs(q).then(function(snap){
+      var payload = Object.assign({patientId:patientId, patientPhone:phone, savedAt:new Date().toISOString()}, notesData);
+      if(!snap.empty){
+        return updateDoc(doc(db,'notes',snap.docs[0].id), payload).then(function(){ return true; });
+      } else {
+        return addDoc(collection(db,'notes'), Object.assign(payload,{createdAt:serverTimestamp()})).then(function(){ return true; });
+      }
+    }).catch(function(e){ console.error('fbSaveNotes error:',e); return false; });
   };
   window.fbGetPatientHistory2=function(patientId){
     return getDocs(query(collection(db,'patients'),where('patientId','==',patientId)))
