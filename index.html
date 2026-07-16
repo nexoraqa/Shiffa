@@ -741,18 +741,9 @@ function cycleStatus(pid,btn){
   // Persist to Firebase in background
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
 
-  // When receptionist moves to Done → close popup then auto print
+  // When receptionist moves to Done → just close the popup
   if(role==='receptionist' && next==='done'){
-    if(window.fbGetRx && pid){
-      window.fbGetRx(pid).then(function(rxList){
-        if(rxList && rxList.length > 0){
-          closePopup(); // close patient popup first
-          setTimeout(function(){
-            printSavedRx(rxList[rxList.length-1]); // then open print
-          }, 300); // small delay so popup closes smoothly before print opens
-        }
-      });
-    }
+    closePopup();
   }
 }
 function loadQueue(doctorFilter){
@@ -1091,10 +1082,17 @@ function printSavedRx(rx){
 
     '</body></html>';
 
-  var win = window.open('','_blank','width=720,height=900');
-  if(!win){ alert("Veuillez autoriser les popups pour imprimer."); return; }
-  win.document.write(rxHtml);
-  win.document.close();
+  // Print in same tab using full overlay — works on all browsers without popup permission
+  var overlay = document.createElement('div');
+  overlay.id = 'rx-print-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:99999;overflow-y:auto';
+  overlay.innerHTML =
+    '<div style="text-align:center;padding:16px;background:#f5f5f5;border-bottom:1px solid #ddd;font-family:Arial,sans-serif" class="no-print">'+
+    '<button onclick="document.getElementById('rx-print-overlay').remove()" style="padding:10px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-right:10px">← Back</button>'+
+    '<button onclick="window.print()" style="padding:10px 28px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Print</button>'+
+    '</div>'+
+    '<div id="rx-print-content">'+rxHtml.replace('<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Ordonnance - '+pname+'</title><style>','<style>body{font-family:"Times New Roman",serif;max-width:680px;margin:20px auto;padding:20px;color:#111}').replace('</body></html>','')+'</div>';
+  document.body.appendChild(overlay);
 }
 
 function toggleRxForm(){
@@ -1584,7 +1582,7 @@ function renderQueue(patients){
     html+='<span class="'+tc+'">'+tl+'</span>';
     html+='</div>';
     html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
-    html+='<button data-status="'+p.status+'" onclick="cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
+    html+='<button data-status="'+p.status+'" onclick="event.stopPropagation();cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
     html+='</div></div></div>';
   }
   list.innerHTML=html;
