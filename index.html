@@ -1220,8 +1220,26 @@ function renderQueue(patients){
   html+='<div data-f="done" onclick="filterQueueBtn(this)" style="flex:1;background:'+dBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+dC+'">'+cDone+'</div><div style="font-size:11px;color:'+dT+';margin-top:2px">Done</div></div>';
   html+='</div>';
 
-  // Only show active patients (not done)
-  var active = patients.filter(function(p){ return p.status !== 'done'; });
+  // Show patients based on filter
+  // If filter active → show filtered, else show all except done
+  var active;
+  if(window.queueFilter){
+    active = patients.filter(function(p){ return p.status === window.queueFilter; });
+  } else {
+    active = patients.filter(function(p){ return p.status !== 'done'; });
+  }
+
+  if(active.length === 0){
+    var msgs = {
+      waiting: 'No patients waiting right now.',
+      inprogress: 'No patients in progress right now.',
+      done: 'No patients done yet today.'
+    };
+    var msg = window.queueFilter ? msgs[window.queueFilter] : 'No active patients right now.';
+    list.innerHTML = html + '<div class="empty-state"><div style="font-size:40px">🏥</div><p>'+msg+'</p></div>';
+    return;
+  }
+
   for(var i=0;i<active.length;i++){
     var p = active[i];
     var pc={emergency:['#D64045','#FDECEA','🔴 EMERGENCY'],urgent:['#F0A500','#FFF8E7','🟡 URGENT'],normal:['#1B6B4A','#E8F5EF','🟢 NORMAL']};
