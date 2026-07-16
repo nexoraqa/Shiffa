@@ -740,6 +740,18 @@ function cycleStatus(pid,btn){
   }
   // Persist to Firebase in background
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
+
+  // When receptionist moves to Done → auto open print prescription
+  if(role==='receptionist' && next==='done'){
+    if(window.fbGetRx && pid){
+      window.fbGetRx(pid).then(function(rxList){
+        if(rxList && rxList.length > 0){
+          printSavedRx(rxList[rxList.length-1]);
+        }
+        // If no prescription exists, do nothing silently
+      });
+    }
+  }
 }
 function loadQueue(doctorFilter){
   var list=document.getElementById('queue-list');
@@ -1532,6 +1544,13 @@ function renderQueue(patients){
   var active;
   if(window.queueFilter){
     active = patients.filter(function(p){ return p.status === window.queueFilter; });
+    // Done list: newest first (last finished shows at top)
+    if(window.queueFilter === 'done'){
+      active = active.slice().sort(function(a,b){
+        var ta=a.createdAt||''; var tb=b.createdAt||'';
+        return ta > tb ? -1 : ta < tb ? 1 : 0;
+      });
+    }
   } else {
     active = patients.filter(function(p){ return p.status !== 'done'; });
   }
