@@ -324,6 +324,7 @@ function buildNav(user){
 }
 
 function goPage(id){
+  if(window._queueTimer){ clearInterval(window._queueTimer); window._queueTimer=null; }
   var sbtns=document.querySelectorAll('.nav-btn');
   for(var i=0;i<sbtns.length;i++) sbtns[i].classList.remove('active');
   var mbtns=document.querySelectorAll('.mnav-btn');
@@ -352,6 +353,7 @@ function loadPage(page){
 
   // REGISTER PAGE
   if(page==='register'){
+    if(currentUser.role!=='receptionist'){ loadPage('dashboard'); return; }
     selGender=''; selVisit='new'; selPrio='normal';
     mc.innerHTML = document.getElementById('reg-template').innerHTML;
     setTimeout(function(){
@@ -370,6 +372,12 @@ function loadPage(page){
       '<button onclick="loadQueue(currentUser.doctorId)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
       '</div><div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
     loadQueue(currentUser.doctorId);
+    // Auto-refresh every 30 seconds
+    if(window._queueTimer) clearInterval(window._queueTimer);
+    window._queueTimer = setInterval(function(){
+      if(document.getElementById('queue-list')) loadQueue(currentUser.doctorId);
+      else clearInterval(window._queueTimer);
+    }, 30000);
     return;
   }
 
@@ -912,8 +920,11 @@ function closePopup(){
 }
 
 function openPatientPopup(el){
-  // Only doctors can see patient popup
-  if(!currentUser || currentUser.role !== 'doctor') return;
+  // Only doctors and receptionists can open popup
+  if(!currentUser) return;
+  var isDoctor = currentUser.role === 'doctor';
+  var isRecep  = currentUser.role === 'receptionist';
+  if(!isDoctor && !isRecep) return;
   // Get patient data from data attributes
   var details = el.querySelector('.patient-details');
   if(!details) return;
@@ -944,6 +955,19 @@ function openPatientPopup(el){
     writeBtn.style.color='#fff';
     writeBtn.style.border='none';
     writeBtn.disabled=false;
+  }
+
+  // Show/hide sections based on role
+  var histSection = document.querySelector('#patient-popup .popup-history-section');
+  var notesBtn    = document.getElementById('write-notes-btn');
+  var rxBtn       = document.getElementById('rx-btn');
+  if(isRecep){
+    // Receptionist sees only prescription button
+    if(notesBtn) notesBtn.style.display='none';
+    if(histSection) histSection.style.display='none';
+  } else {
+    if(notesBtn) notesBtn.style.display='';
+    if(histSection) histSection.style.display='';
   }
 
   // Show popup
@@ -1216,7 +1240,7 @@ try{
         <button onclick="closePopup()" style="background:#F7FAF8;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#4A5E54;cursor:pointer">Close</button>
       </div>
     </div>
-    <div style="padding:16px 20px">
+    <div class="popup-history-section" style="padding:16px 20px">
       <h3 style="font-size:14px;font-weight:700;color:#0F1F17;margin-bottom:12px">Visit History</h3>
       <div id="popup-history">
         <div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>
