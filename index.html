@@ -847,23 +847,46 @@ function editNote(btn){
 }
 
 function toggleNotesForm(){
-  var form = document.getElementById('popup-notes-form');
-  var btn  = document.getElementById('write-notes-btn');
-  if(form.style.display==='none'){
-    form.style.display='block';
-    btn.textContent='Cancel';
+  var notesForm = document.getElementById('popup-notes-form');
+  var rxForm    = document.getElementById('popup-rx-form');
+  var btn       = document.getElementById('write-notes-btn');
+  var rxBtn     = document.getElementById('rx-btn');
+
+  if(notesForm.style.display==='none'){
+    // Open notes, close rx
+    notesForm.style.display='block';
+    if(rxForm) rxForm.style.display='none';
+    // Reset rx button look
+    if(rxBtn){ rxBtn.textContent='Prescription'; rxBtn.style.background='linear-gradient(135deg,#1565C0,#1976D2)'; rxBtn.style.color='#fff'; rxBtn.style.border='none'; }
+    btn.textContent='Cancel Notes';
     btn.style.background='#fff';
     btn.style.color='#4A5E54';
     btn.style.border='1px solid #D6E8DE';
-    document.getElementById('note-diagnosis').value='';
-    document.getElementById('note-treatment').value='';
     document.getElementById('note-err').style.display='none';
+    // Load existing notes into form so doctor can edit
+    loadExistingNotes();
   } else {
-    form.style.display='none';
+    notesForm.style.display='none';
     btn.textContent='Write Notes';
     btn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
     btn.style.color='#fff';
     btn.style.border='none';
+  }
+}
+
+function loadExistingNotes(){
+  if(!currentPatientId) return;
+  if(window.fbGetNotes){
+    window.fbGetNotes(currentPatientId).then(function(notes){
+      if(notes && notes.length > 0){
+        var n = notes[notes.length-1];
+        document.getElementById('note-diagnosis').value = n.diagnosis||'';
+        document.getElementById('note-treatment').value = n.treatment||'';
+      } else {
+        document.getElementById('note-diagnosis').value = '';
+        document.getElementById('note-treatment').value = '';
+      }
+    });
   }
 }
 
@@ -980,28 +1003,71 @@ function printSavedRx(rx){
 }
 
 function toggleRxForm(){
-  var form = document.getElementById('popup-rx-form');
-  var btn  = document.getElementById('rx-btn');
-  if(form.style.display==='none'){
-    form.style.display='block';
-    btn.textContent='Cancel';
+  var rxForm    = document.getElementById('popup-rx-form');
+  var notesForm = document.getElementById('popup-notes-form');
+  var btn       = document.getElementById('rx-btn');
+  var notesBtn  = document.getElementById('write-notes-btn');
+
+  if(rxForm.style.display==='none'){
+    // Open rx, close notes
+    rxForm.style.display='block';
+    if(notesForm) notesForm.style.display='none';
+    // Reset notes button look
+    if(notesBtn){ notesBtn.textContent='Write Notes'; notesBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)'; notesBtn.style.color='#fff'; notesBtn.style.border='none'; }
+    btn.textContent='Cancel Prescription';
     btn.style.background='#fff';
     btn.style.color='#4A5E54';
     btn.style.border='1px solid #D6E8DE';
-    document.getElementById('rx-notes').value='';
-    // Reset to one empty medicine line
-    document.getElementById('rx-medicines').innerHTML=
-      '<div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">'+
-      '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-      '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-      '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>'+
-      '</div>';
+    // Load existing prescription into form
+    loadExistingRx();
   } else {
-    form.style.display='none';
+    rxForm.style.display='none';
     btn.textContent='Prescription';
     btn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
     btn.style.color='#fff';
     btn.style.border='none';
+  }
+}
+
+function loadExistingRx(){
+  if(!currentPatientId) return;
+  if(window.fbGetRx){
+    window.fbGetRx(currentPatientId).then(function(rxList){
+      if(rxList && rxList.length > 0){
+        var rx = rxList[rxList.length-1];
+        var medsContainer = document.getElementById('rx-medicines');
+        if(medsContainer && rx.medicines && rx.medicines.length > 0){
+          medsContainer.innerHTML='';
+          for(var m=0;m<rx.medicines.length;m++){
+            var div=document.createElement('div');
+            div.className='rx-line';
+            div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
+            div.innerHTML=
+              '<input type="text" placeholder="Medicine name" value="'+(rx.medicines[m].med||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+              '<input type="text" placeholder="Dose + duration" value="'+(rx.medicines[m].dose||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+              '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
+            medsContainer.appendChild(div);
+          }
+        } else {
+          // Reset to one empty line
+          document.getElementById('rx-medicines').innerHTML=
+            '<div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">'+
+            '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+            '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+            '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button></div>';
+        }
+        var rxNotesEl=document.getElementById('rx-notes');
+        if(rxNotesEl) rxNotesEl.value=rx.notes||'';
+      } else {
+        // No existing rx — reset to empty
+        document.getElementById('rx-medicines').innerHTML=
+          '<div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">'+
+          '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+          '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+          '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button></div>';
+        document.getElementById('rx-notes').value='';
+      }
+    });
   }
 }
 
@@ -1161,9 +1227,12 @@ function openPatientPopup(el){
   currentPatientId    = el.getAttribute('data-pid');
   currentPatientPhone = phone;
 
-  // Reset notes form
+  // Always reset BOTH forms closed when opening any patient
   var notesForm = document.getElementById('popup-notes-form');
+  var rxForm    = document.getElementById('popup-rx-form');
   if(notesForm) notesForm.style.display='none';
+  if(rxForm)    rxForm.style.display='none';
+
   var writeBtn = document.getElementById('write-notes-btn');
   if(writeBtn){
     writeBtn.textContent='Write Notes';
@@ -1171,6 +1240,16 @@ function openPatientPopup(el){
     writeBtn.style.color='#fff';
     writeBtn.style.border='none';
     writeBtn.disabled=false;
+  }
+  var rxBtnReset = document.getElementById('rx-btn');
+  if(rxBtnReset){
+    rxBtnReset.textContent='Prescription';
+    rxBtnReset.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
+    rxBtnReset.style.color='#fff';
+    rxBtnReset.style.border='none';
+    rxBtnReset.disabled=false;
+    rxBtnReset.style.opacity='1';
+    rxBtnReset.onclick=function(){ toggleRxForm(); };
   }
 
   // Show/hide sections based on role AND status
@@ -1202,52 +1281,40 @@ function openPatientPopup(el){
         rxBtn.disabled=false;
         rxBtn.onclick=function(){ toggleRxForm(); };
       }
-      // Pre-load existing prescription so doctor can edit it
-      if(window.fbGetRx && currentPatientId){
-        window.fbGetRx(currentPatientId).then(function(rxList){
-          if(rxList.length > 0){
-            var rx = rxList[rxList.length-1];
-            // Pre-fill the rx form with saved data
-            var medsContainer = document.getElementById('rx-medicines');
-            if(medsContainer && rx.medicines && rx.medicines.length > 0){
-              medsContainer.innerHTML='';
-              for(var m=0;m<rx.medicines.length;m++){
-                var div=document.createElement('div');
-                div.className='rx-line';
-                div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
-                div.innerHTML='<input type="text" placeholder="Medicine name" value="'+rx.medicines[m].med+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-                  '<input type="text" placeholder="Dose + duration" value="'+(rx.medicines[m].dose||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-                  '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
-                medsContainer.appendChild(div);
-              }
-              var rxNotesEl=document.getElementById('rx-notes');
-              if(rxNotesEl) rxNotesEl.value=rx.notes||'';
-            }
-          }
-        });
-      }
+      // Prescription loads on demand when doctor taps "Prescription" button (via loadExistingRx)
     } else {
       // Waiting or Done — hide notes + prescription buttons
       if(notesBtn) notesBtn.style.display='none';
       if(rxBtn) rxBtn.style.display='none';
     }
   } else if(isRecep){
-    // Receptionist: hide notes, history, and prescription write button
+    // Receptionist: hide EVERYTHING medical
     if(notesBtn) notesBtn.style.display='none';
     if(histSection) histSection.style.display='none';
-    // Print button: only when patient is Done
+    // Also hide both forms completely — receptionist never sees them
+    var nf=document.getElementById('popup-notes-form');
+    var rf=document.getElementById('popup-rx-form');
+    if(nf) nf.style.display='none';
+    if(rf) rf.style.display='none';
+
+    // Print button: ONLY when patient is Done
     if(rxBtn){
-      if(status === 'done'){
+      if(status==='done'){
         rxBtn.style.display='';
         rxBtn.textContent='🖨️ Print Prescription';
-        // Load saved prescription then hook print
+        rxBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
+        rxBtn.style.color='#fff';
+        rxBtn.style.border='none';
+        rxBtn.disabled=false;
+        // Load prescription by patientId and hook print button
         if(window.fbGetRx && currentPatientId){
           window.fbGetRx(currentPatientId).then(function(rxList){
-            var rxBtn2 = document.getElementById('rx-btn');
-            if(rxBtn2 && rxList.length > 0){
-              var rx = rxList[rxList.length-1];
+            var rxBtn2=document.getElementById('rx-btn');
+            if(!rxBtn2) return;
+            if(rxList && rxList.length>0){
+              var rx=rxList[rxList.length-1];
               rxBtn2.onclick=function(){ printSavedRx(rx); };
-            } else if(rxBtn2){
+            } else {
               rxBtn2.textContent='No Prescription Yet';
               rxBtn2.disabled=true;
               rxBtn2.style.opacity='0.5';
@@ -1255,6 +1322,7 @@ function openPatientPopup(el){
           });
         }
       } else {
+        // Waiting or In Progress — no print button for receptionist
         rxBtn.style.display='none';
       }
     }
