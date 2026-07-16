@@ -791,8 +791,10 @@ function filterQueue(status){
   else { loadQueue(currentUser.doctorId || null); }
 }
 
-var currentPatientId = null;
-var currentPatientPhone = null;
+var currentPatientId      = null;
+var currentPatientPhone   = null;
+var currentPatientAddress = null;
+var currentPatientAge     = null;
 
 function editNote(btn){
   var noteId    = btn.getAttribute('data-noteid');
@@ -980,31 +982,120 @@ function printSavedRx(rx){
     }
   }
 
-  var rxHtml =
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"/>'+
-    '<title>Prescription - '+pname+'</title>'+
-    '<style>body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:20px;color:#000}.header{text-align:center;border-bottom:2px solid #1B6B4A;padding-bottom:16px;margin-bottom:20px}.clinic-name{font-size:22px;font-weight:900;color:#1B6B4A}.doctor-name{font-size:17px;font-weight:700;margin-top:4px}.doctor-info{font-size:13px;color:#555;margin-top:3px}.patient-section{background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between}.label{font-size:12px;color:#888;margin-bottom:2px}.value{font-size:14px;font-weight:600}.rx-title{font-size:14px;font-weight:700;color:#1B6B4A;border-bottom:1px solid #D6E8DE;padding-bottom:8px;margin-bottom:14px}.footer{margin-top:40px;display:flex;justify-content:space-between;padding-top:20px;border-top:1px solid #ddd}.sig-box{text-align:center;width:45%}.sig-line{border-top:1px solid #000;margin-top:40px;margin-bottom:6px}.sig-label{font-size:12px;color:#555}.stamp-box{width:100px;height:100px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:12px;margin:0 auto 6px}@media print{.no-print{display:none}}</style></head><body>'+
-    '<div class="no-print" style="margin-bottom:20px;text-align:center">'+
-    '<button onclick="window.print()" style="padding:12px 30px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">🖨️ Print</button>'+
-    '&nbsp;&nbsp;<button onclick="window.close()" style="padding:12px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer">Close</button>'+
-    '</div>'+
-    '<div class="header"><div class="clinic-name">🌿 Shifaa</div>'+
-    '<div class="doctor-name">'+(rx.doctor||u.name)+'</div></div>'+
-    '<div class="patient-section">'+
-    '<div><div class="label">Patient</div><div class="value">'+pname+'</div><div style="font-size:12px;color:#555;margin-top:2px">'+pinfo+'</div></div>'+
-    '<div><div class="label">Date</div><div class="value">'+today+'</div></div>'+
-    '</div>'+
-    '<div class="rx-title">Rp/ Prescription</div>'+
-    medsHtml+
-    (rx.notes?'<div style="margin-top:16px;padding:12px;background:#f9f9f9;border-radius:8px;font-size:13px"><b>Instructions:</b> '+rx.notes+'</div>':'')+
-    '<div class="footer">'+
-    '<div class="sig-box"><div class="sig-line"></div><div class="sig-label">Doctor Signature</div></div>'+
-    '<div class="sig-box"><div class="stamp-box">STAMP</div><div class="sig-label">Official Stamp</div></div>'+
-    '</div></body></html>';
 
-  var win = window.open('','_blank','width=680,height=800');
+  var today_fr = new Date().toLocaleDateString('fr-DZ',{day:'2-digit',month:'long',year:'numeric'});
+  var patAge   = currentPatientAge || '';
+  var patAddr  = currentPatientAddress || '';
+
+  var medsRows = '';
+  for(var j=0;j<medicines.length;j++){
+    medsRows +=
+      '<tr>'+
+      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:14px;font-weight:600;color:#0F1F17">'+(j+1)+'. '+medicines[j].med+'</td>'+
+      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:13px;color:#444">'+( medicines[j].dose||'' )+'</td>'+
+      '</tr>';
+  }
+
+  var rxHtml =
+    '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>'+
+    '<title>Ordonnance - '+pname+'</title>'+
+    '<style>'+
+    '*{margin:0;padding:0;box-sizing:border-box}'+
+    'body{font-family:"Times New Roman",serif;max-width:680px;margin:30px auto;padding:30px;color:#111;background:#fff}'+
+    '.no-print{margin-bottom:24px;text-align:center;font-family:Arial,sans-serif}'+
+    '.top{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px double #1B6B4A;margin-bottom:20px}'+
+    '.clinic-block{}'+
+    '.clinic-name{font-size:20px;font-weight:900;color:#1B6B4A;letter-spacing:1px}'+
+    '.doctor-title{font-size:15px;font-weight:700;margin-top:4px;color:#0F1F17}'+
+    '.doctor-sub{font-size:12px;color:#555;margin-top:3px;line-height:1.6}'+
+    '.ordonnance-title{text-align:right}'+
+    '.ord-word{font-size:28px;font-weight:900;color:#1B6B4A;letter-spacing:2px;font-style:italic}'+
+    '.ord-date{font-size:12px;color:#555;margin-top:6px}'+
+    '.patient-box{background:#f7faf8;border:1px solid #D6E8DE;border-radius:8px;padding:14px 18px;margin-bottom:22px;display:flex;gap:30px}'+
+    '.pat-field{flex:1}'+
+    '.pat-label{font-size:10px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;margin-bottom:3px}'+
+    '.pat-value{font-size:14px;font-weight:700;color:#0F1F17}'+
+    '.pat-sub{font-size:12px;color:#555;margin-top:2px}'+
+    '.rx-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}'+
+    '.rp-symbol{font-size:32px;font-weight:900;color:#1B6B4A;font-style:italic;line-height:1}'+
+    '.rx-label{font-size:12px;color:#8FA89D;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:16px}'+
+    'th{background:#1B6B4A;color:#fff;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:8px;text-align:left}'+
+    'td{vertical-align:top}'+
+    '.instructions-box{border:1px dashed #D6E8DE;border-radius:8px;padding:12px 16px;margin-top:8px;margin-bottom:24px}'+
+    '.inst-label{font-size:11px;color:#8FA89D;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}'+
+    '.inst-text{font-size:13px;color:#333;line-height:1.6}'+
+    '.footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:20px;border-top:2px solid #D6E8DE;margin-top:30px}'+
+    '.sig-area{text-align:center;width:200px}'+
+    '.sig-line{border-top:1.5px solid #333;margin-top:50px;margin-bottom:6px}'+
+    '.sig-label-f{font-size:11px;color:#555;font-family:Arial,sans-serif}'+
+    '.stamp-circle{width:110px;height:110px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;font-family:Arial,sans-serif;margin:0 auto 6px}'+
+    '.watermark{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) rotate(-30deg);font-size:80px;color:rgba(27,107,74,0.04);font-weight:900;pointer-events:none;white-space:nowrap;z-index:0}'+
+    '@media print{.no-print{display:none}body{margin:10px;padding:20px}.watermark{display:block}}'+
+    '</style></head><body>'+
+
+    '<div class="watermark">SHIFAA</div>'+
+
+    '<div class="no-print">'+
+    '<button onclick="window.print()" style="padding:12px 32px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif">🖨️ Imprimer</button>'+
+    '&nbsp;&nbsp;'+
+    '<button onclick="window.close()" style="padding:12px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:Arial,sans-serif">Fermer</button>'+
+    '</div>'+
+
+    '<div class="top">'+
+      '<div class="clinic-block">'+
+        '<div class="clinic-name">🌿 Cabinet Médical</div>'+
+        '<div class="doctor-title">Dr. '+u.name+'</div>'+
+        '<div class="doctor-sub">'+(u.specialty||'Médecine Générale')+'<br>'+(u.city||'Algérie')+'</div>'+
+      '</div>'+
+      '<div class="ordonnance-title">'+
+        '<div class="ord-word">Ordonnance</div>'+
+        '<div class="ord-date">Le : '+today_fr+'</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="patient-box">'+
+      '<div class="pat-field">'+
+        '<div class="pat-label">Nom du patient</div>'+
+        '<div class="pat-value">'+pname+'</div>'+
+        '<div class="pat-sub">'+pinfo+(patAddr?' &nbsp;|&nbsp; '+patAddr:'')+'</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="rx-header">'+
+      '<div class="rp-symbol">Rp/</div>'+
+      '<div class="rx-label">Médicaments prescrits</div>'+
+    '</div>'+
+
+    '<table>'+
+      '<thead><tr><th style="width:55%">Médicament</th><th>Posologie / Durée</th></tr></thead>'+
+      '<tbody>'+medsRows+'</tbody>'+
+    '</table>'+
+
+    (notes?
+      '<div class="instructions-box">'+
+        '<div class="inst-label">Instructions & Conseils</div>'+
+        '<div class="inst-text">'+notes+'</div>'+
+      '</div>'
+    :'')+
+
+    '<div class="footer">'+
+      '<div class="sig-area">'+
+        '<div class="sig-line"></div>'+
+        '<div class="sig-label-f">Signature du médecin</div>'+
+      '</div>'+
+      '<div class="sig-area">'+
+        '<div class="stamp-circle">Cachet</div>'+
+        '<div class="sig-label-f" style="text-align:center">Cachet officiel</div>'+
+      '</div>'+
+    '</div>'+
+
+    '</body></html>';
+
+  var win = window.open('','_blank','width=720,height=900');
   win.document.write(rxHtml);
   win.document.close();
+
 }
 
 function toggleRxForm(){
@@ -1121,47 +1212,119 @@ function saveAndPrintRx(){
     medsHtml += '</div>';
   }
 
+
+  var today_fr = new Date().toLocaleDateString('fr-DZ',{day:'2-digit',month:'long',year:'numeric'});
+  var patAge   = currentPatientAge || '';
+  var patAddr  = currentPatientAddress || '';
+
+  var medsRows = '';
+  for(var j=0;j<medicines.length;j++){
+    medsRows +=
+      '<tr>'+
+      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:14px;font-weight:600;color:#0F1F17">'+(j+1)+'. '+medicines[j].med+'</td>'+
+      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:13px;color:#444">'+( medicines[j].dose||'' )+'</td>'+
+      '</tr>';
+  }
+
   var rxHtml =
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"/>'+
-    '<title>Prescription - '+pname+'</title>'+
+    '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>'+
+    '<title>Ordonnance - '+pname+'</title>'+
     '<style>'+
-    'body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:20px;color:#000}'+
-    '.header{text-align:center;border-bottom:2px solid #1B6B4A;padding-bottom:16px;margin-bottom:20px}'+
-    '.clinic-name{font-size:22px;font-weight:900;color:#1B6B4A}'+
-    '.doctor-name{font-size:17px;font-weight:700;margin-top:4px}'+
-    '.doctor-info{font-size:13px;color:#555;margin-top:3px}'+
-    '.patient-section{background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between}'+
-    '.label{font-size:12px;color:#888;margin-bottom:2px}'+
-    '.value{font-size:14px;font-weight:600}'+
-    '.rx-title{font-size:14px;font-weight:700;color:#1B6B4A;border-bottom:1px solid #D6E8DE;padding-bottom:8px;margin-bottom:14px}'+
-    '.footer{margin-top:40px;display:flex;justify-content:space-between;padding-top:20px;border-top:1px solid #ddd}'+
-    '.sig-box{text-align:center;width:45%}'+
-    '.sig-line{border-top:1px solid #000;margin-top:40px;margin-bottom:6px}'+
-    '.sig-label{font-size:12px;color:#555}'+
-    '.stamp-box{width:100px;height:100px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:12px;margin:0 auto 6px}'+
-    '@media print{.no-print{display:none}body{margin:20px}}'+
+    '*{margin:0;padding:0;box-sizing:border-box}'+
+    'body{font-family:"Times New Roman",serif;max-width:680px;margin:30px auto;padding:30px;color:#111;background:#fff}'+
+    '.no-print{margin-bottom:24px;text-align:center;font-family:Arial,sans-serif}'+
+    '.top{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px double #1B6B4A;margin-bottom:20px}'+
+    '.clinic-block{}'+
+    '.clinic-name{font-size:20px;font-weight:900;color:#1B6B4A;letter-spacing:1px}'+
+    '.doctor-title{font-size:15px;font-weight:700;margin-top:4px;color:#0F1F17}'+
+    '.doctor-sub{font-size:12px;color:#555;margin-top:3px;line-height:1.6}'+
+    '.ordonnance-title{text-align:right}'+
+    '.ord-word{font-size:28px;font-weight:900;color:#1B6B4A;letter-spacing:2px;font-style:italic}'+
+    '.ord-date{font-size:12px;color:#555;margin-top:6px}'+
+    '.patient-box{background:#f7faf8;border:1px solid #D6E8DE;border-radius:8px;padding:14px 18px;margin-bottom:22px;display:flex;gap:30px}'+
+    '.pat-field{flex:1}'+
+    '.pat-label{font-size:10px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;margin-bottom:3px}'+
+    '.pat-value{font-size:14px;font-weight:700;color:#0F1F17}'+
+    '.pat-sub{font-size:12px;color:#555;margin-top:2px}'+
+    '.rx-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}'+
+    '.rp-symbol{font-size:32px;font-weight:900;color:#1B6B4A;font-style:italic;line-height:1}'+
+    '.rx-label{font-size:12px;color:#8FA89D;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:16px}'+
+    'th{background:#1B6B4A;color:#fff;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:8px;text-align:left}'+
+    'td{vertical-align:top}'+
+    '.instructions-box{border:1px dashed #D6E8DE;border-radius:8px;padding:12px 16px;margin-top:8px;margin-bottom:24px}'+
+    '.inst-label{font-size:11px;color:#8FA89D;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}'+
+    '.inst-text{font-size:13px;color:#333;line-height:1.6}'+
+    '.footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:20px;border-top:2px solid #D6E8DE;margin-top:30px}'+
+    '.sig-area{text-align:center;width:200px}'+
+    '.sig-line{border-top:1.5px solid #333;margin-top:50px;margin-bottom:6px}'+
+    '.sig-label-f{font-size:11px;color:#555;font-family:Arial,sans-serif}'+
+    '.stamp-circle{width:110px;height:110px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;font-family:Arial,sans-serif;margin:0 auto 6px}'+
+    '.watermark{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) rotate(-30deg);font-size:80px;color:rgba(27,107,74,0.04);font-weight:900;pointer-events:none;white-space:nowrap;z-index:0}'+
+    '@media print{.no-print{display:none}body{margin:10px;padding:20px}.watermark{display:block}}'+
     '</style></head><body>'+
-    '<div class="no-print" style="margin-bottom:20px;text-align:center">'+
-    '<button onclick="window.print()" style="padding:12px 30px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">🖨️ Print Prescription</button>'+
-    '&nbsp;&nbsp;<button onclick="window.close()" style="padding:12px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer">Close</button>'+
+
+    '<div class="watermark">SHIFAA</div>'+
+
+    '<div class="no-print">'+
+    '<button onclick="window.print()" style="padding:12px 32px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif">🖨️ Imprimer</button>'+
+    '&nbsp;&nbsp;'+
+    '<button onclick="window.close()" style="padding:12px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:Arial,sans-serif">Fermer</button>'+
     '</div>'+
-    '<div class="header">'+
-    '<div class="clinic-name">🌿 Shifaa</div>'+
-    '<div class="doctor-name">'+u.name+'</div>'+
-    '<div class="doctor-info">'+(u.specialty||'')+(u.city?' - '+u.city:'')+'</div>'+
+
+    '<div class="top">'+
+      '<div class="clinic-block">'+
+        '<div class="clinic-name">🌿 Cabinet Médical</div>'+
+        '<div class="doctor-title">Dr. '+u.name+'</div>'+
+        '<div class="doctor-sub">'+(u.specialty||'Médecine Générale')+'<br>'+(u.city||'Algérie')+'</div>'+
+      '</div>'+
+      '<div class="ordonnance-title">'+
+        '<div class="ord-word">Ordonnance</div>'+
+        '<div class="ord-date">Le : '+today_fr+'</div>'+
+      '</div>'+
     '</div>'+
-    '<div class="patient-section">'+
-    '<div><div class="label">Patient</div><div class="value">'+pname+'</div><div style="font-size:12px;color:#555;margin-top:2px">'+pinfo+'</div></div>'+
-    '<div><div class="label">Date</div><div class="value">'+today+'</div></div>'+
+
+    '<div class="patient-box">'+
+      '<div class="pat-field">'+
+        '<div class="pat-label">Nom du patient</div>'+
+        '<div class="pat-value">'+pname+'</div>'+
+        '<div class="pat-sub">'+pinfo+(patAddr?' &nbsp;|&nbsp; '+patAddr:'')+'</div>'+
+      '</div>'+
     '</div>'+
-    '<div class="rx-title">Rp/ Prescription</div>'+
-    medsHtml+
-    (notes?'<div style="margin-top:16px;padding:12px;background:#f9f9f9;border-radius:8px;font-size:13px"><b>Instructions:</b> '+notes+'</div>':'')+
+
+    '<div class="rx-header">'+
+      '<div class="rp-symbol">Rp/</div>'+
+      '<div class="rx-label">Médicaments prescrits</div>'+
+    '</div>'+
+
+    '<table>'+
+      '<thead><tr><th style="width:55%">Médicament</th><th>Posologie / Durée</th></tr></thead>'+
+      '<tbody>'+medsRows+'</tbody>'+
+    '</table>'+
+
+    (notes?
+      '<div class="instructions-box">'+
+        '<div class="inst-label">Instructions & Conseils</div>'+
+        '<div class="inst-text">'+notes+'</div>'+
+      '</div>'
+    :'')+
+
     '<div class="footer">'+
-    '<div class="sig-box"><div class="sig-line"></div><div class="sig-label">Doctor Signature</div></div>'+
-    '<div class="sig-box"><div class="stamp-box">STAMP</div><div class="sig-label">Official Stamp</div></div>'+
+      '<div class="sig-area">'+
+        '<div class="sig-line"></div>'+
+        '<div class="sig-label-f">Signature du médecin</div>'+
+      '</div>'+
+      '<div class="sig-area">'+
+        '<div class="stamp-circle">Cachet</div>'+
+        '<div class="sig-label-f" style="text-align:center">Cachet officiel</div>'+
+      '</div>'+
     '</div>'+
+
     '</body></html>';
+
+  var win = window.open('','_blank','width=720,height=900');
+  win.document.write(rxHtml);
+  win.document.close();
 
   // Save prescription to Firebase - doctor saves only, receptionist prints
   if(window.fbSaveRx){
@@ -1220,6 +1383,11 @@ function openPatientPopup(el){
   var doctor  = details.getAttribute('data-doctor');
   var reason  = details.getAttribute('data-reason');
   var status  = details.getAttribute('data-status');
+
+  // Store globally so prescription print can access them
+  currentPatientPhone   = phone;
+  currentPatientAddress = address;
+  currentPatientAge     = age;
 
   // Fill popup header
   document.getElementById('popup-name').textContent   = name;
