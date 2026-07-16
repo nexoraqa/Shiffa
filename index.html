@@ -366,9 +366,8 @@ function loadPage(page){
 
     // QUEUE PAGE
   if(page==='queue'){
-    // Init queue date to today
+    // Init queue date to today only if not already set
     if(!window.queueDate) window.queueDate = new Date().toISOString().split('T')[0];
-    window.queueDate = new Date().toISOString().split('T')[0];
     window.queueFilter = null; // no status filter by default
     mc.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
@@ -444,17 +443,43 @@ function loadPage(page){
   }
   if(u.role==='receptionist'){
     mc.innerHTML=banner+
-      '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val">14</div><div class="stat-lbl">Registered Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val">5</div><div class="stat-lbl">Still Waiting</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#E6510020">✅</div><div><div class="stat-val">8</div><div class="stat-lbl">Done</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val">6</div><div class="stat-lbl">New Patients</div></div></div>'+
+      '<div class="stats-grid" id="recep-stats">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="rs-total">—</div><div class="stat-lbl">Registered Today</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val" id="rs-waiting">—</div><div class="stat-lbl">Still Waiting</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#E6510020">✅</div><div><div class="stat-val" id="rs-done">—</div><div class="stat-lbl">Done</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val" id="rs-new">—</div><div class="stat-lbl">New Patients</div></div></div>'+
       '</div>'+
-      '<div class="table-card"><h3>📋 Today\'s Queue</h3>'+
-        '<div class="table-row"><div><div class="row-name">Bensalem Khaled</div><div class="row-sub">Dr. Belouadah - New</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">🩺 With Doctor</span></div>'+
-        '<div class="table-row"><div><div class="row-name">Boudaoud Fatima</div><div class="row-sub">Dr. Belouadah - Follow-up</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">⏳ Waiting</span></div>'+
-        '<div class="table-row"><div><div class="row-name">Brahimi Lila</div><div class="row-sub">Dr. Slimani - New</div></div><span class="status-pill" style="color:#8FA89D;background:#F0F0F0">✅ Done</span></div>'+
-      '</div>';
+      '<div class="table-card"><h3>📋 Today\'s Queue</h3><div id="recep-queue-preview"><div style="color:#8FA89D;font-size:13px;padding:10px 0">Loading...</div></div></div>';
+    if(window.fbGetPatients){
+      var today = new Date().toISOString().split('T')[0];
+      window.fbGetPatients(today).then(function(pts){
+        // Filter to this receptionist's doctor
+        if(u.doctorId) pts = pts.filter(function(p){ return p.doctor===u.doctorId; });
+        var total=pts.length, waiting=0, done=0, newP=0;
+        for(var i=0;i<pts.length;i++){
+          if(pts[i].status==='waiting'||pts[i].status==='inprogress') waiting++;
+          if(pts[i].status==='done') done++;
+          if(pts[i].visitType==='new') newP++;
+        }
+        document.getElementById('rs-total').textContent=total;
+        document.getElementById('rs-waiting').textContent=waiting;
+        document.getElementById('rs-done').textContent=done;
+        document.getElementById('rs-new').textContent=newP;
+        // Show latest 5 in preview
+        var preview='';
+        var shown=pts.slice(0,5);
+        for(var j=0;j<shown.length;j++){
+          var p=shown[j];
+          var sc=p.status==='done'?'color:#8FA89D;background:#F0F0F0':p.status==='inprogress'?'color:#1B6B4A;background:#E8F5EF':'color:#F0A500;background:#FFF8E7';
+          var sl=p.status==='done'?'✅ Done':p.status==='inprogress'?'🩺 With Doctor':'⏳ Waiting';
+          var dName=p.doctor;
+          for(var k=0;k<ALL_DOCTORS.length;k++){if(ALL_DOCTORS[k].id===p.doctor){dName=ALL_DOCTORS[k].name;break;}}
+          preview+='<div class="table-row"><div><div class="row-name">'+p.name+'</div><div class="row-sub">'+dName+' - '+(p.visitType==='new'?'New':'Follow-up')+'</div></div><span class="status-pill" style="'+sc+'">'+sl+'</span></div>';
+        }
+        if(!preview) preview='<div style="color:#8FA89D;font-size:13px;padding:10px 0">No patients registered today.</div>';
+        document.getElementById('recep-queue-preview').innerHTML=preview;
+      });
+    }
     return;
   }
   mc.innerHTML='<p style="color:#8FA89D;padding:40px;text-align:center">Coming soon...</p>';
@@ -484,6 +509,22 @@ function pickPrio(btn,val){
   if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
   if(val==='urgent')   {btn.style.borderColor='#F0A500';btn.style.background='#FFF8E7';btn.style.color='#F0A500';}
   if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
+}
+
+function populateDoctorSelect(selectId){
+  var sel = document.getElementById(selectId);
+  if(!sel) return;
+  // Receptionist sees only their assigned doctor's patients
+  var doctors = ALL_DOCTORS;
+  if(currentUser.doctorId){
+    doctors = ALL_DOCTORS.filter(function(d){ return d.id === currentUser.doctorId; });
+  }
+  sel.innerHTML = '<option value="">Select a doctor...</option>';
+  for(var i=0;i<doctors.length;i++){
+    sel.innerHTML += '<option value="'+doctors[i].id+'">'+doctors[i].name+' ('+doctors[i].specialty+')</option>';
+  }
+  // Auto-select if only one doctor
+  if(doctors.length === 1) sel.value = doctors[0].id;
 }
 
 // ═══════════════
@@ -643,10 +684,10 @@ var STATUS_CYCLE={waiting:'inprogress',inprogress:'done',done:'waiting'};
 var STATUS_DATA={waiting:['#F0A500','#FFF8E7','⏳ Waiting'],inprogress:['#1B6B4A','#E8F5EF','🩺 In Progress'],done:['#8FA89D','#F0F0F0','✅ Done']};
 
 function cycleStatus(pid,btn){
-  var label=btn.textContent.trim();
-  var cur=label.indexOf('Progress')>-1?'inprogress':label.indexOf('Done')>-1?'done':'waiting';
+  var cur=btn.getAttribute('data-status')||'waiting';
   var next=STATUS_CYCLE[cur]||'waiting';
   var s=STATUS_DATA[next];
+  btn.setAttribute('data-status',next);
   btn.style.background=s[1]; btn.style.color=s[0]; btn.textContent=s[2];
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
 }
@@ -1206,16 +1247,12 @@ function renderQueue(patients){
 
   // Counter bar
   var activeFilter = window.queueFilter;
-  var html='<div style="display:flex;gap:10px;margin-bottom:16px">';
   var activeFilter = window.queueFilter;
   var wBg=activeFilter==='waiting'?'#F0A500':'#FFF8E7', wC=activeFilter==='waiting'?'#fff':'#F0A500', wT=activeFilter==='waiting'?'#fff':'#8FA89D';
   var pBg=activeFilter==='inprogress'?'#1B6B4A':'#E8F5EF', pC=activeFilter==='inprogress'?'#fff':'#1B6B4A', pT=activeFilter==='inprogress'?'#fff':'#8FA89D';
   var dBg=activeFilter==='done'?'#8FA89D':'#F0F0F0', dC=activeFilter==='done'?'#fff':'#8FA89D', dT=activeFilter==='done'?'#fff':'#8FA89D';
   var html='<div style="display:flex;gap:10px;margin-bottom:16px">';
   html+='<div data-f="waiting" onclick="filterQueueBtn(this)" style="flex:1;background:'+wBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+wC+'">'+cWaiting+'</div><div style="font-size:11px;color:'+wT+';margin-top:2px">Waiting</div></div>';
-  html+='<div data-f="inprogress" onclick="filterQueueBtn(this)" style="flex:1;background:'+pBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+pC+'">'+cProgress+'</div><div style="font-size:11px;color:'+pT+';margin-top:2px">In Progress</div></div>';
-  html+='<div data-f="done" onclick="filterQueueBtn(this)" style="flex:1;background:'+dBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+dC+'">'+cDone+'</div><div style="font-size:11px;color:'+dT+';margin-top:2px">Done</div></div>';
-  html+='</div>';
   html+='<div data-f="inprogress" onclick="filterQueueBtn(this)" style="flex:1;background:'+pBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+pC+'">'+cProgress+'</div><div style="font-size:11px;color:'+pT+';margin-top:2px">In Progress</div></div>';
   html+='<div data-f="done" onclick="filterQueueBtn(this)" style="flex:1;background:'+dBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+dC+'">'+cDone+'</div><div style="font-size:11px;color:'+dT+';margin-top:2px">Done</div></div>';
   html+='</div>';
@@ -1256,7 +1293,7 @@ function renderQueue(patients){
     html+='<span class="'+tc+'">'+tl+'</span>';
     html+='</div>';
     html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
-    html+='<button onclick="cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
+    html+='<button data-status="'+p.status+'" onclick="cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
     html+='</div></div></div>';
   }
   list.innerHTML=html;
