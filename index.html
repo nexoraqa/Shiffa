@@ -797,6 +797,49 @@ function saveNotes(){
   }
 }
 
+function printSavedRx(rx){
+  var u = currentUser;
+  var pname = document.getElementById('popup-name').textContent;
+  var pinfo = document.getElementById('popup-info').textContent;
+  var today = new Date().toLocaleDateString('en-DZ',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  var medsHtml = '';
+  if(rx.medicines){
+    for(var j=0;j<rx.medicines.length;j++){
+      medsHtml += '<div style="margin-bottom:12px;padding-left:10px">';
+      medsHtml += '<div style="font-weight:600;font-size:15px">'+(j+1)+'. '+rx.medicines[j].med+'</div>';
+      if(rx.medicines[j].dose) medsHtml += '<div style="font-size:13px;color:#444;margin-top:3px">'+rx.medicines[j].dose+'</div>';
+      medsHtml += '</div>';
+    }
+  }
+
+  var rxHtml =
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"/>'+
+    '<title>Prescription - '+pname+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:20px;color:#000}.header{text-align:center;border-bottom:2px solid #1B6B4A;padding-bottom:16px;margin-bottom:20px}.clinic-name{font-size:22px;font-weight:900;color:#1B6B4A}.doctor-name{font-size:17px;font-weight:700;margin-top:4px}.doctor-info{font-size:13px;color:#555;margin-top:3px}.patient-section{background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between}.label{font-size:12px;color:#888;margin-bottom:2px}.value{font-size:14px;font-weight:600}.rx-title{font-size:14px;font-weight:700;color:#1B6B4A;border-bottom:1px solid #D6E8DE;padding-bottom:8px;margin-bottom:14px}.footer{margin-top:40px;display:flex;justify-content:space-between;padding-top:20px;border-top:1px solid #ddd}.sig-box{text-align:center;width:45%}.sig-line{border-top:1px solid #000;margin-top:40px;margin-bottom:6px}.sig-label{font-size:12px;color:#555}.stamp-box{width:100px;height:100px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:12px;margin:0 auto 6px}@media print{.no-print{display:none}}</style></head><body>'+
+    '<div class="no-print" style="margin-bottom:20px;text-align:center">'+
+    '<button onclick="window.print()" style="padding:12px 30px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">🖨️ Print</button>'+
+    '&nbsp;&nbsp;<button onclick="window.close()" style="padding:12px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer">Close</button>'+
+    '</div>'+
+    '<div class="header"><div class="clinic-name">🌿 Shifaa</div>'+
+    '<div class="doctor-name">'+(rx.doctor||u.name)+'</div></div>'+
+    '<div class="patient-section">'+
+    '<div><div class="label">Patient</div><div class="value">'+pname+'</div><div style="font-size:12px;color:#555;margin-top:2px">'+pinfo+'</div></div>'+
+    '<div><div class="label">Date</div><div class="value">'+today+'</div></div>'+
+    '</div>'+
+    '<div class="rx-title">Rp/ Prescription</div>'+
+    medsHtml+
+    (rx.notes?'<div style="margin-top:16px;padding:12px;background:#f9f9f9;border-radius:8px;font-size:13px"><b>Instructions:</b> '+rx.notes+'</div>':'')+
+    '<div class="footer">'+
+    '<div class="sig-box"><div class="sig-line"></div><div class="sig-label">Doctor Signature</div></div>'+
+    '<div class="sig-box"><div class="stamp-box">STAMP</div><div class="sig-label">Official Stamp</div></div>'+
+    '</div></body></html>';
+
+  var win = window.open('','_blank','width=680,height=800');
+  win.document.write(rxHtml);
+  win.document.close();
+}
+
 function toggleRxForm(){
   var form = document.getElementById('popup-rx-form');
   var btn  = document.getElementById('rx-btn');
@@ -839,7 +882,7 @@ function removeRxLine(btn){
   if(lines.length > 1) btn.parentElement.remove();
 }
 
-function previewPrescription(){
+function saveAndPrintRx(){
   // Gather medicines
   var lines = document.querySelectorAll('.rx-line');
   var medicines = [];
@@ -910,9 +953,43 @@ function previewPrescription(){
     '</div>'+
     '</body></html>';
 
-  var win = window.open('','_blank','width=680,height=800');
-  win.document.write(rxHtml);
-  win.document.close();
+  // Save prescription to Firebase - doctor saves only, receptionist prints
+  if(window.fbSaveRx){
+    var rxBtn2 = document.querySelector('#popup-rx-form button:last-child');
+    if(rxBtn2){ rxBtn2.textContent='Saving...'; rxBtn2.disabled=true; }
+    window.fbSaveRx(currentPatientId, {
+      medicines: medicines,
+      notes: notes,
+      doctor: u.name,
+      doctorId: u.doctorId,
+      patientName: pname,
+      patientPhone: currentPatientPhone||'',
+      savedAt: new Date().toISOString()
+    }).then(function(id){
+      document.getElementById('popup-rx-form').style.display='none';
+      var rxBtn3 = document.getElementById('rx-btn');
+      if(rxBtn3){
+        rxBtn3.textContent='Prescription Saved ✅';
+        rxBtn3.style.background='#E3F0FF';
+        rxBtn3.style.color='#1565C0';
+        rxBtn3.style.border='1px solid #1565C0';
+        rxBtn3.disabled=true;
+      }
+    }).catch(function(){
+      if(rxBtn2){ rxBtn2.textContent='Save Prescription'; rxBtn2.disabled=false; }
+    });
+  } else {
+    // No Firebase - show saved anyway
+    document.getElementById('popup-rx-form').style.display='none';
+    var rxBtn4 = document.getElementById('rx-btn');
+    if(rxBtn4){
+      rxBtn4.textContent='Prescription Saved ✅';
+      rxBtn4.style.background='#E3F0FF';
+      rxBtn4.style.color='#1565C0';
+      rxBtn4.style.border='1px solid #1565C0';
+      rxBtn4.disabled=true;
+    }
+  }
 }
 
 function closePopup(){
@@ -962,9 +1039,22 @@ function openPatientPopup(el){
   var notesBtn    = document.getElementById('write-notes-btn');
   var rxBtn       = document.getElementById('rx-btn');
   if(isRecep){
-    // Receptionist sees only prescription button
+    // Receptionist: hide notes button and history
     if(notesBtn) notesBtn.style.display='none';
     if(histSection) histSection.style.display='none';
+    // Load saved prescription for this patient
+    if(window.fbGetRx && currentPatientPhone){
+      window.fbGetRx(currentPatientPhone).then(function(rxList){
+        if(rxList.length > 0){
+          var rx = rxList[rxList.length-1]; // latest prescription
+          var rxBtn2 = document.getElementById('rx-btn');
+          if(rxBtn2){
+            rxBtn2.textContent='🖨️ Print Prescription';
+            rxBtn2.onclick=function(){ printSavedRx(rx); };
+          }
+        }
+      });
+    }
   } else {
     if(notesBtn) notesBtn.style.display='';
     if(histSection) histSection.style.display='';
@@ -1148,6 +1238,19 @@ try{
       return list;
     }).catch(function(e){console.error(e);return[];});
   };
+  window.fbSaveRx=function(patientId, rxData){
+    return addDoc(collection(db,'prescriptions'), Object.assign({patientId:patientId}, rxData, {createdAt:serverTimestamp()}))
+      .then(function(r){ return r.id; })
+      .catch(function(e){ console.error(e); return null; });
+  };
+  window.fbGetRx=function(patientPhone){
+    var q = patientPhone
+      ? query(collection(db,'prescriptions'), where('patientPhone','==',patientPhone))
+      : query(collection(db,'prescriptions'), where('patientId','==',''));
+    return getDocs(q)
+      .then(function(snap){ var list=[]; snap.forEach(function(d){ list.push(Object.assign({id:d.id},d.data())); }); return list; })
+      .catch(function(e){ console.error(e); return []; });
+  };
   window.fbFindPatient=function(phone){return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){if(snap.empty)return null;var d=snap.docs[0];return Object.assign({id:d.id},d.data());}).catch(function(e){console.error(e);return null;});};
   var b=document.createElement('div');
   b.style.cssText='position:fixed;bottom:80px;right:16px;background:#1B6B4A;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999';
@@ -1277,7 +1380,7 @@ try{
         <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Instructions / Notes</label>
         <textarea id="rx-notes" placeholder="e.g. Rest for 3 days, avoid cold water..." style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;height:70px;resize:vertical"></textarea>
       </div>
-      <button onclick="previewPrescription()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Preview & Print</button>
+      <button onclick="saveAndPrintRx()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Prescription</button>
     </div>
 
     <div style="padding:0 20px 20px;display:flex;gap:8px;flex-wrap:wrap">
