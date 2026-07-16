@@ -366,9 +366,9 @@ function loadPage(page){
 
     // QUEUE PAGE
   if(page==='queue'){
-    // Init queue date to today only if not already set
-    if(!window.queueDate) window.queueDate = new Date().toISOString().split('T')[0];
-    window.queueFilter = null; // no status filter by default
+    // Always reset to today when first entering queue page in a session
+    window.queueDate = new Date().toISOString().split('T')[0];
+    window.queueFilter = null;
     mc.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
       '<h2 style="color:#0F1F17;margin:0;font-size:17px">Queue</h2>'+
@@ -381,11 +381,13 @@ function loadPage(page){
       '</div>'+
       '<div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
     updateQueueDateLabel();
-    loadQueue(currentUser.doctorId);
+    // Both doctor and receptionist filter by their assigned doctorId
+    var qDocFilter = currentUser.doctorId || null;
+    loadQueue(qDocFilter);
     // Auto-refresh every 30 seconds
     if(window._queueTimer) clearInterval(window._queueTimer);
     window._queueTimer = setInterval(function(){
-      if(document.getElementById('queue-list')) loadQueue(currentUser.doctorId);
+      if(document.getElementById('queue-list')) loadQueue(qDocFilter);
       else clearInterval(window._queueTimer);
     }, 30000);
     return;
@@ -438,7 +440,8 @@ function loadPage(page){
         '<button onclick="loadQueue(currentUser.doctorId)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
       '</div>'+
       '<div id="queue-list"><div style="text-align:center;padding:20px;color:#8FA89D">Loading...</div></div>';
-    loadQueue(u.doctorId);
+    window.queueDate = new Date().toISOString().split('T')[0];
+    loadQueue(u.doctorId || null);
     return;
   }
   if(u.role==='receptionist'){
@@ -514,16 +517,15 @@ function pickPrio(btn,val){
 function populateDoctorSelect(selectId){
   var sel = document.getElementById(selectId);
   if(!sel) return;
-  // Receptionist sees only their assigned doctor's patients
   var doctors = ALL_DOCTORS;
   if(currentUser.doctorId){
     doctors = ALL_DOCTORS.filter(function(d){ return d.id === currentUser.doctorId; });
   }
-  sel.innerHTML = '<option value="">Select a doctor...</option>';
+  // Only show placeholder if more than one doctor to choose from
+  sel.innerHTML = doctors.length > 1 ? '<option value="">Select a doctor...</option>' : '';
   for(var i=0;i<doctors.length;i++){
     sel.innerHTML += '<option value="'+doctors[i].id+'">'+doctors[i].name+' ('+doctors[i].specialty+')</option>';
   }
-  // Auto-select if only one doctor
   if(doctors.length === 1) sel.value = doctors[0].id;
 }
 
@@ -575,7 +577,8 @@ function searchByPhone(){
 function addReturnPatient(){
   var p = retPatient;
   if(!p) return;
-  selRetPrio = 'normal';
+  selRetPrio  = 'normal';
+  selRetVisit = 'follow_up';
 
   // Get doctor info from logged-in user
   var docId   = currentUser.doctorId || '';
@@ -587,6 +590,11 @@ function addReturnPatient(){
   document.getElementById('search-result').innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #D6E8DE;margin-top:4px">'+
     '<div style="font-weight:700;font-size:15px;color:#0F1F17;margin-bottom:12px">'+p.name+' - Add to queue</div>'+
+    '<div class="form-field"><label class="form-label">Visit Type</label>'+
+    '<div class="toggle-group">'+
+    '<button class="visit-btn" onclick="pickRetVisit(this)" data-val="new">New Patient</button>'+
+    '<button class="visit-btn active" onclick="pickRetVisit(this)" data-val="follow_up">Follow-up</button>'+
+    '</div></div>'+
     '<div class="form-field"><label class="form-label">Priority</label>'+
     '<div class="toggle-group" id="ret-prio-group">'+
     '<button class="prio-btn" onclick="pickRetPrio(this)" data-val="normal" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>'+
@@ -606,7 +614,14 @@ function addReturnPatient(){
     '</div></div>';
 }
 
-var selRetPrio = 'normal';
+var selRetPrio  = 'normal';
+var selRetVisit = 'follow_up';
+function pickRetVisit(btn){
+  selRetVisit = btn.getAttribute('data-val');
+  var group = btn.parentElement.querySelectorAll('button');
+  for(var i=0;i<group.length;i++){group[i].className='visit-btn';group[i].style.cssText='';}
+  btn.className='visit-btn active';
+}
 function pickRetPrio(btn){
   selRetPrio = btn.getAttribute('data-val');
   var group = btn.parentElement.querySelectorAll('button');
@@ -624,14 +639,26 @@ function confirmReturnPatient(){
   var errEl  = document.getElementById('ret-err');
   if(!doctor){ errEl.textContent='Please select a doctor.'; errEl.style.display='block'; return; }
   errEl.style.display='none';
+  var today = new Date().toISOString().split('T')[0];
   var data = {
     patientId:p.id, name:p.name, age:p.age, phone:p.phone, gender:p.gender,
-    visitType:'follow_up', priority:selRetPrio, doctor:doctor, reason:reason,
-    visitDate:new Date().toISOString().split('T')[0],
-    status:'waiting', clinicId:'clinic_001', createdAt:new Date().toISOString()
+    visitType:selRetVisit, priority:selRetPrio, doctor:doctor, reason:reason,
+    visitDate:today, status:'waiting', clinicId:'clinic_001', createdAt:new Date().toISOString()
   };
-  if(window.fbSave){
-    window.fbSave(data).then(function(id){ if(id) showSuccess(p.name); });
+  // Check for duplicate same-day registration
+  if(window.fbGetPatients){
+    var confirmBtn = document.querySelector('[onclick="confirmReturnPatient()"]');
+    if(confirmBtn){ confirmBtn.textContent='Checking...'; confirmBtn.disabled=true; }
+    window.fbGetPatients(today).then(function(pts){
+      var already = pts.filter(function(pt){ return pt.phone===p.phone && pt.doctor===doctor; });
+      if(already.length > 0){
+        errEl.textContent='⚠️ This patient is already in today\'s queue for this doctor.';
+        errEl.style.display='block';
+        if(confirmBtn){ confirmBtn.textContent='Confirm'; confirmBtn.disabled=false; }
+        return;
+      }
+      window.fbSave(data).then(function(id){ if(id) showSuccess(p.name); });
+    });
   } else {
     showSuccess(p.name);
   }
@@ -714,7 +741,7 @@ function changeQueueDate(dir){
   window.queueDate = d.toISOString().split('T')[0];
   window.queueFilter = null;
   updateQueueDateLabel();
-  loadQueue(currentUser.doctorId);
+  loadQueue(currentUser.doctorId || null);
 }
 
 function updateQueueDateLabel(){
