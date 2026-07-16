@@ -707,12 +707,26 @@ function showSuccess(name){
 // ═══════════════
 // QUEUE
 // ═══════════════
-var STATUS_CYCLE={waiting:'inprogress',inprogress:'done',done:'waiting'};
 var STATUS_DATA={waiting:['#F0A500','#FFF8E7','⏳ Waiting'],inprogress:['#1B6B4A','#E8F5EF','🩺 In Progress'],done:['#8FA89D','#F0F0F0','✅ Done']};
 
 function cycleStatus(pid,btn){
   var cur=btn.getAttribute('data-status')||'waiting';
-  var next=STATUS_CYCLE[cur]||'waiting';
+  var role=currentUser.role;
+  var next=null;
+
+  // Doctor: Waiting ↔ In Progress only (can undo)
+  if(role==='doctor'){
+    if(cur==='waiting') next='inprogress';
+    else if(cur==='inprogress') next='waiting';
+    else return; // doctor cannot touch Done
+  }
+  // Receptionist: In Progress → Done only (one way, no undo)
+  else if(role==='receptionist'){
+    if(cur==='inprogress') next='done';
+    else return; // receptionist cannot touch Waiting or undo Done
+  }
+  else return; // other roles cannot change status
+
   var s=STATUS_DATA[next];
   btn.setAttribute('data-status',next);
   btn.style.background=s[1]; btn.style.color=s[0]; btn.textContent=s[2];
@@ -1165,18 +1179,57 @@ function openPatientPopup(el){
   var rxBtn       = document.getElementById('rx-btn');
 
   if(isDoctor){
-    // Doctor: show notes + history always
-    if(notesBtn) notesBtn.style.display='';
+    // Doctor: always sees history
     if(histSection) histSection.style.display='';
-    // Prescription button: only when patient is In Progress
-    if(rxBtn){
-      if(status === 'inprogress'){
+    // Notes + Prescription: ONLY when In Progress
+    if(status === 'inprogress'){
+      // Show Write Notes button, always editable
+      if(notesBtn){
+        notesBtn.style.display='';
+        notesBtn.textContent='Write Notes';
+        notesBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
+        notesBtn.style.color='#fff';
+        notesBtn.style.border='none';
+        notesBtn.disabled=false;
+      }
+      // Show Prescription button, always editable
+      if(rxBtn){
         rxBtn.style.display='';
         rxBtn.textContent='Prescription';
+        rxBtn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
+        rxBtn.style.color='#fff';
+        rxBtn.style.border='none';
+        rxBtn.disabled=false;
         rxBtn.onclick=function(){ toggleRxForm(); };
-      } else {
-        rxBtn.style.display='none';
       }
+      // Pre-load existing prescription so doctor can edit it
+      if(window.fbGetRx && currentPatientId){
+        window.fbGetRx(currentPatientId).then(function(rxList){
+          if(rxList.length > 0){
+            var rx = rxList[rxList.length-1];
+            // Pre-fill the rx form with saved data
+            var medsContainer = document.getElementById('rx-medicines');
+            if(medsContainer && rx.medicines && rx.medicines.length > 0){
+              medsContainer.innerHTML='';
+              for(var m=0;m<rx.medicines.length;m++){
+                var div=document.createElement('div');
+                div.className='rx-line';
+                div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
+                div.innerHTML='<input type="text" placeholder="Medicine name" value="'+rx.medicines[m].med+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+                  '<input type="text" placeholder="Dose + duration" value="'+(rx.medicines[m].dose||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
+                  '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
+                medsContainer.appendChild(div);
+              }
+              var rxNotesEl=document.getElementById('rx-notes');
+              if(rxNotesEl) rxNotesEl.value=rx.notes||'';
+            }
+          }
+        });
+      }
+    } else {
+      // Waiting or Done — hide notes + prescription buttons
+      if(notesBtn) notesBtn.style.display='none';
+      if(rxBtn) rxBtn.style.display='none';
     }
   } else if(isRecep){
     // Receptionist: hide notes, history, and prescription write button
@@ -1188,8 +1241,8 @@ function openPatientPopup(el){
         rxBtn.style.display='';
         rxBtn.textContent='🖨️ Print Prescription';
         // Load saved prescription then hook print
-        if(window.fbGetRx && currentPatientPhone){
-          window.fbGetRx(currentPatientPhone).then(function(rxList){
+        if(window.fbGetRx && currentPatientId){
+          window.fbGetRx(currentPatientId).then(function(rxList){
             var rxBtn2 = document.getElementById('rx-btn');
             if(rxBtn2 && rxList.length > 0){
               var rx = rxList[rxList.length-1];
@@ -1212,11 +1265,40 @@ function openPatientPopup(el){
 
   // Load visit history from Firebase
   var historyEl = document.getElementById('popup-history');
+
+  // ── RECEPTIONIST: show last visit only when patient is Waiting, no notes ──
+  if(isRecep){
+    if(status !== 'waiting'){
+      historyEl.innerHTML='';
+      return;
+    }
+    historyEl.innerHTML='<div style="text-align:center;padding:10px;color:#8FA89D;font-size:13px">Loading...</div>';
+    if(window.fbGetPatientHistory && phone){
+      window.fbGetPatientHistory(phone).then(function(visits){
+        if(!visits||visits.length===0){
+          historyEl.innerHTML='<div style="font-size:13px;color:#8FA89D;padding:8px 0">First visit — no previous history.</div>';
+          return;
+        }
+        visits.sort(function(a,b){ return b.visitDate > a.visitDate ? 1 : -1; });
+        var last = visits[0];
+        var dName=last.doctor;
+        for(var j=0;j<ALL_DOCTORS.length;j++){ if(ALL_DOCTORS[j].id===last.doctor){ dName=ALL_DOCTORS[j].name; break; } }
+        historyEl.innerHTML=
+          '<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px">'+
+          '<div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Last visit</div>'+
+          '<div style="font-weight:700;font-size:14px;color:#0F1F17">'+last.visitDate+'</div>'+
+          '<div style="font-size:13px;color:#4A5E54;margin-top:3px">'+dName+'</div>'+
+          (last.reason?'<div style="font-size:12px;color:#8FA89D;margin-top:2px">'+last.reason+'</div>':'')+
+          '</div>';
+      });
+    }
+    return;
+  }
+
+  // ── DOCTOR: show last visit only, with notes ──
   historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>';
 
   if(window.fbGetPatientHistory && (phone || currentPatientId)){
-    // Load visits AND notes at same time
-    // Use phone to find all visits by this patient across all doctors
     Promise.all([
       phone ? window.fbGetPatientHistory(phone) : window.fbGetPatientHistory2(currentPatientId),
       window.fbGetNotes ? window.fbGetNotes(currentPatientId) : Promise.resolve([])
@@ -1228,7 +1310,6 @@ function openPatientPopup(el){
       var notesMap = {};
       for(var n=0;n<notes.length;n++){
         var note = notes[n];
-        // Key = date + doctor so any doctor can find notes for that visit
         var key = (note.savedAt||'').substring(0,10) + '_' + (note.doctorId||'');
         if(!notesMap[key]) notesMap[key] = [];
         notesMap[key].push(note);
@@ -1238,9 +1319,17 @@ function openPatientPopup(el){
         historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">No previous visits found.</div>';
         return;
       }
-      var html = '';
-      visits.sort(function(a,b){ return b.createdAt > a.createdAt ? 1 : -1; });
-      for(var i=0;i<visits.length;i++){
+      visits.sort(function(a,b){ return b.visitDate > a.visitDate ? 1 : -1; });
+      // Doctor sees LAST visit only (previous visit, not today's current one)
+      var today = new Date().toISOString().split('T')[0];
+      var prevVisits = visits.filter(function(v){ return v.visitDate !== today; });
+      if(prevVisits.length === 0){
+        historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">No previous visits — this is their first visit.</div>';
+        return;
+      }
+      var lastVisit = [prevVisits[0]]; // only the most recent past visit
+      var html = '<div style="font-size:12px;font-weight:700;color:#8FA89D;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Last Visit</div>';
+      for(var i=0;i<lastVisit.length;i++){
         var v = visits[i];
         var sc = v.status==='done'?'#1B6B4A':v.status==='inprogress'?'#F0A500':'#8FA89D';
         var sl = v.status==='done'?'Closed':v.status==='inprogress'?'In Progress':'Waiting';
@@ -1410,13 +1499,24 @@ try{
     }).catch(function(e){console.error(e);return[];});
   };
   window.fbSaveRx=function(patientId, rxData){
-    return addDoc(collection(db,'prescriptions'), Object.assign({patientId:patientId}, rxData, {createdAt:serverTimestamp()}))
-      .then(function(r){ return r.id; })
-      .catch(function(e){ console.error(e); return null; });
+    // Check if prescription already exists for this patient → update it, don't create duplicate
+    var q=query(collection(db,'prescriptions'),where('patientId','==',patientId));
+    return getDocs(q).then(function(snap){
+      if(!snap.empty){
+        // Update existing
+        var existingId=snap.docs[0].id;
+        return updateDoc(doc(db,'prescriptions',existingId), Object.assign({patientId:patientId},rxData,{updatedAt:serverTimestamp()}))
+          .then(function(){ return existingId; });
+      } else {
+        // Create new
+        return addDoc(collection(db,'prescriptions'), Object.assign({patientId:patientId},rxData,{createdAt:serverTimestamp()}))
+          .then(function(r){ return r.id; });
+      }
+    }).catch(function(e){ console.error(e); return null; });
   };
-  window.fbGetRx=function(patientPhone){
-    var q = patientPhone
-      ? query(collection(db,'prescriptions'), where('patientPhone','==',patientPhone))
+  window.fbGetRx=function(patientId){
+    var q = patientId
+      ? query(collection(db,'prescriptions'), where('patientId','==',patientId))
       : query(collection(db,'prescriptions'), where('patientId','==',''));
     return getDocs(q)
       .then(function(snap){ var list=[]; snap.forEach(function(d){ list.push(Object.assign({id:d.id},d.data())); }); return list; })
