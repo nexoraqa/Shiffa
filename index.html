@@ -741,14 +741,16 @@ function cycleStatus(pid,btn){
   // Persist to Firebase in background
   if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
 
-  // When receptionist moves to Done → auto open print prescription
+  // When receptionist moves to Done → close popup then auto print
   if(role==='receptionist' && next==='done'){
     if(window.fbGetRx && pid){
       window.fbGetRx(pid).then(function(rxList){
         if(rxList && rxList.length > 0){
-          printSavedRx(rxList[rxList.length-1]);
+          closePopup(); // close patient popup first
+          setTimeout(function(){
+            printSavedRx(rxList[rxList.length-1]); // then open print
+          }, 300); // small delay so popup closes smoothly before print opens
         }
-        // If no prescription exists, do nothing silently
       });
     }
   }
