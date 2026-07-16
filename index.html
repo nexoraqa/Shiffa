@@ -641,7 +641,7 @@ function confirmReturnPatient(){
   errEl.style.display='none';
   var today = new Date().toISOString().split('T')[0];
   var data = {
-    patientId:p.id, name:p.name, age:p.age, phone:p.phone, gender:p.gender,
+    patientId:p.id, name:p.name, age:p.age, phone:p.phone, address:p.address||'', gender:p.gender,
     visitType:selRetVisit, priority:selRetPrio, doctor:doctor, reason:reason,
     visitDate:today, status:'waiting', clinicId:'clinic_001', createdAt:new Date().toISOString()
   };
@@ -671,10 +671,11 @@ function submitPatient(){
   var name=document.getElementById('r-name').value.trim();
   var age=document.getElementById('r-age').value;
   var phone=document.getElementById('r-phone').value.trim();
+  var address=document.getElementById('r-address').value.trim();
   var doctor=document.getElementById('r-doctor').value;
   var reason=document.getElementById('r-reason').value.trim();
   var err=document.getElementById('form-err');
-  if(!name||!age||!phone||!doctor||!selGender){
+  if(!name||!age||!phone||!address||!doctor||!selGender){
     err.textContent='Please fill in all required fields and select gender.';
     err.style.display='block';
     return;
@@ -682,7 +683,7 @@ function submitPatient(){
   err.style.display='none';
   var btn=document.getElementById('reg-btn');
   btn.textContent='Saving...'; btn.disabled=true;
-  var data={name:name,age:parseInt(age),phone:phone.replace(/ /g,''),gender:selGender,visitType:selVisit,priority:selPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
+  var data={name:name,age:parseInt(age),phone:phone.replace(/ /g,''),address:address,gender:selGender,visitType:selVisit,priority:selPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
   if(window.fbSave){
     window.fbSave(data).then(function(id){
       if(id){showSuccess(name);}
@@ -1214,15 +1215,16 @@ function openPatientPopup(el){
   var name   = details.getAttribute('data-name');
   var age    = details.getAttribute('data-age');
   var gender = details.getAttribute('data-gender');
-  var phone  = details.getAttribute('data-phone');
-  var doctor = details.getAttribute('data-doctor');
-  var reason = details.getAttribute('data-reason');
-  var status = details.getAttribute('data-status');
+  var phone   = details.getAttribute('data-phone');
+  var address = details.getAttribute('data-address');
+  var doctor  = details.getAttribute('data-doctor');
+  var reason  = details.getAttribute('data-reason');
+  var status  = details.getAttribute('data-status');
 
   // Fill popup header
   document.getElementById('popup-name').textContent   = name;
   document.getElementById('popup-info').textContent   = 'Age '+age+' - '+gender;
-  document.getElementById('popup-phone').textContent  = phone ? 'Phone: '+phone : '';
+  document.getElementById('popup-phone').textContent  = (phone ? 'Phone: '+phone : '') + (address ? '  |  '+address : '');
 
   // Store current patient id for notes
   currentPatientId    = el.getAttribute('data-pid');
@@ -1515,7 +1517,7 @@ function renderQueue(patients){
     html+='<span style="background:'+c[1]+';color:'+c[0]+';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">'+c[2]+'</span>';
     html+='<span class="'+tc+'">'+tl+'</span>';
     html+='</div>';
-    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
+    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:12px;color:#8FA89D;margin-bottom:8px">Age '+p.age+' - '+p.doctor+(p.reason?' - '+p.reason:'')+'</div>';
     html+='<button data-status="'+p.status+'" onclick="cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
     html+='</div></div></div>';
   }
@@ -1643,6 +1645,10 @@ try{
           <label class="form-label">Phone *</label>
           <input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/>
         </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Address *</label>
+        <input class="form-input" id="r-address" type="text" placeholder="e.g. Rue Didouche Mourad, Bou Saada"/>
       </div>
       <div class="form-field">
         <label class="form-label">Gender *</label>
