@@ -1460,7 +1460,14 @@ function renderQueue(patients){
     return;
   }
   var pOrder={emergency:0,urgent:1,normal:2};
-  patients.sort(function(a,b){return (pOrder[a.priority]!==undefined?pOrder[a.priority]:99)-(pOrder[b.priority]!==undefined?pOrder[b.priority]:99);});
+  patients.sort(function(a,b){
+    // First sort by priority (emergency first)
+    var pd=(pOrder[a.priority]!==undefined?pOrder[a.priority]:99)-(pOrder[b.priority]!==undefined?pOrder[b.priority]:99);
+    if(pd!==0) return pd;
+    // Then by arrival time — oldest first (first registered = #1)
+    var ta=a.createdAt||''; var tb=b.createdAt||'';
+    return ta < tb ? -1 : ta > tb ? 1 : 0;
+  });
 
   // Count by status
   var cWaiting=0, cProgress=0, cDone=0;
