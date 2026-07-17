@@ -504,7 +504,7 @@ function loadPage(page){
       '</div>';
     return;
   }
-  if(u.role==='doctor'){
+  if(u.role==='doctor' && page==='dashboard'){
     // Show doctor profile + real queue
     mc.innerHTML=banner+
       '<div style="background:#fff;border-radius:13px;border:1px solid #D6E8DE;padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:14px">'+
