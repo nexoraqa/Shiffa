@@ -111,6 +111,11 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .mnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:10px;color:var(--light);font-size:10px;font-weight:600;min-width:54px}
 .mnav-btn .mi{font-size:22px;line-height:1}
 .mnav-btn.active{color:var(--green);background:var(--green-xl)}
+@media print{
+  body > *:not(#rx-print-overlay){ display:none !important; }
+  #rx-print-overlay{ position:absolute !important; box-shadow:none !important; }
+  #rx-print-overlay > div:first-child{ display:none !important; }
+}
 @media(max-width:640px){
   .sidebar{display:none}
   .top-header{padding:0 14px}
@@ -1053,7 +1058,7 @@ function printSavedRx(rx){
     '<div class="top">'+
       '<div class="clinic-block">'+
         '<div class="clinic-name">🌿 Cabinet Médical</div>'+
-        '<div class="doctor-title">Dr. '+doctorName+'</div>'+
+        '<div class="doctor-title">'+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'</div>'+
         '<div class="doctor-sub">'+doctorSpecialty+'<br>'+doctorCity+'</div>'+
       '</div>'+
       '<div class="ordonnance-title">'+
