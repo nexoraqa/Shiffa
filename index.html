@@ -98,7 +98,11 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn-outline{padding:11px 20px;background:var(--green-xl);color:var(--green);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
 .btn-filled{padding:11px 20px;background:linear-gradient(135deg,var(--green),var(--green-l));color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
-.queue-item{background:#fff;border-radius:13px;border:1.5px solid var(--border);padding:15px;margin-bottom:11px}
+.queue-item{background:#fff;border-radius:13px;border:1.5px solid var(--border);padding:15px;margin-bottom:11px;transition:box-shadow 0.2s,transform 0.15s;animation:slideIn 0.25s ease-out}
+.queue-item:active{transform:scale(0.985)}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.prio-btn,.toggle-btn,.visit-btn{transition:all 0.15s ease}
+.status-btn-anim{transition:background 0.2s,color 0.2s}
 .type-new{background:var(--green-xl);color:var(--green);border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700}
 .type-followup{background:var(--purple-l);color:var(--purple);border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700}
 .empty-state{text-align:center;padding:60px 20px;color:var(--light)}
@@ -378,6 +382,17 @@ function loadPage(page){
       '<button onclick="changeQueueDate(-1)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 14px;font-size:16px;cursor:pointer">←</button>'+
       '<div id="queue-date-label" style="font-weight:700;font-size:14px;color:#0F1F17;text-align:center"></div>'+
       '<button onclick="changeQueueDate(1)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 14px;font-size:16px;cursor:pointer">→</button>'+
+      '</div>'+
+      '<div id="live-stats-bar" style="display:flex;gap:8px;margin-bottom:14px">'+
+      '<div style="flex:1;background:#FFF8E7;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #F0A50030">'+
+      '<div id="ls-waiting" style="font-size:22px;font-weight:900;color:#F0A500">—</div>'+
+      '<div style="font-size:10px;color:#8FA89D;font-weight:600;margin-top:1px">WAITING</div></div>'+
+      '<div style="flex:1;background:#E8F5EF;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #1B6B4A30">'+
+      '<div id="ls-progress" style="font-size:22px;font-weight:900;color:#1B6B4A">—</div>'+
+      '<div style="font-size:10px;color:#8FA89D;font-weight:600;margin-top:1px">WITH DOCTOR</div></div>'+
+      '<div style="flex:1;background:#F0F0F0;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #8FA89D30">'+
+      '<div id="ls-done" style="font-size:22px;font-weight:900;color:#8FA89D">—</div>'+
+      '<div style="font-size:10px;color:#8FA89D;font-weight:600;margin-top:1px">DONE</div></div>'+
       '</div>'+
       '<div id="queue-list"><div class="empty-state"><p>Loading...</p></div></div>';
     updateQueueDateLabel();
@@ -1534,6 +1549,13 @@ function renderQueue(patients){
     else if(patients[i].status==='inprogress') cProgress++;
     else if(patients[i].status==='done') cDone++;
   }
+  // Update live stats bar if it exists
+  var lsW=document.getElementById('ls-waiting');
+  var lsP=document.getElementById('ls-progress');
+  var lsD=document.getElementById('ls-done');
+  if(lsW) lsW.textContent=cWaiting;
+  if(lsP) lsP.textContent=cProgress;
+  if(lsD) lsD.textContent=cDone;
 
   // Counter bar
   var activeFilter = window.queueFilter;
