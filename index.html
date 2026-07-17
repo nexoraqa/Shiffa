@@ -271,7 +271,23 @@ function doLogin(){
     for(var i=0;i<USERS.length;i++){
       if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
     }
-    if(user){currentUser=user;showDashboard(user);}
+    if(user){
+      currentUser=user;
+      // Load saved doctor profile from Firebase before showing dashboard
+      if(user.role==='doctor' && user.doctorId && window.fbGetProfile){
+        window.fbGetProfile(user.doctorId).then(function(prof){
+          if(prof){
+            if(prof.name) currentUser.name=prof.name;
+            if(prof.specialty) currentUser.specialty=prof.specialty;
+            if(prof.city) currentUser.city=prof.city;
+            if(prof.phone) currentUser.phone=prof.phone;
+          }
+          showDashboard(currentUser);
+        });
+      } else {
+        showDashboard(user);
+      }
+    }
     else{showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;}
   },600);
 }
@@ -293,7 +309,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser
 var NAV={
   superadmin:  [['📊 Overview','dashboard'],['🏥 Clinics','clinics'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
   clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
-  doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes']],
+  doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['👤 Profile','profile']],
   receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue']]
 };
 var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100'};
@@ -505,6 +521,49 @@ function loadPage(page){
     }
     return;
   }
+  if(page==='profile'){
+    var u = currentUser;
+    mc.innerHTML=
+      '<h2 style="color:#0F1F17;margin-bottom:20px">👤 Mon Profil</h2>'+
+      '<div style="background:#fff;border-radius:16px;border:1.5px solid #D6E8DE;padding:20px;margin-bottom:16px">'+
+        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #D6E8DE">'+
+          '<div style="width:56px;height:56px;background:linear-gradient(135deg,#1B6B4A,#2D9166);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px">👨‍⚕️</div>'+
+          '<div>'+
+            '<div style="font-weight:800;font-size:16px;color:#0F1F17" id="prof-display-name">'+u.name+'</div>'+
+            '<div style="font-size:13px;color:#8FA89D">'+u.cabinetName+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:14px">'+
+          '<label class="form-label">Full Name *</label>'+
+          '<input class="form-input" id="prof-name" value="'+u.name+'" placeholder="Dr. Your Name"/>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:14px">'+
+          '<label class="form-label">Specialty *</label>'+
+          '<input class="form-input" id="prof-specialty" value="'+(u.specialty||'')+'" placeholder="e.g. Médecine Générale"/>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:14px">'+
+          '<label class="form-label">City / Address</label>'+
+          '<input class="form-input" id="prof-city" value="'+(u.city||'')+'" placeholder="e.g. Bou Saada, M Sila"/>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:20px">'+
+          '<label class="form-label">Phone (optional)</label>'+
+          '<input class="form-input" id="prof-phone" value="'+(u.phone||'')+'" placeholder="e.g. 0555 123 456"/>'+
+        '</div>'+
+        '<div id="prof-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:12px"></div>'+
+        '<button onclick="saveProfile()" class="btn-filled" style="width:100%;padding:14px;font-size:15px">💾 Save Profile</button>'+
+      '</div>';
+    if(window.fbGetProfile){
+      window.fbGetProfile(u.doctorId).then(function(prof){
+        if(prof){
+          if(document.getElementById('prof-name')) document.getElementById('prof-name').value=prof.name||u.name;
+          if(document.getElementById('prof-specialty')) document.getElementById('prof-specialty').value=prof.specialty||u.specialty||'';
+          if(document.getElementById('prof-city')) document.getElementById('prof-city').value=prof.city||u.city||'';
+          if(document.getElementById('prof-phone')) document.getElementById('prof-phone').value=prof.phone||u.phone||'';
+        }
+      });
+    }
+    return;
+  }
   mc.innerHTML='<p style="color:#8FA89D;padding:40px;text-align:center">Coming soon...</p>';
 }
 
@@ -532,6 +591,39 @@ function pickPrio(btn,val){
   if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
 
   if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
+}
+
+function saveProfile(){
+  var name = document.getElementById('prof-name').value.trim();
+  var specialty = document.getElementById('prof-specialty').value.trim();
+  var city = document.getElementById('prof-city').value.trim();
+  var phone = document.getElementById('prof-phone').value.trim();
+  var errEl = document.getElementById('prof-err');
+  if(!name||!specialty){ errEl.textContent='Name and specialty are required.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  var btn = document.querySelector('[onclick="saveProfile()"]');
+  if(btn){ btn.textContent='Saving...'; btn.disabled=true; }
+  // Update currentUser in memory so prescription uses new info immediately
+  currentUser.name = name;
+  currentUser.specialty = specialty;
+  currentUser.city = city;
+  currentUser.phone = phone;
+  // Update display name in header
+  var headerName = document.querySelector('.top-header .user-name');
+  if(headerName) headerName.textContent = name;
+  document.getElementById('prof-display-name').textContent = name;
+  if(window.fbSaveProfile){
+    window.fbSaveProfile(currentUser.doctorId, {name:name,specialty:specialty,city:city,phone:phone}).then(function(){
+      if(btn){ btn.textContent='✅ Saved!'; btn.disabled=false; }
+      setTimeout(function(){ if(btn){ btn.textContent='💾 Save Profile'; } }, 2000);
+    }).catch(function(){
+      if(btn){ btn.textContent='💾 Save Profile'; btn.disabled=false; }
+      errEl.textContent='Could not save. Try again.'; errEl.style.display='block';
+    });
+  } else {
+    if(btn){ btn.textContent='✅ Saved!'; btn.disabled=false; }
+    setTimeout(function(){ if(btn){ btn.textContent='💾 Save Profile'; } }, 2000);
+  }
 }
 
 function populateDoctorSelect(selectId){
@@ -1651,6 +1743,22 @@ try{
   window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
   // Get notes by patientId (for THIS specific visit - used by doctor writing notes)
+  // Doctor profile save/load
+  window.fbSaveProfile=function(doctorId, data){
+    return getDocs(query(collection(db,'doctors'),where('doctorId','==',doctorId))).then(function(snap){
+      if(!snap.empty){
+        return updateDoc(doc(db,'doctors',snap.docs[0].id), Object.assign({doctorId:doctorId},data,{updatedAt:serverTimestamp()}));
+      } else {
+        return addDoc(collection(db,'doctors'), Object.assign({doctorId:doctorId},data,{createdAt:serverTimestamp()}));
+      }
+    }).catch(function(e){ console.error(e); });
+  };
+  window.fbGetProfile=function(doctorId){
+    return getDocs(query(collection(db,'doctors'),where('doctorId','==',doctorId)))
+      .then(function(snap){ return snap.empty?null:snap.docs[0].data(); })
+      .catch(function(e){ console.error(e); return null; });
+  };
+
   window.fbGetNotesByPatientId=function(patientId){
     return getDocs(query(collection(db,'notes'),where('patientId','==',patientId)))
       .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
