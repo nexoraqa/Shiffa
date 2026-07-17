@@ -429,6 +429,50 @@ function loadPage(page){
     return;
   }
 
+  // PROFILE PAGE (must be before role checks)
+  if(page==='profile' && u.role==='doctor'){
+    mc.innerHTML=
+      '<h2 style="color:#0F1F17;margin-bottom:20px">👤 Mon Profil</h2>'+
+      '<div style="background:#fff;border-radius:16px;border:1.5px solid #D6E8DE;padding:20px;margin-bottom:16px">'+
+        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #D6E8DE">'+
+          '<div style="width:56px;height:56px;background:linear-gradient(135deg,#1B6B4A,#2D9166);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px">👨‍⚕️</div>'+
+          '<div>'+
+            '<div style="font-weight:800;font-size:16px;color:#0F1F17" id="prof-display-name">'+u.name+'</div>'+
+            '<div style="font-size:13px;color:#8FA89D">'+u.cabinetName+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:14px">'+
+          '<label class="form-label">Full Name *</label>'+
+          '<input class="form-input" id="prof-name" value="'+u.name+'" placeholder="Dr. Your Name"/>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:14px">'+
+          '<label class="form-label">Specialty *</label>'+
+          '<input class="form-input" id="prof-specialty" value="'+(u.specialty||'')+'" placeholder="e.g. Médecine Générale"/>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:14px">'+
+          '<label class="form-label">City / Address</label>'+
+          '<input class="form-input" id="prof-city" value="'+(u.city||'')+'" placeholder="e.g. Bou Saada, M Sila"/>'+
+        '</div>'+
+        '<div class="form-field" style="margin-bottom:20px">'+
+          '<label class="form-label">Phone (optional)</label>'+
+          '<input class="form-input" id="prof-phone" value="'+(u.phone||'')+'" placeholder="e.g. 0555 123 456"/>'+
+        '</div>'+
+        '<div id="prof-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:12px"></div>'+
+        '<button onclick="saveProfile()" class="btn-filled" style="width:100%;padding:14px;font-size:15px">💾 Save Profile</button>'+
+      '</div>';
+    if(window.fbGetProfile){
+      window.fbGetProfile(u.doctorId).then(function(prof){
+        if(prof){
+          if(document.getElementById('prof-name')) document.getElementById('prof-name').value=prof.name||u.name;
+          if(document.getElementById('prof-specialty')) document.getElementById('prof-specialty').value=prof.specialty||u.specialty||'';
+          if(document.getElementById('prof-city')) document.getElementById('prof-city').value=prof.city||u.city||'';
+          if(document.getElementById('prof-phone')) document.getElementById('prof-phone').value=prof.phone||'';
+        }
+      });
+    }
+    return;
+  }
+
   // OVERVIEW PAGES
   if(u.role==='superadmin'){
     mc.innerHTML=banner+
@@ -521,10 +565,8 @@ function loadPage(page){
     }
     return;
   }
+  // Profile page handled above
   if(page==='profile'){
-    var u = currentUser;
-    mc.innerHTML=
-      '<h2 style="color:#0F1F17;margin-bottom:20px">👤 Mon Profil</h2>'+
       '<div style="background:#fff;border-radius:16px;border:1.5px solid #D6E8DE;padding:20px;margin-bottom:16px">'+
         '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #D6E8DE">'+
           '<div style="width:56px;height:56px;background:linear-gradient(135deg,#1B6B4A,#2D9166);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px">👨‍⚕️</div>'+
