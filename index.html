@@ -384,13 +384,13 @@ function loadPage(page){
       '<button onclick="changeQueueDate(1)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 14px;font-size:16px;cursor:pointer">→</button>'+
       '</div>'+
       '<div id="live-stats-bar" style="display:flex;gap:8px;margin-bottom:14px">'+
-      '<div style="flex:1;background:#FFF8E7;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #F0A50030">'+
+      '<div data-f="waiting" onclick="filterQueueBtn(this)" id="ls-box-waiting" style="flex:1;background:#FFF8E7;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #F0A50030;cursor:pointer">'+
       '<div id="ls-waiting" style="font-size:22px;font-weight:900;color:#F0A500">—</div>'+
       '<div style="font-size:10px;color:#8FA89D;font-weight:600;margin-top:1px">WAITING</div></div>'+
-      '<div style="flex:1;background:#E8F5EF;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #1B6B4A30">'+
+      '<div data-f="inprogress" onclick="filterQueueBtn(this)" id="ls-box-progress" style="flex:1;background:#E8F5EF;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #1B6B4A30;cursor:pointer">'+
       '<div id="ls-progress" style="font-size:22px;font-weight:900;color:#1B6B4A">—</div>'+
       '<div style="font-size:10px;color:#8FA89D;font-weight:600;margin-top:1px">WITH DOCTOR</div></div>'+
-      '<div style="flex:1;background:#F0F0F0;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #8FA89D30">'+
+      '<div data-f="done" onclick="filterQueueBtn(this)" id="ls-box-done" style="flex:1;background:#F0F0F0;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #8FA89D30;cursor:pointer">'+
       '<div id="ls-done" style="font-size:22px;font-weight:900;color:#8FA89D">—</div>'+
       '<div style="font-size:10px;color:#8FA89D;font-weight:600;margin-top:1px">DONE</div></div>'+
       '</div>'+
@@ -1549,25 +1549,30 @@ function renderQueue(patients){
     else if(patients[i].status==='inprogress') cProgress++;
     else if(patients[i].status==='done') cDone++;
   }
-  // Update live stats bar if it exists
+  // Update live stats bar numbers
   var lsW=document.getElementById('ls-waiting');
   var lsP=document.getElementById('ls-progress');
   var lsD=document.getElementById('ls-done');
   if(lsW) lsW.textContent=cWaiting;
   if(lsP) lsP.textContent=cProgress;
   if(lsD) lsD.textContent=cDone;
+  // Highlight active filter box
+  var boxes={waiting:'ls-box-waiting',inprogress:'ls-box-progress',done:'ls-box-done'};
+  var colors={waiting:'#F0A500',inprogress:'#1B6B4A',done:'#8FA89D'};
+  var bgs={waiting:'#FFF8E7',inprogress:'#E8F5EF',done:'#F0F0F0'};
+  for(var bk in boxes){
+    var bEl=document.getElementById(boxes[bk]);
+    if(!bEl) continue;
+    if(window.queueFilter===bk){
+      bEl.style.background=colors[bk];
+      bEl.querySelector('div').style.color='#fff';
+    } else {
+      bEl.style.background=bgs[bk];
+      bEl.querySelector('div').style.color=colors[bk];
+    }
+  }
 
-  // Counter bar
-  var activeFilter = window.queueFilter;
-  var activeFilter = window.queueFilter;
-  var wBg=activeFilter==='waiting'?'#F0A500':'#FFF8E7', wC=activeFilter==='waiting'?'#fff':'#F0A500', wT=activeFilter==='waiting'?'#fff':'#8FA89D';
-  var pBg=activeFilter==='inprogress'?'#1B6B4A':'#E8F5EF', pC=activeFilter==='inprogress'?'#fff':'#1B6B4A', pT=activeFilter==='inprogress'?'#fff':'#8FA89D';
-  var dBg=activeFilter==='done'?'#8FA89D':'#F0F0F0', dC=activeFilter==='done'?'#fff':'#8FA89D', dT=activeFilter==='done'?'#fff':'#8FA89D';
-  var html='<div style="display:flex;gap:10px;margin-bottom:16px">';
-  html+='<div data-f="waiting" onclick="filterQueueBtn(this)" style="flex:1;background:'+wBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+wC+'">'+cWaiting+'</div><div style="font-size:11px;color:'+wT+';margin-top:2px">Waiting</div></div>';
-  html+='<div data-f="inprogress" onclick="filterQueueBtn(this)" style="flex:1;background:'+pBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+pC+'">'+cProgress+'</div><div style="font-size:11px;color:'+pT+';margin-top:2px">In Progress</div></div>';
-  html+='<div data-f="done" onclick="filterQueueBtn(this)" style="flex:1;background:'+dBg+';border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:20px;font-weight:800;color:'+dC+'">'+cDone+'</div><div style="font-size:11px;color:'+dT+';margin-top:2px">Done</div></div>';
-  html+='</div>';
+  var html='';
 
   // Show patients based on filter
   // If filter active → show filtered, else show all except done
