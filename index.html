@@ -1209,8 +1209,8 @@ function saveAndPrintRx(){
   }
 
   // Save prescription to Firebase - doctor saves only, receptionist prints
+  var rxBtn2 = document.querySelector('#popup-rx-form button:last-child');
   if(window.fbSaveRx){
-    var rxBtn2 = document.querySelector('#popup-rx-form button:last-child');
     if(rxBtn2){ rxBtn2.textContent='Saving...'; rxBtn2.disabled=true; }
     window.fbSaveRx(currentPatientId, {
       medicines: medicines,
@@ -1446,7 +1446,9 @@ function openPatientPopup(el){
       }
       visits.sort(function(a,b){ return b.visitDate > a.visitDate ? 1 : -1; });
       // Doctor sees LAST visit only (previous visit, not today's current one)
-      var today = new Date().toISOString().split('T')[0];
+      // Use local date to match how visitDate was saved
+      var now = new Date();
+      var today = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
       var prevVisits = visits.filter(function(v){ return v.visitDate !== today; });
       if(prevVisits.length === 0){
         historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">No previous visits — this is their first visit.</div>';
