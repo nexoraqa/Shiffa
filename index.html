@@ -606,6 +606,64 @@ function loadPage(page){
     }
     return;
   }
+  // PATIENTS PAGE
+  if(page==='patients' && u.role==='doctor'){
+    mc.innerHTML=
+      '<h2 style="color:#0F1F17;margin-bottom:16px">👥 My Patients</h2>'+
+      '<div style="position:relative;margin-bottom:16px">'+
+        '<input type="tel" id="pat-search" placeholder="🔍 Search by phone number..." '+
+        'style="width:100%;padding:12px 16px;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box" '+
+        'oninput="searchPatients(this.value)"/>'+
+      '</div>'+
+      '<div id="pat-list"><div style="text-align:center;padding:40px;color:#8FA89D">Enter a phone number to search</div></div>';
+    return;
+  }
+
+  // NOTES PAGE
+  if(page==='notes' && u.role==='doctor'){
+    mc.innerHTML=
+      '<h2 style="color:#0F1F17;margin-bottom:6px">📝 Today's Notes</h2>'+
+      '<div style="font-size:13px;color:#8FA89D;margin-bottom:16px">Your diagnoses for today</div>'+
+      '<div id="notes-list"><div style="text-align:center;padding:40px;color:#8FA89D">Loading...</div></div>';
+    // Load today's notes from Firebase
+    if(window.fbGetPatients){
+      var todayStr = (function(){ var n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); })();
+      window.fbGetPatients(todayStr).then(function(pts){
+        pts = pts.filter(function(p){ return p.doctor===u.doctorId; });
+        if(!pts.length){ document.getElementById('notes-list').innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes written today yet.</div>'; return; }
+        // Load notes for each patient
+        var promises = pts.map(function(p){ return window.fbGetNotesByPatientId ? window.fbGetNotesByPatientId(p.id).then(function(n){ return {patient:p,notes:n}; }) : Promise.resolve({patient:p,notes:[]}); });
+        Promise.all(promises).then(function(results){
+          var html='';
+          for(var i=0;i<results.length;i++){
+            var pt=results[i].patient;
+            var notes=results[i].notes;
+            var n=notes&&notes.length?notes[0]:null;
+            html+='<div style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;animation:slideIn 0.25s ease-out">';
+            html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
+            html+='<div><div style="font-weight:800;font-size:15px;color:#0F1F17">'+pt.name+'</div>';
+            html+='<div style="font-size:12px;color:#8FA89D">Age '+pt.age+' · '+pt.phone+'</div></div>';
+            html+='<span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:3px 8px;border-radius:8px;font-weight:600">'+(pt.visitType==='new'?'New':'Follow-up')+'</span>';
+            html+='</div>';
+            if(n){
+              html+='<div style="background:#F7FAF8;border-radius:8px;padding:12px">';
+              html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Diagnosis</div>';
+              html+='<div style="font-size:14px;font-weight:600;color:#0F1F17;margin-bottom:8px">'+(n.diagnosis||'—')+'</div>';
+              html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Treatment</div>';
+              html+='<div style="font-size:13px;color:#4A5E54">'+(n.treatment||'—')+'</div>';
+              html+='</div>';
+            } else {
+              html+='<div style="font-size:13px;color:#8FA89D;font-style:italic">No notes written yet</div>';
+            }
+            html+='</div>';
+          }
+          document.getElementById('notes-list').innerHTML=html;
+        });
+      });
+    }
+    return;
+  }
+
   mc.innerHTML='<p style="color:#8FA89D;padding:40px;text-align:center">Coming soon...</p>';
 }
 
@@ -633,6 +691,48 @@ function pickPrio(btn,val){
   if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
 
   if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
+}
+
+function searchPatients(phone){
+  var listEl = document.getElementById('pat-list');
+  if(!listEl) return;
+  var q = phone.trim();
+  if(q.length < 3){
+    listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">Enter at least 3 digits to search</div>';
+    return;
+  }
+  listEl.innerHTML='<div style="text-align:center;padding:20px;color:#8FA89D">Searching...</div>';
+  if(window.fbSearchPatientsByPhone){
+    window.fbSearchPatientsByPhone(q, currentUser.doctorId).then(function(results){
+      if(!results||!results.length){
+        listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">No patients found with this phone number.</div>';
+        return;
+      }
+      // Group by phone to get unique patients with visit count
+      var grouped={};
+      for(var i=0;i<results.length;i++){
+        var p=results[i];
+        if(!grouped[p.phone]){ grouped[p.phone]={name:p.name,age:p.age,phone:p.phone,visits:[],lastVisit:''}; }
+        grouped[p.phone].visits.push(p.visitDate);
+        if(p.visitDate>grouped[p.phone].lastVisit) grouped[p.phone].lastVisit=p.visitDate;
+      }
+      var html='';
+      for(var phone in grouped){
+        var pt=grouped[phone];
+        pt.visits.sort(function(a,b){return b>a?1:-1;});
+        html+='<div style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;animation:slideIn 0.25s ease-out">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+        html+='<div>';
+        html+='<div style="font-weight:800;font-size:16px;color:#0F1F17">'+pt.name+'</div>';
+        html+='<div style="font-size:13px;color:#8FA89D;margin-top:3px">Age '+pt.age+' · 📞 '+pt.phone+'</div>';
+        html+='<div style="font-size:12px;color:#8FA89D;margin-top:2px">Last visit: '+pt.lastVisit+' · '+pt.visits.length+' total visit'+(pt.visits.length>1?'s':'')+'</div>';
+        html+='</div>';
+        html+='<span style="background:#E8F5EF;color:#1B6B4A;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:700">'+pt.visits.length+'x</span>';
+        html+='</div></div>';
+      }
+      listEl.innerHTML=html;
+    });
+  }
 }
 
 function saveProfile(){
@@ -1785,6 +1885,19 @@ try{
   window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
   // Get notes by patientId (for THIS specific visit - used by doctor writing notes)
+  // Search patients by phone for doctor
+  window.fbSearchPatientsByPhone=function(phoneQuery, doctorId){
+    return getDocs(query(collection(db,'patients'),where('doctor','==',doctorId)))
+      .then(function(snap){
+        var list=[];
+        snap.forEach(function(d){
+          var data=Object.assign({id:d.id},d.data());
+          if(data.phone && data.phone.includes(phoneQuery)) list.push(data);
+        });
+        return list;
+      }).catch(function(e){ console.error(e); return []; });
+  };
+
   // Doctor profile save/load
   window.fbSaveProfile=function(doctorId, data){
     return getDocs(query(collection(db,'doctors'),where('doctorId','==',doctorId))).then(function(snap){
