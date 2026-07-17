@@ -973,6 +973,10 @@ function saveNotes(){
 
 function printSavedRx(rx){
   var u = currentUser;
+  // Use the doctor who wrote the prescription, not the current user
+  var doctorName = rx.doctor || u.name;
+  var doctorSpecialty = rx.doctorSpecialty || u.specialty || 'Médecine Générale';
+  var doctorCity = rx.doctorCity || u.city || 'Algérie';
   var pname = document.getElementById('popup-name').textContent;
   var pinfo = document.getElementById('popup-info').textContent;
   var today_fr = new Date().toLocaleDateString('fr-DZ',{day:'2-digit',month:'long',year:'numeric'});
@@ -1030,17 +1034,13 @@ function printSavedRx(rx){
 
     '<div class="watermark">SHIFAA</div>'+
 
-    '<div class="no-print">'+
-    '<button onclick="window.print()" style="padding:12px 32px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif">🖨️ Imprimer</button>'+
-    '&nbsp;&nbsp;'+
-    '<button onclick="window.close()" style="padding:12px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:Arial,sans-serif">Fermer</button>'+
-    '</div>'+
+
 
     '<div class="top">'+
       '<div class="clinic-block">'+
         '<div class="clinic-name">🌿 Cabinet Médical</div>'+
-        '<div class="doctor-title">Dr. '+u.name+'</div>'+
-        '<div class="doctor-sub">'+(u.specialty||'Médecine Générale')+'<br>'+(u.city||'Algérie')+'</div>'+
+        '<div class="doctor-title">Dr. '+doctorName+'</div>'+
+        '<div class="doctor-sub">'+doctorSpecialty+'<br>'+doctorCity+'</div>'+
       '</div>'+
       '<div class="ordonnance-title">'+
         '<div class="ord-word">Ordonnance</div>'+
@@ -1220,6 +1220,8 @@ function saveAndPrintRx(){
       medicines: medicines,
       notes: notes,
       doctor: u.name,
+      doctorSpecialty: u.specialty||'Médecine Générale',
+      doctorCity: u.city||'Algérie',
       doctorId: u.doctorId,
       patientName: pname,
       patientPhone: currentPatientPhone||'',
