@@ -114,6 +114,8 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .mnav-btn .mi{font-size:22px;line-height:1}
 .mnav-btn.active{color:var(--green-l);background:var(--green-xl)}
 .mnav-btn.active::after{content:'';display:block;width:4px;height:4px;background:var(--green-l);border-radius:50%;margin:2px auto 0}
+.mnav-badge{position:absolute;top:-2px;right:-2px;background:#EF4444;color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #fff;line-height:1}
+.mnav-wrap{position:relative;display:inline-block}
 @media print{
   body > *:not(#rx-print-overlay){ display:none !important; }
   #rx-print-overlay{ position:absolute !important; box-shadow:none !important; }
@@ -345,10 +347,23 @@ function buildNav(user){
     var lbl=items[i][0],id=items[i][1];
     var act=(id==='dashboard');
     sh+='<button class="nav-btn'+(act?' active':'')+'" id="snav-'+id+'" onclick="goPage(\''+id+'\')">'+lbl+'</button>';
-    mh+='<button class="mnav-btn'+(act?' active':'')+'" id="mnav-'+id+'" onclick="goPage(\''+id+'\')"><span class="mi">'+lbl.split(' ')[0]+'</span><span>'+lbl.split(' ').slice(1).join(' ')+'</span></button>';
+    var isQueue=(id==='queue');
+    var qbadge=isQueue?'<span class="mnav-badge" id="queue-badge" style="display:none">0</span>':'';
+    mh+='<button class="mnav-btn'+(act?' active':'')+'" id="mnav-'+id+'" onclick="goPage(\''+id+'\')"><span class="mnav-wrap"><span class="mi">'+lbl.split(' ')[0]+'</span>'+qbadge+'</span><span>'+lbl.split(' ').slice(1).join(' ')+'</span></button>';
   }
   document.getElementById('sidebar-nav').innerHTML=sh;
   document.getElementById('mobile-nav').innerHTML=mh;
+}
+
+function updateQueueBadge(waitingCount){
+  var badge = document.getElementById('queue-badge');
+  if(!badge) return;
+  if(waitingCount > 0){
+    badge.textContent = waitingCount > 99 ? '99+' : waitingCount;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 function goPage(id){
@@ -2119,6 +2134,8 @@ function renderQueue(patients){
   if(lsW) lsW.textContent=cWaiting;
   if(lsP) lsP.textContent=cProgress;
   if(lsD) lsD.textContent=cDone;
+  // Update queue tab badge with waiting count
+  updateQueueBadge(cWaiting);
   // Highlight active filter box
   var boxes={waiting:'ls-box-waiting',inprogress:'ls-box-progress',done:'ls-box-done'};
   var colors={waiting:'#D97706',inprogress:'#2563A8',done:'#059669'};
