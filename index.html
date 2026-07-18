@@ -1626,6 +1626,363 @@ function saveNotes(){
   }
 }
 
+
+// ══════════════════════════════════════════
+// MISSING FUNCTIONS — restored
+// ══════════════════════════════════════════
+
+function closePopup(){
+  var popup = document.getElementById('patient-popup');
+  if(popup) popup.style.display='none';
+  currentPatientId=null; currentPatientPhone=null;
+  currentPatientAddress=null; currentPatientAge=null;
+}
+
+function openPatientPopup(el){
+  var details = el.querySelector('.patient-details') || el;
+  var name   = details.getAttribute('data-name');
+  var age    = details.getAttribute('data-age');
+  var gender = details.getAttribute('data-gender');
+  var phone  = details.getAttribute('data-phone');
+  var address= details.getAttribute('data-address');
+  var doctor = details.getAttribute('data-doctor');
+  var reason = details.getAttribute('data-reason');
+  var status = details.getAttribute('data-status');
+  var pid    = el.getAttribute('data-pid');
+
+  currentPatientId      = pid;
+  currentPatientPhone   = phone;
+  currentPatientAddress = address;
+  currentPatientAge     = age;
+
+  document.getElementById('popup-name').textContent  = name;
+  document.getElementById('popup-info').textContent  = 'Age '+age+' - '+gender;
+  document.getElementById('popup-phone').textContent = (phone?'Phone: '+phone:'')+(address?' | '+address:'');
+
+  // Reset both forms
+  var notesForm = document.getElementById('popup-notes-form');
+  var rxForm    = document.getElementById('popup-rx-form');
+  if(notesForm) notesForm.style.display='none';
+  if(rxForm)    rxForm.style.display='none';
+
+  var notesBtn = document.getElementById('write-notes-btn');
+  var rxBtn    = document.getElementById('rx-btn');
+  if(notesBtn){ notesBtn.textContent='Write Notes'; notesBtn.style.background='linear-gradient(135deg,var(--green),var(--green-l))'; notesBtn.style.color='#fff'; notesBtn.style.border='none'; notesBtn.disabled=false; notesBtn.style.display='none'; }
+  if(rxBtn){ rxBtn.textContent='Prescription'; rxBtn.style.background='linear-gradient(135deg,#1565C0,#1976D2)'; rxBtn.style.color='#fff'; rxBtn.style.border='none'; rxBtn.disabled=false; rxBtn.style.opacity='1'; rxBtn.onclick=function(){toggleRxForm();}; rxBtn.style.display='none'; }
+
+  var histSection = document.querySelector('#patient-popup .popup-history-section');
+  var isDoctor = currentUser.role==='doctor';
+  var isRecep  = currentUser.role==='receptionist';
+
+  if(isDoctor){
+    if(histSection) histSection.style.display='';
+    if(status==='inprogress'){
+      if(notesBtn){ notesBtn.style.display=''; }
+      if(rxBtn){ rxBtn.style.display=''; rxBtn.onclick=function(){toggleRxForm();}; }
+    }
+  } else if(isRecep){
+    if(histSection) histSection.style.display='none';
+    if(notesBtn) notesBtn.style.display='none';
+    if(rxBtn){
+      if(status==='done'){
+        rxBtn.style.display='';
+        rxBtn.textContent='⏳ Loading...';
+        rxBtn.onclick=function(){return false;};
+        rxBtn.disabled=true;
+        if(window.fbGetRx && pid){
+          window.fbGetRx(pid).then(function(rxList){
+            var b=document.getElementById('rx-btn');
+            if(!b) return;
+            if(rxList && rxList.length>0){
+              var rx=rxList[rxList.length-1];
+              b.textContent='🖨️ Print Prescription';
+              b.disabled=false;
+              b.onclick=function(e){e.stopPropagation();printSavedRx(rx);};
+            } else {
+              b.textContent='No Prescription Yet';
+              b.disabled=true;
+              b.style.opacity='0.5';
+              b.onclick=function(){return false;};
+            }
+          });
+        }
+      } else {
+        rxBtn.style.display='none';
+      }
+    }
+  }
+
+  // Show popup
+  document.getElementById('patient-popup').style.display='block';
+
+  // Load history
+  var historyEl = document.getElementById('popup-history');
+  if(!historyEl) return;
+
+  if(isRecep){
+    if(status!=='waiting'){ historyEl.innerHTML=''; return; }
+    historyEl.innerHTML='<div style="font-size:13px;color:#8FA89D">Loading...</div>';
+    if(window.fbGetPatientHistory && phone){
+      window.fbGetPatientHistory(phone).then(function(visits){
+        if(!visits||!visits.length){ historyEl.innerHTML='<div style="font-size:13px;color:#8FA89D">First visit.</div>'; return; }
+        visits.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;});
+        var last=visits[0];
+        var dName=last.doctor;
+        for(var j=0;j<ALL_DOCTORS.length;j++){if(ALL_DOCTORS[j].id===last.doctor){dName=ALL_DOCTORS[j].name;break;}}
+        historyEl.innerHTML='<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px"><div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Last visit</div><div style="font-weight:700;font-size:14px;color:#0F1F17">'+last.visitDate+'</div><div style="font-size:13px;color:#4A5E54;margin-top:3px">'+dName+'</div>'+(last.reason?'<div style="font-size:12px;color:#8FA89D;margin-top:2px">'+last.reason+'</div>':'')+'</div>';
+      });
+    }
+    return;
+  }
+
+  historyEl.innerHTML='<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>';
+  if(window.fbGetPatientHistory && phone){
+    Promise.all([
+      window.fbGetPatientHistory(phone),
+      window.fbGetNotesByPatientId && pid ? window.fbGetNotesByPatientId(pid) : Promise.resolve([])
+    ]).then(function(results){
+      var visits=results[0]||[];
+      var notes=results[1]||[];
+      visits.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;});
+      var now=new Date();
+      var today2=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+      var prev=visits.filter(function(v){return v.visitDate!==today2;});
+      if(!prev.length){ historyEl.innerHTML='<div style="font-size:13px;color:#8FA89D;padding:8px 0">No previous visits — this is their first visit.</div>'; return; }
+      var last=prev[0];
+      var dName=last.doctor;
+      for(var j=0;j<ALL_DOCTORS.length;j++){if(ALL_DOCTORS[j].id===last.doctor){dName=ALL_DOCTORS[j].name;break;}}
+      var notesMap={};
+      for(var n=0;n<notes.length;n++){var key=(notes[n].savedAt||'').substring(0,10)+'_'+(notes[n].doctorId||'');if(!notesMap[key])notesMap[key]=[];notesMap[key].push(notes[n]);}
+      var html='<div style="font-size:12px;font-weight:700;color:#8FA89D;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Last Visit</div>';
+      html+='<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px;margin-bottom:10px">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:14px;color:#0F1F17">'+last.visitDate+'</div><span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:2px 8px;border-radius:8px">'+(last.visitType==='new'?'New':'Follow-up')+'</span></div>';
+      html+='<div style="font-size:12px;color:#4A5E54">'+dName+'</div>';
+      if(last.reason) html+='<div style="font-size:12px;color:#8FA89D;margin-top:3px">'+last.reason+'</div>';
+      var nKey=(last.visitDate||'')+'_'+(last.doctor||'');
+      if(notesMap[nKey]){var nd=notesMap[nKey][0];html+='<div style="margin-top:8px;padding:8px;background:#fff;border-radius:6px"><div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Diagnosis</div><div style="font-size:13px;font-weight:600;color:#0F1F17">'+nd.diagnosis+'</div></div>';}
+      html+='</div>';
+      historyEl.innerHTML=html;
+    });
+  }
+}
+
+function toggleNotesForm(){
+  var notesForm=document.getElementById('popup-notes-form');
+  var rxForm=document.getElementById('popup-rx-form');
+  var btn=document.getElementById('write-notes-btn');
+  var rxBtn=document.getElementById('rx-btn');
+  if(notesForm.style.display==='none'){
+    notesForm.style.display='block';
+    if(rxForm) rxForm.style.display='none';
+    if(rxBtn){rxBtn.textContent='Prescription';rxBtn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';rxBtn.style.color='#fff';rxBtn.style.border='none';}
+    btn.textContent='Cancel Notes';btn.style.background='#fff';btn.style.color='#4A5E54';btn.style.border='1px solid #D6E8DE';
+    document.getElementById('note-err').style.display='none';
+    loadExistingNotes();
+  } else {
+    notesForm.style.display='none';
+    btn.textContent='Write Notes';btn.style.background='linear-gradient(135deg,var(--green),var(--green-l))';btn.style.color='#fff';btn.style.border='none';
+  }
+}
+
+function toggleRxForm(){
+  var rxForm=document.getElementById('popup-rx-form');
+  var notesForm=document.getElementById('popup-notes-form');
+  var btn=document.getElementById('rx-btn');
+  var notesBtn=document.getElementById('write-notes-btn');
+  if(rxForm.style.display==='none'){
+    rxForm.style.display='block';
+    if(notesForm) notesForm.style.display='none';
+    if(notesBtn){notesBtn.textContent='Write Notes';notesBtn.style.background='linear-gradient(135deg,var(--green),var(--green-l))';notesBtn.style.color='#fff';notesBtn.style.border='none';}
+    btn.textContent='Cancel Prescription';btn.style.background='#fff';btn.style.color='#4A5E54';btn.style.border='1px solid #D6E8DE';
+    loadExistingRx();
+  } else {
+    rxForm.style.display='none';
+    btn.textContent='Prescription';btn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';btn.style.color='#fff';btn.style.border='none';
+  }
+}
+
+function loadExistingRx(){
+  if(!currentPatientId) return;
+  if(window.fbGetRx){
+    window.fbGetRx(currentPatientId).then(function(rxList){
+      var meds=document.getElementById('rx-medicines');
+      var rxNotesEl=document.getElementById('rx-notes');
+      if(rxList&&rxList.length>0){
+        var rx=rxList[rxList.length-1];
+        if(meds&&rx.medicines&&rx.medicines.length>0){
+          meds.innerHTML='';
+          for(var m=0;m<rx.medicines.length;m++){
+            var div=document.createElement('div');
+            div.className='rx-line'; div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
+            div.innerHTML='<input type="text" placeholder="Medicine name" value="'+(rx.medicines[m].med||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/><input type="text" placeholder="Dose + duration" value="'+(rx.medicines[m].dose||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/><button onclick="removeRxLine(this)" style="padding:9px 12px;background:var(--red-l);color:var(--red);border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
+            meds.appendChild(div);
+          }
+        }
+        if(rxNotesEl) rxNotesEl.value=rx.notes||'';
+      } else {
+        if(meds) meds.innerHTML='<div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px"><input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/><input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/><button onclick="removeRxLine(this)" style="padding:9px 12px;background:var(--red-l);color:var(--red);border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button></div>';
+        if(rxNotesEl) rxNotesEl.value='';
+      }
+    });
+  }
+}
+
+function addRxLine(){
+  var meds=document.getElementById('rx-medicines');
+  if(!meds) return;
+  var div=document.createElement('div');
+  div.className='rx-line'; div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
+  div.innerHTML='<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/><input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/><button onclick="removeRxLine(this)" style="padding:9px 12px;background:var(--red-l);color:var(--red);border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
+  meds.appendChild(div);
+}
+
+function removeRxLine(btn){
+  var lines=document.getElementById('rx-medicines').querySelectorAll('.rx-line');
+  if(lines.length>1) btn.parentElement.remove();
+}
+
+function saveAndPrintRx(){
+  var u=currentUser;
+  var pname=document.getElementById('popup-name').textContent;
+  var pinfo=document.getElementById('popup-info').textContent;
+  var rxBtn2=document.querySelector('#popup-rx-form button:last-child');
+  var lines=document.getElementById('rx-medicines').querySelectorAll('.rx-line');
+  var medicines=[];
+  for(var i=0;i<lines.length;i++){
+    var inputs=lines[i].querySelectorAll('input');
+    var med=inputs[0]?inputs[0].value.trim():'';
+    var dose=inputs[1]?inputs[1].value.trim():'';
+    if(med) medicines.push({med:med,dose:dose});
+  }
+  var notes=document.getElementById('rx-notes').value.trim();
+  if(!medicines.length){
+    alert('Please add at least one medicine.');
+    return;
+  }
+  if(!currentPatientId){
+    alert('Error: no patient selected.');
+    return;
+  }
+  if(rxBtn2){rxBtn2.textContent='Saving...';rxBtn2.disabled=true;}
+  if(window.fbSaveRx){
+    window.fbSaveRx(currentPatientId,{
+      medicines:medicines, notes:notes,
+      doctor:u.name, doctorSpecialty:u.specialty||'Médecine Générale',
+      doctorCity:u.city||'Algérie', doctorId:u.doctorId,
+      patientName:pname, patientPhone:currentPatientPhone||'',
+      savedAt:new Date().toISOString()
+    }).then(function(id){
+      if(rxBtn2){
+        rxBtn2.textContent='✅ Saved — click again to update';
+        rxBtn2.disabled=false;
+        rxBtn2.style.background='#E3F0FF';
+        rxBtn2.style.color='#1565C0';
+        setTimeout(function(){
+          rxBtn2.textContent='Save Prescription';
+          rxBtn2.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
+          rxBtn2.style.color='#fff';
+        },2000);
+      }
+    }).catch(function(){
+      if(rxBtn2){rxBtn2.textContent='Save Prescription';rxBtn2.disabled=false;}
+    });
+  } else {
+    if(rxBtn2){rxBtn2.textContent='✅ Saved';setTimeout(function(){rxBtn2.textContent='Save Prescription';},2000);}
+  }
+}
+
+function renderQueue(patients){
+  var list=document.getElementById('queue-list');
+  if(!list) return;
+  if((!patients||patients.length===0)&&!window.queueFilter){
+    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No active patients right now.</p></div>';
+    return;
+  }
+  var pOrder={emergency:0,normal:1};
+  patients.sort(function(a,b){
+    var pd=(pOrder[a.priority]!==undefined?pOrder[a.priority]:99)-(pOrder[b.priority]!==undefined?pOrder[b.priority]:99);
+    if(pd!==0) return pd;
+    var ta=a.createdAt||''; var tb=b.createdAt||'';
+    return ta<tb?-1:ta>tb?1:0;
+  });
+  var cWaiting=0,cProgress=0,cDone=0;
+  for(var i=0;i<patients.length;i++){
+    if(patients[i].status==='waiting') cWaiting++;
+    else if(patients[i].status==='inprogress') cProgress++;
+    else if(patients[i].status==='done') cDone++;
+  }
+  var lsW=document.getElementById('ls-waiting');
+  var lsP=document.getElementById('ls-progress');
+  var lsD=document.getElementById('ls-done');
+  if(lsW) lsW.textContent=cWaiting;
+  if(lsP) lsP.textContent=cProgress;
+  if(lsD) lsD.textContent=cDone;
+  updateQueueBadge(cWaiting);
+  var boxes={waiting:'ls-box-waiting',inprogress:'ls-box-progress',done:'ls-box-done'};
+  var colors={waiting:'#D97706',inprogress:'#2563A8',done:'#059669'};
+  var bgs={waiting:'#FEF3C7',inprogress:'#EEF2FF',done:'#ECFDF5'};
+  for(var bk in boxes){
+    var bEl=document.getElementById(boxes[bk]);
+    if(!bEl) continue;
+    if(window.queueFilter===bk){bEl.style.background=colors[bk];var fv=bEl.querySelector('div');if(fv)fv.style.color='#fff';}
+    else{bEl.style.background=bgs[bk];var fv2=bEl.querySelector('div');if(fv2)fv2.style.color=colors[bk];}
+  }
+  var active;
+  if(window.queueFilter){
+    active=patients.filter(function(p){return p.status===window.queueFilter;});
+    if(window.queueFilter==='done') active=active.slice().sort(function(a,b){var ta=a.createdAt||'';var tb=b.createdAt||'';return ta>tb?-1:ta<tb?1:0;});
+  } else {
+    active=patients.filter(function(p){return p.status!=='done';});
+  }
+  if(!active.length){
+    var msgs={waiting:'No patients waiting right now.',inprogress:'No patients in progress right now.',done:'No patients done yet today.'};
+    list.innerHTML='<div class="empty-state"><div style="font-size:32px">🏥</div><p>'+(window.queueFilter?msgs[window.queueFilter]:'No active patients right now.')+'</p></div>';
+    return;
+  }
+  var STATUS_DATA2={waiting:['#F59E0B','#FEF3C7','⧐️ Waiting'],inprogress:['#2563A8','#EEF2FF','🦺 In Progress'],done:['#059669','#ECFDF5','✅ Done']};
+  var html='';
+  for(var i=0;i<active.length;i++){
+    var p=active[i];
+    var isEmergency=p.priority==='emergency';
+    var s=STATUS_DATA2[p.status]||STATUS_DATA2.waiting;
+    var tc=p.visitType==='new'?'type-new':'type-followup';
+    var tl=p.visitType==='new'?'NEW':'FOLLOW-UP';
+    var leftColor=p.status==='waiting'?'#F59E0B':p.status==='inprogress'?'#2563A8':'#10B981';
+    if(isEmergency) leftColor='#EF4444';
+    var cardBg=isEmergency?'background:#FFFAF9;border-color:#FECACA;':'background:#fff;';
+    var waitStr='';
+    if(p.createdAt&&p.status==='waiting'){
+      var created=p.createdAt.toDate?p.createdAt.toDate():new Date(p.createdAt);
+      var diffMin=Math.floor((Date.now()-created.getTime())/60000);
+      if(diffMin<1) waitStr='Just arrived';
+      else if(diffMin<60) waitStr=diffMin+' min';
+      else waitStr=Math.floor(diffMin/60)+'h '+(diffMin%60)+'m';
+    }
+    var chipBg=p.status==='waiting'?'#FEF3C7':p.status==='inprogress'?'#EEF2FF':'#ECFDF5';
+    var chipColor=p.status==='waiting'?'#D97706':p.status==='inprogress'?'#2563A8':'#059669';
+    if(isEmergency&&p.status==='waiting'){chipBg='#FEE2E2';chipColor='#EF4444';}
+    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBg+'border-left:4px solid '+leftColor+';cursor:pointer;padding:0;" onclick="openPatientPopup(this)">';
+    html+='<div style="display:flex;align-items:stretch">';
+    html+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;padding:14px 0;border-right:1px solid #F3F4F6">';
+    html+='<span style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">No.</span>';
+    html+='<span style="font-size:24px;font-weight:900;color:'+(isEmergency?'#EF4444':'#0D1117')+';line-height:1;letter-spacing:-1px">'+(i+1)+'</span>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:12px 14px">';
+    html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">';
+    html+='<span style="font-weight:800;font-size:15px;color:#0D1117;letter-spacing:-0.3px">'+p.name+'</span>';
+    if(isEmergency) html+='<span style="font-size:9px;font-weight:700;background:#FEE2E2;color:#EF4444;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px">Emergency</span>';
+    html+='<span class="'+tc+'">'+tl+'</span>';
+    html+='</div>';
+    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:8px;font-weight:500">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between">';
+    html+='<button data-status="'+p.status+'" onclick="event.stopPropagation();cycleStatus(\''+p.id+'\',this)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.2px">'+s[2]+'</button>';
+    if(waitStr) html+='<span style="font-size:11px;color:#F59E0B;font-weight:700">⏱ '+waitStr+'</span>';
+    html+='</div>';
+    html+='</div></div></div>';
+  }
+  list.innerHTML=html;
+}
+
 function printSavedRx(rx){
   var u = currentUser;
   // Use the doctor who wrote the prescription, not the current user
