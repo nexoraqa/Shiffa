@@ -312,24 +312,17 @@ function doLogin(){
             if(prof.phone) currentUser.phone=prof.phone;
           }
           showDashboard(currentUser);
-          // Start real-time listener for doctor
-          if(currentUser.role==='doctor' && currentUser.doctorId && window.fbStartListening){
-            window.fbStartListening(currentUser.doctorId);
-          }
+
         });
       } else {
         showDashboard(user);
-        // Start real-time listener for doctor
-        if(user.role==='doctor' && user.doctorId && window.fbStartListening){
-          window.fbStartListening(user.doctorId);
-        }
+
       }
     }
     else{showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;}
   },600);
 }
 function doLogout(){
-  if(window._unsubscribe){ window._unsubscribe(); window._unsubscribe=null; }
   dismissNotif();
   currentUser=null;
   document.getElementById('dashboard-page').style.display='none';
@@ -410,7 +403,7 @@ function showInAppNotification(p){
   }
 
   // Show banner
-  banner.classList.add('show');
+  banner.style.display='block';
 
   // Auto dismiss after 6 seconds (emergency stays 10 seconds)
   if(window._notifTimer) clearTimeout(window._notifTimer);
@@ -425,7 +418,7 @@ function dismissAndGo(){
 }
 function dismissNotif(){
   var banner = document.getElementById('notif-banner');
-  if(banner) banner.classList.remove('show');
+  if(banner) banner.style.display='none';
   if(window._notifTimer) clearTimeout(window._notifTimer);
 }
 
@@ -1851,7 +1844,7 @@ function printSavedRx(rx){
 <div id="firebase-status" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;z-index:500;pointer-events:none"></div>
 
 <!-- IN-APP NOTIFICATION BANNER -->
-<div id="notif-banner" onclick="dismissAndGo()" style="position:fixed;top:-100px;left:50%;transform:translateX(-50%);background:#0D1117;color:#fff;border-radius:14px;padding:14px 18px;min-width:280px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.3);z-index:9999;cursor:pointer;border-left:4px solid #2563A8;transition:top 0.4s cubic-bezier(0.34,1.56,0.64,1)">
+<div id="notif-banner" onclick="dismissAndGo()" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0D1117;color:#fff;border-radius:14px;padding:14px 18px;min-width:280px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.3);z-index:9999;cursor:pointer;border-left:4px solid #2563A8">
   <span onclick="event.stopPropagation();dismissNotif()" style="position:absolute;top:10px;right:12px;font-size:16px;color:rgba(255,255,255,0.4);cursor:pointer">✕</span>
   <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px" id="notif-title">🔔 New Patient Waiting</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.65)" id="notif-body"></div>
@@ -1860,28 +1853,10 @@ function printSavedRx(rx){
 <script type="module">
 try{
   const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-  const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc,onSnapshot}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
   const config={apiKey:"AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",authDomain:"shiffa-fcae0.firebaseapp.com",projectId:"shiffa-fcae0",storageBucket:"shiffa-fcae0.firebasestorage.app",messagingSenderId:"48392150056",appId:"1:48392150056:web:3c89b803c4c8220298e91d"};
   const app=initializeApp(config);
   const db=getFirestore(app);
-
-  window.fbStartListening=function(doctorId){
-    if(window._unsubscribe) window._unsubscribe();
-    var now=new Date();
-    var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-    var q=query(collection(db,'patients'),where('doctor','==',doctorId),where('visitDate','==',todayStr));
-    var isFirst=true; var knownIds={};
-    window._unsubscribe=onSnapshot(q,function(snap){
-      if(isFirst){ snap.forEach(function(d){ knownIds[d.id]=true; }); isFirst=false; return; }
-      snap.docChanges().forEach(function(change){
-        if(change.type==='added'&&!knownIds[change.doc.id]){
-          knownIds[change.doc.id]=true;
-          var p=change.doc.data();
-          if(currentUser&&currentUser.role==='doctor') showInAppNotification(p);
-        }
-      });
-    },function(err){ console.error('Listener:',err); });
-  };
 
   window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
   window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
