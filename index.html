@@ -1697,3 +1697,155 @@ function printSavedRx(rx){
     '.sig-label-f{font-size:11px;color:#555;font-family:Arial,sans-serif}'+
     '.stamp-circle{width:110px;height:110px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;font-family:Arial,sans-serif;margin:0 auto 6px}'+
     '.watermark{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) rotate(-30deg);font-size:80px;color:rgba(27,107,74,0.04);font-weight:900;pointer-events:none;white-space:nowrap;z-index:0}'+
+    '.watermark{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) rotate(-30deg);font-size:80px;color:rgba(27,107,74,0.04);font-weight:900;pointer-events:none;white-space:nowrap;z-index:0}'+
+    '@media print{.no-print{display:none}body{margin:10px;padding:20px}.watermark{display:block}}'+
+    '</style></head><body>'+
+    '<div class="watermark">SHIFAA</div>'+
+    '<div class="no-print" style="text-align:center;padding:16px;background:#f5f5f5;border-bottom:1px solid #ddd;font-family:Arial,sans-serif">'+
+    '<button onclick="document.getElementById(\'rx-print-overlay\').remove()" style="padding:10px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-right:10px">\u2190 Back</button>'+
+    '<button onclick="window.print()" style="padding:10px 28px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">\U0001f5a8\ufe0f Imprimer</button>'+
+    '</div>'+
+    '<div style="max-width:680px;margin:20px auto;padding:20px">'+
+    '<div class="top">'+
+      '<div class="clinic-block">'+
+        '<div class="clinic-name">\U0001f33f Cabinet M\u00e9dical</div>'+
+        '<div class="doctor-title">'+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'</div>'+
+        '<div class="doctor-sub">'+doctorSpecialty+'<br>'+doctorCity+'</div>'+
+      '</div>'+
+      '<div class="ordonnance-title">'+
+        '<div class="ord-word">Ordonnance</div>'+
+        '<div class="ord-date">Le : '+today_fr+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="padding:10px 0 18px 0;border-bottom:1px solid #e8f0eb;margin-bottom:18px">'+
+      '<div style="font-size:10px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;margin-bottom:6px">Nom du patient</div>'+
+      '<div style="font-size:22px;font-weight:900;color:#0F1F17;margin-bottom:4px">'+pname+'</div>'+
+      '<div style="font-size:13px;color:#555;">'+pinfo+(patAddr?' &nbsp;|&nbsp; '+patAddr:'')+'</div>'+
+    '</div>'+
+    '<div class="rx-header">'+
+      '<div class="rp-symbol">Rp/</div>'+
+      '<div class="rx-label">M\u00e9dicaments prescrits</div>'+
+    '</div>'+
+    '<table>'+
+      '<thead><tr><th style="width:55%">M\u00e9dicament</th><th>Posologie / Dur\u00e9e</th></tr></thead>'+
+      '<tbody>'+medsRows+'</tbody>'+
+    '</table>'+
+    (notes?'<div class="instructions-box"><div class="inst-label">Instructions &amp; Conseils</div><div class="inst-text">'+notes+'</div></div>':'')+
+    '<div class="footer">'+
+      '<div class="sig-area">'+
+        '<div class="sig-line"></div>'+
+        '<div class="sig-label-f">Signature du m\u00e9decin</div>'+
+      '</div>'+
+    '</div>'+
+    '</div></body></html>';
+
+  var overlay = document.createElement('div');
+  overlay.id = 'rx-print-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:99999;overflow-y:auto';
+  document.body.appendChild(overlay);
+  var content = document.createElement('div');
+  content.innerHTML = rxHtml;
+  overlay.appendChild(content);
+}
+</script>
+
+<script type="module">
+try{
+  const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+  const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc,onSnapshot}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const config={apiKey:"AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",authDomain:"shiffa-fcae0.firebaseapp.com",projectId:"shiffa-fcae0",storageBucket:"shiffa-fcae0.firebasestorage.app",messagingSenderId:"48392150056",appId:"1:48392150056:web:3c89b803c4c8220298e91d"};
+  const app=initializeApp(config);
+  const db=getFirestore(app);
+
+  window.fbStartListening=function(doctorId){
+    if(window._unsubscribe) window._unsubscribe();
+    var now=new Date();
+    var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    var q=query(collection(db,'patients'),where('doctor','==',doctorId),where('visitDate','==',todayStr));
+    var isFirst=true; var knownIds={};
+    window._unsubscribe=onSnapshot(q,function(snap){
+      if(isFirst){ snap.forEach(function(d){ knownIds[d.id]=true; }); isFirst=false; return; }
+      snap.docChanges().forEach(function(change){
+        if(change.type==='added'&&!knownIds[change.doc.id]){
+          knownIds[change.doc.id]=true;
+          var p=change.doc.data();
+          if(currentUser&&currentUser.role==='doctor') showInAppNotification(p);
+        }
+      });
+    },function(err){ console.error('Listener:',err); });
+  };
+
+  window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
+  window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
+  window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
+
+  window.fbGetNotesByPatientId=function(patientId){
+    return getDocs(query(collection(db,'notes'),where('patientId','==',patientId)))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+  window.fbGetNotes=function(patientId){
+    var phone=currentPatientPhone||'';
+    var q=phone?query(collection(db,'notes'),where('patientPhone','==',phone)):query(collection(db,'notes'),where('patientId','==',patientId));
+    return getDocs(q).then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;}).catch(function(e){console.error(e);return[];});
+  };
+  window.fbSaveNotes=function(patientId,notesData){
+    var phone=notesData.patientPhone||currentPatientPhone||'';
+    var q=query(collection(db,'notes'),where('patientId','==',patientId));
+    return getDocs(q).then(function(snap){
+      var payload=Object.assign({patientId:patientId,patientPhone:phone,savedAt:new Date().toISOString()},notesData);
+      if(!snap.empty){return updateDoc(doc(db,'notes',snap.docs[0].id),payload).then(function(){return true;});}
+      else{return addDoc(collection(db,'notes'),Object.assign(payload,{createdAt:serverTimestamp()})).then(function(){return true;});}
+    }).catch(function(e){console.error('fbSaveNotes:',e);return false;});
+  };
+  window.fbGetNotesByPhone=window.fbGetNotes;
+
+  window.fbGetPatientHistory=function(phone){
+    return getDocs(query(collection(db,'patients'),where('phone','==',phone)))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+
+  window.fbSaveRx=function(patientId,rxData){
+    if(!patientId){console.error('fbSaveRx: no patientId!');return Promise.resolve(null);}
+    var q=query(collection(db,'prescriptions'),where('patientId','==',patientId));
+    return getDocs(q).then(function(snap){
+      var payload=Object.assign({patientId:patientId},rxData);
+      if(!snap.empty){var existingId=snap.docs[0].id;return updateDoc(doc(db,'prescriptions',existingId),Object.assign(payload,{updatedAt:serverTimestamp()})).then(function(){return existingId;});}
+      else{return addDoc(collection(db,'prescriptions'),Object.assign(payload,{createdAt:serverTimestamp()})).then(function(r){return r.id;});}
+    }).catch(function(e){console.error('fbSaveRx:',e);return null;});
+  };
+  window.fbGetRx=function(patientId){
+    return getDocs(query(collection(db,'prescriptions'),where('patientId','==',patientId)))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+
+  window.fbSearchPatientsByPhone=function(phoneQuery,doctorId){
+    return getDocs(query(collection(db,'patients'),where('doctor','==',doctorId)))
+      .then(function(snap){var list=[];snap.forEach(function(d){var data=Object.assign({id:d.id},d.data());if(!phoneQuery||(data.phone&&data.phone.includes(phoneQuery)))list.push(data);});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+
+  window.fbSaveProfile=function(doctorId,data){
+    return getDocs(query(collection(db,'doctors'),where('doctorId','==',doctorId))).then(function(snap){
+      if(!snap.empty){return updateDoc(doc(db,'doctors',snap.docs[0].id),Object.assign({doctorId:doctorId},data,{updatedAt:serverTimestamp()}));}
+      else{return addDoc(collection(db,'doctors'),Object.assign({doctorId:doctorId},data,{createdAt:serverTimestamp()}));}
+    }).catch(function(e){console.error(e);});
+  };
+  window.fbGetProfile=function(doctorId){
+    return getDocs(query(collection(db,'doctors'),where('doctorId','==',doctorId)))
+      .then(function(snap){return snap.empty?null:snap.docs[0].data();})
+      .catch(function(e){console.error(e);return null;});
+  };
+
+  document.getElementById('firebase-status').textContent='';
+  console.log('Firebase connected');
+}catch(e){
+  console.error('Firebase error:',e);
+  document.getElementById('firebase-status').textContent='Firebase offline - demo mode';
+}
+</script>
+
+</body>
+</html>
