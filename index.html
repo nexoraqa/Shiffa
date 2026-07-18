@@ -571,11 +571,17 @@ function loadPage(page){
     mc.innerHTML=
       '<h2 style="color:#0F1F17;margin-bottom:16px">👥 My Patients</h2>'+
       '<div style="position:relative;margin-bottom:16px">'+
-        '<input type="tel" id="pat-search" placeholder="🔍 Search by phone number..." '+
+        '<input type="tel" id="pat-search" placeholder="🔍 Filter by phone number..." '+
         'style="width:100%;padding:12px 16px;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box" '+
         'oninput="searchPatients(this.value)"/>'+
       '</div>'+
-      '<div id="pat-list"><div style="text-align:center;padding:40px;color:#8FA89D">Enter a phone number to search</div></div>';
+      '<div id="pat-list"><div style="text-align:center;padding:20px;color:#8FA89D">Loading patients...</div></div>';
+    // Load ALL patients on open
+    if(window.fbSearchPatientsByPhone){
+      window.fbSearchPatientsByPhone('', u.doctorId).then(function(results){
+        renderPatientsList(results);
+      });
+    }
     return;
   }
 
@@ -653,44 +659,108 @@ function pickPrio(btn,val){
   if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
 }
 
+function renderPatientsList(results){
+  var listEl = document.getElementById('pat-list');
+  if(!listEl) return;
+  if(!results||!results.length){
+    listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">No patients found.</div>';
+    return;
+  }
+  // Group by phone — unique patients with visit count
+  var grouped={};
+  for(var i=0;i<results.length;i++){
+    var p=results[i];
+    var key=p.phone||p.name;
+    if(!grouped[key]){ grouped[key]={name:p.name,age:p.age,phone:p.phone,gender:p.gender||'',visits:[],lastVisit:'',lastId:p.id}; }
+    grouped[key].visits.push(p.visitDate);
+    if(p.visitDate>grouped[key].lastVisit){ grouped[key].lastVisit=p.visitDate; grouped[key].lastId=p.id; }
+  }
+  var html='';
+  var keys=Object.keys(grouped);
+  // Sort by last visit newest first
+  keys.sort(function(a,b){ return grouped[b].lastVisit>grouped[a].lastVisit?1:-1; });
+  for(var ki=0;ki<keys.length;ki++){
+    var pt=grouped[keys[ki]];
+    html+='<div onclick="openPatientHistory(this)" data-phone="'+pt.phone+'" data-name="'+pt.name+'" data-age="'+pt.age+'" data-gender="'+pt.gender+'" '+
+      'style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;cursor:pointer;animation:slideIn 0.25s ease-out">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+    html+='<div>';
+    html+='<div style="font-weight:800;font-size:16px;color:#0F1F17">'+pt.name+'</div>';
+    html+='<div style="font-size:13px;color:#8FA89D;margin-top:3px">Age '+pt.age+' · 📞 '+(pt.phone||'—')+'</div>';
+    html+='<div style="font-size:12px;color:#8FA89D;margin-top:2px">Last visit: '+pt.lastVisit+' · '+pt.visits.length+' visit'+(pt.visits.length>1?'s':'')+'</div>';
+    html+='</div>';
+    html+='<span style="background:#E8F5EF;color:#1B6B4A;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:700">'+pt.visits.length+'x</span>';
+    html+='</div></div>';
+  }
+  listEl.innerHTML=html||'<div style="text-align:center;padding:40px;color:#8FA89D">No patients found.</div>';
+}
+
 function searchPatients(phone){
   var listEl = document.getElementById('pat-list');
   if(!listEl) return;
   var q = phone.trim();
-  if(q.length < 3){
-    listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">Enter at least 3 digits to search</div>';
+  if(q.length < 2){
+    // Show all patients when search is cleared
+    if(window.fbSearchPatientsByPhone){
+      window.fbSearchPatientsByPhone('', currentUser.doctorId).then(function(r){ renderPatientsList(r); });
+    }
     return;
   }
   listEl.innerHTML='<div style="text-align:center;padding:20px;color:#8FA89D">Searching...</div>';
   if(window.fbSearchPatientsByPhone){
     window.fbSearchPatientsByPhone(q, currentUser.doctorId).then(function(results){
-      if(!results||!results.length){
-        listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">No patients found with this phone number.</div>';
+      renderPatientsList(results);
+    });
+  }
+}
+
+function openPatientHistory(el){
+  var phone = el.getAttribute('data-phone');
+  var name  = el.getAttribute('data-name');
+  var age   = el.getAttribute('data-age');
+  var gender = el.getAttribute('data-gender');
+  // Show patient full visit history in a popup
+  var popup = document.getElementById('patient-popup');
+  if(!popup) return;
+  // Set patient info in popup header
+  document.getElementById('popup-name').textContent = name;
+  document.getElementById('popup-info').textContent = 'Age '+age+' - '+gender;
+  document.getElementById('popup-phone').textContent = phone ? 'Phone: '+phone : '';
+  currentPatientPhone = phone;
+  currentPatientId = null;
+  // Hide all action buttons — history view only
+  var notesBtn = document.getElementById('write-notes-btn');
+  var rxBtn = document.getElementById('rx-btn');
+  var closeBtn = document.getElementById('popup-close-btn');
+  if(notesBtn) notesBtn.style.display='none';
+  if(rxBtn) rxBtn.style.display='none';
+  // Show popup
+  popup.style.display='block';
+  // Load full visit history
+  var historyEl = document.getElementById('popup-history');
+  historyEl.innerHTML='<div style="text-align:center;padding:20px;color:#8FA89D">Loading history...</div>';
+  if(window.fbGetPatientHistory){
+    window.fbGetPatientHistory(phone).then(function(visits){
+      if(!visits||!visits.length){
+        historyEl.innerHTML='<div style="font-size:13px;color:#8FA89D">No visit history found.</div>';
         return;
       }
-      // Group by phone to get unique patients with visit count
-      var grouped={};
-      for(var i=0;i<results.length;i++){
-        var p=results[i];
-        if(!grouped[p.phone]){ grouped[p.phone]={name:p.name,age:p.age,phone:p.phone,visits:[],lastVisit:''}; }
-        grouped[p.phone].visits.push(p.visitDate);
-        if(p.visitDate>grouped[p.phone].lastVisit) grouped[p.phone].lastVisit=p.visitDate;
-      }
-      var html='';
-      for(var phone in grouped){
-        var pt=grouped[phone];
-        pt.visits.sort(function(a,b){return b>a?1:-1;});
-        html+='<div style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;animation:slideIn 0.25s ease-out">';
-        html+='<div style="display:flex;justify-content:space-between;align-items:center">';
-        html+='<div>';
-        html+='<div style="font-weight:800;font-size:16px;color:#0F1F17">'+pt.name+'</div>';
-        html+='<div style="font-size:13px;color:#8FA89D;margin-top:3px">Age '+pt.age+' · 📞 '+pt.phone+'</div>';
-        html+='<div style="font-size:12px;color:#8FA89D;margin-top:2px">Last visit: '+pt.lastVisit+' · '+pt.visits.length+' total visit'+(pt.visits.length>1?'s':'')+'</div>';
+      visits.sort(function(a,b){ return b.visitDate>a.visitDate?1:-1; });
+      var html='<div style="font-size:12px;font-weight:700;color:#8FA89D;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Visit History ('+visits.length+')</div>';
+      for(var i=0;i<visits.length;i++){
+        var v=visits[i];
+        var dName=v.doctor;
+        for(var j=0;j<ALL_DOCTORS.length;j++){if(ALL_DOCTORS[j].id===v.doctor){dName=ALL_DOCTORS[j].name;break;}}
+        html+='<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px;margin-bottom:10px">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+        html+='<div style="font-weight:700;font-size:14px;color:#0F1F17">'+v.visitDate+'</div>';
+        html+='<span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:2px 8px;border-radius:8px">'+(v.visitType==='new'?'New':'Follow-up')+'</span>';
         html+='</div>';
-        html+='<span style="background:#E8F5EF;color:#1B6B4A;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:700">'+pt.visits.length+'x</span>';
-        html+='</div></div>';
+        html+='<div style="font-size:12px;color:#4A5E54">'+dName+'</div>';
+        if(v.reason) html+='<div style="font-size:12px;color:#8FA89D;margin-top:3px">'+v.reason+'</div>';
+        html+='</div>';
       }
-      listEl.innerHTML=html;
+      historyEl.innerHTML=html;
     });
   }
 }
@@ -1852,7 +1922,8 @@ try{
         var list=[];
         snap.forEach(function(d){
           var data=Object.assign({id:d.id},d.data());
-          if(data.phone && data.phone.includes(phoneQuery)) list.push(data);
+          // Return all if no query, else filter by phone
+          if(!phoneQuery || (data.phone && data.phone.includes(phoneQuery))) list.push(data);
         });
         return list;
       }).catch(function(e){ console.error(e); return []; });
