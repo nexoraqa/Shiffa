@@ -1200,32 +1200,33 @@ function searchByPhone(){
     return;
   }
   res.innerHTML = '<div style="color:#8FA89D;font-size:13px;padding:8px 0">Searching...</div>';
-  if(window.fbFindPatient){
-    window.fbFindPatient(phone).then(function(patient){
-      if(patient){
-        // FOUND - show returning patient card
-        retPatient = patient;
+  if(window.fbGetPatientHistory){
+    window.fbGetPatientHistory(phone).then(function(visits){
+      if(visits && visits.length > 0){
+        // FOUND — use most recent visit data
+        var latest = visits.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;})[0];
+        retPatient = latest;
+        retPatient.phone = phone;
         res.innerHTML =
           '<div style="background:#E8F5EF;border-radius:12px;padding:16px;border:2px solid #1B6B4A;margin-top:4px">'+
-          '<div style="font-weight:800;font-size:16px;color:#0F1F17;margin-bottom:4px">'+patient.name+'</div>'+
-          '<div style="font-size:12px;color:#4A5E54;margin-bottom:12px">Age '+patient.age+' - '+patient.gender+' - '+patient.phone+'</div>'+
-          '<div style="font-size:13px;font-weight:600;color:#1B6B4A;margin-bottom:10px">Patient found! Add to today queue?</div>'+
+          '<div style="font-weight:800;font-size:16px;color:#0F1F17;margin-bottom:4px">'+latest.name+'</div>'+
+          '<div style="font-size:12px;color:#4A5E54;margin-bottom:12px">Age '+latest.age+' · '+latest.gender+' · '+phone+'</div>'+
+          '<div style="font-size:13px;font-weight:600;color:#1B6B4A;margin-bottom:10px">Patient found! Add to today’s queue?</div>'+
           '<button onclick="addReturnPatient()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Add to Queue</button>'+
           '</div>';
-        // Hide the form
-        document.getElementById('reg-form-box').style.display='none';
+        document.getElementById('new-patient-form').style.display='none';
       } else {
-        // NOT FOUND - show form with phone pre-filled
-        res.innerHTML = '<div style="color:#1B6B4A;font-size:13px;font-weight:600;padding:8px 0">New patient - please fill in the details below.</div>';
-        document.getElementById('reg-form-box').style.display='block';
+        // NOT FOUND — show new patient form
+        res.innerHTML = '<div style="color:#1B6B4A;font-size:13px;font-weight:600;padding:8px 0">New patient — please fill in the details below.</div>';
+        document.getElementById('new-patient-form').style.display='block';
         document.getElementById('r-phone').value = raw;
         document.getElementById('r-name').focus();
       }
     });
   } else {
-    // No Firebase - just show the form
+    // No Firebase — just show the form
     res.innerHTML = '';
-    document.getElementById('reg-form-box').style.display='block';
+    document.getElementById('new-patient-form').style.display='block';
     document.getElementById('r-phone').value = raw;
   }
 }
