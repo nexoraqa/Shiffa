@@ -1337,13 +1337,13 @@ function submitPatient(){
     return;
   }
   err.style.display='none';
-  var btn=document.getElementById('reg-btn');
-  btn.textContent='Saving...'; btn.disabled=true;
+  var submitBtns=document.querySelectorAll('[onclick="submitPatient()"]');
+  submitBtns.forEach(function(b){b.textContent='Saving...';b.disabled=true;});
   var data={name:name,age:parseInt(age),phone:phone.replace(/ /g,''),address:address,gender:selGender,visitType:selVisit,priority:selPrio,doctor:doctor,reason:reason,visitDate:new Date().toISOString().split('T')[0],status:'waiting',clinicId:'clinic_001',createdAt:new Date().toISOString()};
   if(window.fbSave){
     window.fbSave(data).then(function(id){
       if(id){showSuccess(name);}
-      else{btn.textContent='Register Patient';btn.disabled=false;err.textContent='Could not save.';err.style.display='block';}
+      else{submitBtns.forEach(function(b){b.textContent='Add to Queue';b.disabled=false;});err.textContent='Could not save.';err.style.display='block';}
     });
   } else {
     setTimeout(function(){showSuccess(name);},400);
