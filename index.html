@@ -677,42 +677,132 @@ function loadPage(page){
     return;
   }
   if(u.role==='receptionist'){
-    mc.innerHTML=banner+
-      '<div class="stats-grid" id="recep-stats">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="rs-total">—</div><div class="stat-lbl">Registered Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">⏳</div><div><div class="stat-val" id="rs-waiting">—</div><div class="stat-lbl">Still Waiting</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#E6510020">✅</div><div><div class="stat-val" id="rs-done">—</div><div class="stat-lbl">Done</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val" id="rs-new">—</div><div class="stat-lbl">New Patients</div></div></div>'+
+    var rNow = new Date();
+    var rTodayStr = rNow.getFullYear()+'-'+String(rNow.getMonth()+1).padStart(2,'0')+'-'+String(rNow.getDate()).padStart(2,'0');
+    var rHour = rNow.getHours();
+    var rGreet = rHour<12?'morning':rHour<17?'afternoon':'evening';
+    var rFname = u.name.split(' ')[0];
+    var rDateStr = rNow.toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+    mc.innerHTML =
+      '<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:16px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden">'+
+        '<div style="position:absolute;right:-10px;top:-10px;width:90px;height:90px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)"></div>'+
+        '<div style="margin-bottom:14px">'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:4px">'+rDateStr+'</div>'+
+          '<div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.3px">Good '+rGreet+', '+rFname+' 👋</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+u.cabinetName+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:0;background:rgba(255,255,255,0.08);border-radius:12px;overflow:hidden">'+
+          '<div id="rdb-total" style="flex:1;padding:14px 8px;text-align:center;border-right:1px solid rgba(255,255,255,0.1)">'+
+            '<div style="font-size:32px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">—</div>'+
+            '<div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;font-weight:600">Registered</div>'+
+          '</div>'+
+          '<div id="rdb-waiting" style="flex:1;padding:14px 8px;text-align:center;border-right:1px solid rgba(255,255,255,0.1)">'+
+            '<div style="font-size:32px;font-weight:900;color:#F59E0B;line-height:1;letter-spacing:-1px">—</div>'+
+            '<div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;font-weight:600">Waiting</div>'+
+          '</div>'+
+          '<div id="rdb-done" style="flex:1;padding:14px 8px;text-align:center">'+
+            '<div style="font-size:32px;font-weight:900;color:#10B981;line-height:1;letter-spacing:-1px">—</div>'+
+            '<div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;font-weight:600">Done</div>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
-      '<div class="table-card"><h3>📋 Today\'s Queue</h3><div id="recep-queue-preview"><div style="color:#8FA89D;font-size:13px;padding:10px 0">Loading...</div></div></div>';
+      '<div onclick="goPage(\'register\')" style="background:linear-gradient(135deg,#059669,#10B981);border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">'+
+        '<div>'+
+          '<div style="font-size:15px;font-weight:800;color:#fff">➕ Register New Patient</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px">Tap to open registration form</div>'+
+        '</div>'+
+        '<div style="font-size:28px">📋</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;margin-bottom:14px;overflow:hidden">'+
+        '<div style="padding:12px 16px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between">'+
+          '<span style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Waiting Room</span>'+
+          '<span style="font-size:10px;color:#9CA3AF" id="rdb-time">—</span>'+
+        '</div>'+
+        '<div id="rdb-alerts" style="padding:12px 16px">'+
+          '<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:13px">Loading...</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px">'+
+        '<div style="flex:1;background:#fff;border-radius:12px;border:1.5px solid #E5E7EB;padding:14px;text-align:center">'+
+          '<div style="font-size:22px;font-weight:900;color:#7C3AED" id="rdb-new">—</div>'+
+          '<div style="font-size:10px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px">New</div>'+
+        '</div>'+
+        '<div style="flex:1;background:#fff;border-radius:12px;border:1.5px solid #E5E7EB;padding:14px;text-align:center">'+
+          '<div style="font-size:22px;font-weight:900;color:#2563A8" id="rdb-follow">—</div>'+
+          '<div style="font-size:10px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px">Follow-ups</div>'+
+        '</div>'+
+        '<div style="flex:1;background:#fff;border-radius:12px;border:1.5px solid #E5E7EB;padding:14px;text-align:center">'+
+          '<div style="font-size:22px;font-weight:900;color:#EF4444" id="rdb-emerg">—</div>'+
+          '<div style="font-size:10px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px">Emergency</div>'+
+        '</div>'+
+      '</div>';
+
     if(window.fbGetPatients){
-      var today = new Date().toISOString().split('T')[0];
-      window.fbGetPatients(today).then(function(pts){
-        // Filter to this receptionist's doctor
-        if(u.doctorId) pts = pts.filter(function(p){ return p.doctor===u.doctorId; });
-        var total=pts.length, waiting=0, done=0, newP=0;
-        for(var i=0;i<pts.length;i++){
-          if(pts[i].status==='waiting'||pts[i].status==='inprogress') waiting++;
-          if(pts[i].status==='done') done++;
-          if(pts[i].visitType==='new') newP++;
+      window.fbGetPatients(rTodayStr).then(function(pts){
+        if(u.doctorId) pts=pts.filter(function(p){return p.doctor===u.doctorId;});
+        var total=pts.length;
+        var waiting=pts.filter(function(p){return p.status==='waiting';}).length;
+        var inprog=pts.filter(function(p){return p.status==='inprogress';}).length;
+        var done=pts.filter(function(p){return p.status==='done';}).length;
+        var newP=pts.filter(function(p){return p.visitType==='new';}).length;
+        var emerg=pts.filter(function(p){return p.priority==='emergency';}).length;
+        var el=function(id){return document.getElementById(id);};
+        if(el('rdb-total')) el('rdb-total').querySelector('div').textContent=total;
+        if(el('rdb-waiting')) el('rdb-waiting').querySelector('div').textContent=waiting+inprog;
+        if(el('rdb-done')) el('rdb-done').querySelector('div').textContent=done;
+        if(el('rdb-new')) el('rdb-new').textContent=newP;
+        if(el('rdb-follow')) el('rdb-follow').textContent=total-newP;
+        if(el('rdb-emerg')) el('rdb-emerg').textContent=emerg;
+        if(el('rdb-time')) el('rdb-time').textContent='Updated '+rNow.toLocaleTimeString('fr-DZ',{hour:'2-digit',minute:'2-digit'});
+        var alerts='';
+        if(total===0){
+          alerts='<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:13px">📋 No patients registered yet. Tap the green button above.</div>';
+        } else {
+          var withDoc=pts.filter(function(p){return p.status==='inprogress';});
+          if(withDoc.length>0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#2563A8;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#0D1117">🦺 '+withDoc[0].name+' is with the doctor now</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+(withDoc[0].visitType==='new'?'New patient':'Follow-up')+'</div></div></div>';
+          }
+          var longWait=[];
+          for(var li=0;li<pts.length;li++){
+            if(pts[li].status==='waiting'&&pts[li].createdAt){
+              var lc=pts[li].createdAt.toDate?pts[li].createdAt.toDate():new Date(pts[li].createdAt);
+              var lm=Math.floor((Date.now()-lc.getTime())/60000);
+              if(lm>=20) longWait.push({name:pts[li].name,min:lm});
+            }
+          }
+          if(longWait.length>0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#F59E0B;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#0D1117">⏰ '+longWait.length+' patient'+(longWait.length>1?'s':'')+' waiting over 20 min</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+longWait.map(function(x){return x.name;}).join(', ')+'</div></div></div>';
+          }
+          var emergActive=pts.filter(function(p){return p.priority==='emergency'&&p.status!=='done';});
+          if(emergActive.length>0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#EF4444;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#EF4444">🚨 Emergency: '+emergActive[0].name+'</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">Needs immediate attention</div></div></div>';
+          }
+          var nextW=pts.filter(function(p){return p.status==='waiting';});
+          nextW.sort(function(a,b){var ta=a.createdAt?(a.createdAt.toDate?a.createdAt.toDate():new Date(a.createdAt)):new Date(0);var tb=b.createdAt?(b.createdAt.toDate?b.createdAt.toDate():new Date(b.createdAt)):new Date(0);return ta-tb;});
+          if(nextW.length>0&&withDoc.length===0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#7C3AED;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#0D1117">🚪 Ready to call: '+nextW[0].name+'</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">Next in queue · '+(nextW[0].visitType==='new'?'New':'Follow-up')+'</div></div></div>';
+          }
+          if(waiting===0&&inprog===0&&done>0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#10B981;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#059669">✅ Queue clear! All '+done+' patients seen.</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">Great work today!</div></div></div>';
+          }
         }
-        document.getElementById('rs-total').textContent=total;
-        document.getElementById('rs-waiting').textContent=waiting;
-        document.getElementById('rs-done').textContent=done;
-        document.getElementById('rs-new').textContent=newP;
-        // Show latest 5 in preview
-        var preview='';
-        var shown=pts.slice(0,5);
-        for(var j=0;j<shown.length;j++){
-          var p=shown[j];
-          var sc=p.status==='done'?'color:#8FA89D;background:#F0F0F0':p.status==='inprogress'?'color:#1B6B4A;background:#E8F5EF':'color:#F0A500;background:#FFF8E7';
-          var sl=p.status==='done'?'✅ Done':p.status==='inprogress'?'🩺 With Doctor':'⏳ Waiting';
-          var dName=p.doctor;
-          for(var k=0;k<ALL_DOCTORS.length;k++){if(ALL_DOCTORS[k].id===p.doctor){dName=ALL_DOCTORS[k].name;break;}}
-          preview+='<div class="table-row"><div><div class="row-name">'+p.name+'</div><div class="row-sub">'+dName+' - '+(p.visitType==='new'?'New':'Follow-up')+'</div></div><span class="status-pill" style="'+sc+'">'+sl+'</span></div>';
-        }
-        if(!preview) preview='<div style="color:#8FA89D;font-size:13px;padding:10px 0">No patients registered today.</div>';
-        document.getElementById('recep-queue-preview').innerHTML=preview;
+        if(el('rdb-alerts')) el('rdb-alerts').innerHTML=alerts||'<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:13px">All quiet in the waiting room.</div>';
       });
     }
     return;
