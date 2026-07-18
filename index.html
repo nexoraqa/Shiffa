@@ -1912,34 +1912,41 @@ function renderQueue(patients){
 
   for(var i=0;i<active.length;i++){
     var p = active[i];
-    var pc={emergency:['#D64045','#FDECEA','🔴 EMERGENCY'],urgent:['#F0A500','#FFF8E7','🟡 URGENT'],normal:['#1B6B4A','#E8F5EF','🟢 NORMAL']};
-    var c=pc[p.priority]||pc.normal;
-    var s=STATUS_DATA[p.status]||STATUS_DATA.waiting;
-    var tc=p.visitType==='new'?'type-new':'type-followup';
-    var tl=p.visitType==='new'?'NEW':'FOLLOW-UP';
-    var isEmergency=p.priority==='emergency';
-    var cardBorder=isEmergency?'border-left:5px solid #D64045;':'border-left:4px solid '+c[0]+';';
-    var cardBg=isEmergency?'background:linear-gradient(135deg,#FFF5F5,#fff);':'';
+    var isEmergency = p.priority==='emergency';
+    var s = STATUS_DATA[p.status]||STATUS_DATA.waiting;
+    var tc = p.visitType==='new'?'type-new':'type-followup';
+    var tl = p.visitType==='new'?'NEW':'FOLLOW-UP';
+    var leftColor = p.status==='waiting'?'#F59E0B':p.status==='inprogress'?'#2563A8':'#10B981';
+    if(isEmergency) leftColor='#EF4444';
+    var cardBg = isEmergency?'background:#FFFAF9;border-color:#FECACA;':'background:#fff;';
     var waitStr='';
     if(p.createdAt && p.status==='waiting'){
       var created=p.createdAt.toDate?p.createdAt.toDate():new Date(p.createdAt);
       var diffMin=Math.floor((Date.now()-created.getTime())/60000);
       if(diffMin<1) waitStr='Just arrived';
-      else if(diffMin<60) waitStr='⏱️ '+diffMin+' min waiting';
-      else waitStr='⏱️ '+Math.floor(diffMin/60)+'h '+(diffMin%60)+'m waiting';
+      else if(diffMin<60) waitStr=diffMin+' min';
+      else waitStr=Math.floor(diffMin/60)+'h '+(diffMin%60)+'m';
     }
-    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBorder+cardBg+'cursor:pointer" onclick="openPatientPopup(this)">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-    html+='<div style="flex:1">';
-    html+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">';
-    html+='<span style="font-weight:900;font-size:22px;color:'+(isEmergency?'#D64045':'#0F1F17')+';min-width:34px;line-height:1">#'+(i+1)+'</span>';
-    html+='<span style="font-weight:800;font-size:15px;color:#0F1F17">'+p.name+'</span>';
-    html+='<span style="background:'+c[1]+';color:'+c[0]+';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700">'+c[2]+'</span>';
+    var chipBg=p.status==='waiting'?'#FEF3C7':p.status==='inprogress'?'#EEF2FF':'#ECFDF5';
+    var chipColor=p.status==='waiting'?'#D97706':p.status==='inprogress'?'#2563A8':'#059669';
+    if(isEmergency && p.status==='waiting'){ chipBg='#FEE2E2'; chipColor='#EF4444'; }
+    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBg+'border-left:4px solid '+leftColor+';cursor:pointer;padding:0;" onclick="openPatientPopup(this)">';
+    html+='<div style="display:flex;align-items:stretch">';
+    html+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;padding:14px 0;border-right:1px solid #F3F4F6">';
+    html+='<span style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">No.</span>';
+    html+='<span style="font-size:24px;font-weight:900;color:'+(isEmergency?'#EF4444':'#0D1117')+';line-height:1;letter-spacing:-1px">'+(i+1)+'</span>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:12px 14px">';
+    html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">';
+    html+='<span style="font-weight:800;font-size:15px;color:#0D1117;letter-spacing:-0.3px">'+p.name+'</span>';
+    if(isEmergency) html+='<span style="font-size:9px;font-weight:700;background:#FEE2E2;color:#EF4444;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px">Emergency</span>';
     html+='<span class="'+tc+'">'+tl+'</span>';
     html+='</div>';
-    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:12px;color:#8FA89D;margin-bottom:6px">Age '+p.age+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
-    if(waitStr) html+='<div style="font-size:11px;color:#E65100;font-weight:700;margin-bottom:6px">'+waitStr+'</div>';
-    html+='<button data-status="'+p.status+'" onclick="event.stopPropagation();cycleStatus(\''+p.id+'\',this)" style="background:'+s[1]+';color:'+s[0]+';border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">'+s[2]+'</button>';
+    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:8px;font-weight:500">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between">';
+    html+='<button data-status="'+p.status+'" onclick="event.stopPropagation();cycleStatus(\''+p.id+'\',this)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.2px">'+s[2]+'</button>';
+    if(waitStr) html+='<span style="font-size:11px;color:#F59E0B;font-weight:700">⏱ '+waitStr+'</span>';
+    html+='</div>';
     html+='</div></div></div>';
   }
   list.innerHTML=html;
