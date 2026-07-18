@@ -202,7 +202,7 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 </div>
 
 <!-- IN-APP NOTIFICATION BANNER -->
-<div id="notif-banner" onclick="goPage('queue');dismissNotif()">
+<div id="notif-banner" onclick="dismissAndGo()">
   <span class="notif-dismiss" onclick="event.stopPropagation();dismissNotif()">✕</span>
   <div class="notif-title" id="notif-title">🔔 New Patient Waiting</div>
   <div class="notif-body" id="notif-body">Loading...</div>
@@ -419,6 +419,10 @@ function showInAppNotification(p){
   }, isEmergency ? 10000 : 6000);
 }
 
+function dismissAndGo(){
+  dismissNotif();
+  goPage('queue');
+}
 function dismissNotif(){
   var banner = document.getElementById('notif-banner');
   if(banner) banner.classList.remove('show');
