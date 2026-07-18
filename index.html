@@ -511,24 +511,169 @@ function loadPage(page){
     return;
   }
   if(u.role==='doctor' && page==='dashboard'){
-    // Show doctor profile + real queue
-    mc.innerHTML=banner+
-      '<div style="background:#fff;border-radius:13px;border:1px solid #D6E8DE;padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:14px">'+
-        '<div style="width:52px;height:52px;background:#E8F5EF;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid #1B6B4A">👨‍⚕️</div>'+
-        '<div>'+
-          '<div style="font-weight:800;font-size:16px;color:#0F1F17">'+u.name+'</div>'+
-          '<div style="font-size:13px;color:#1B6B4A;font-weight:600">'+(u.specialty||'')+'</div>'+
-          '<div style="font-size:12px;color:#8FA89D">'+(u.city||'Bou Saada')+'</div>'+
+    var now = new Date();
+    var todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    var hour = now.getHours();
+    var greetIcon = hour<12?'🌅':hour<17?'☀️':'🌆';
+
+    mc.innerHTML =
+      // ── Hero greeting strip ──
+      '<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:16px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden">'+
+        '<div style="position:absolute;right:-10px;top:-10px;width:90px;height:90px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)"></div>'+
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
+          '<div style="width:46px;height:46px;background:rgba(255,255,255,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid rgba(255,255,255,0.2)">👨‍⚕️</div>'+
+          '<div>'+
+            '<div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:1px;font-weight:600">'+dateStr+'</div>'+
+            '<div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.3px">Good '+greet+', Dr. '+u.name.replace(/^Dr\.\s*/i,'')+' '+greetIcon+'</div>'+
+            '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+(u.specialty||'')+(u.city?' · '+u.city:'')+'</div>'+
+          '</div>'+
+        '</div>'+
+        // ── Big 3 numbers ──
+        '<div style="display:flex;gap:0;background:rgba(255,255,255,0.08);border-radius:12px;overflow:hidden">'+
+          '<div id="db-total" style="flex:1;padding:14px 8px;text-align:center;border-right:1px solid rgba(255,255,255,0.1)">'+
+            '<div style="font-size:32px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">—</div>'+
+            '<div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;font-weight:600">Total</div>'+
+          '</div>'+
+          '<div id="db-active" style="flex:1;padding:14px 8px;text-align:center;border-right:1px solid rgba(255,255,255,0.1)">'+
+            '<div style="font-size:32px;font-weight:900;color:#F59E0B;line-height:1;letter-spacing:-1px">—</div>'+
+            '<div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;font-weight:600">Waiting</div>'+
+          '</div>'+
+          '<div id="db-done" style="flex:1;padding:14px 8px;text-align:center">'+
+            '<div style="font-size:32px;font-weight:900;color:#10B981;line-height:1;letter-spacing:-1px">—</div>'+
+            '<div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;font-weight:600">Done</div>'+
+          '</div>'+
         '</div>'+
       '</div>'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
-        '<h3 style="margin:0;color:#0F1F17;font-size:15px">🔢 My Queue Today</h3>'+
-        '<button onclick="loadQueue(currentUser.doctorId)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
+
+      // ── Alerts section ──
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;margin-bottom:14px;overflow:hidden">'+
+        '<div style="padding:12px 16px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between">'+
+          '<span style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Smart Alerts</span>'+
+          '<span style="font-size:10px;color:#9CA3AF" id="db-alert-time">—</span>'+
+        '</div>'+
+        '<div id="db-alerts" style="padding:12px 16px">'+
+          '<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:13px">Loading...</div>'+
+        '</div>'+
       '</div>'+
-      '<div id="queue-list"><div style="text-align:center;padding:20px;color:#8FA89D">Loading...</div></div>';
-    window.queueDate = new Date().toISOString().split('T')[0];
-    window.queueFilter = null; // always show full queue on dashboard
-    loadQueue(u.doctorId || null);
+
+      // ── Today timeline ──
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden">'+
+        '<div style="padding:12px 16px;border-bottom:1px solid #F3F4F6">'+
+          '<span style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Patient Flow Today</span>'+
+        '</div>'+
+        '<div id="db-timeline" style="padding:14px 16px">'+
+          '<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:13px">Loading...</div>'+
+        '</div>'+
+      '</div>';
+
+    // Load real data
+    if(window.fbGetPatients){
+      window.fbGetPatients(todayStr).then(function(pts){
+        pts = pts.filter(function(p){ return p.doctor===u.doctorId; });
+        var total=pts.length;
+        var waiting=pts.filter(function(p){return p.status==='waiting';}).length;
+        var inprog=pts.filter(function(p){return p.status==='inprogress';}).length;
+        var done=pts.filter(function(p){return p.status==='done';}).length;
+        var newP=pts.filter(function(p){return p.visitType==='new';}).length;
+
+        // Update big numbers
+        var dbTotal=document.getElementById('db-total');
+        var dbActive=document.getElementById('db-active');
+        var dbDone=document.getElementById('db-done');
+        if(dbTotal) dbTotal.querySelector('div').textContent=total;
+        if(dbActive) dbActive.querySelector('div').textContent=waiting+inprog;
+        if(dbDone) dbDone.querySelector('div').textContent=done;
+
+        // Update alert time
+        var at=document.getElementById('db-alert-time');
+        if(at) at.textContent='Updated '+now.toLocaleTimeString('fr-DZ',{hour:'2-digit',minute:'2-digit'});
+
+        // Build smart alerts
+        var alerts='';
+        if(total===0){
+          alerts='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;color:#9CA3AF;font-size:13px">📋 No patients registered yet today.</div>';
+        } else {
+          // Who is currently in progress
+          var inProgPt=pts.filter(function(p){return p.status==='inprogress';});
+          if(inProgPt.length>0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#2563A8;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#0D1117">🦺 '+inProgPt[0].name+' is with you now</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+(inProgPt[0].visitType==='new'?'New patient':'Follow-up')+' · Age '+inProgPt[0].age+'</div></div>'+
+            '</div>';
+          }
+          // Long waiting patients
+          var longWait=[];
+          for(var li=0;li<pts.length;li++){
+            var lp=pts[li];
+            if(lp.status==='waiting' && lp.createdAt){
+              var lc=lp.createdAt.toDate?lp.createdAt.toDate():new Date(lp.createdAt);
+              var lm=Math.floor((Date.now()-lc.getTime())/60000);
+              if(lm>=30) longWait.push({name:lp.name,min:lm});
+            }
+          }
+          if(longWait.length>0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#F59E0B;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#0D1117">⏰ '+longWait.length+' patient'+(longWait.length>1?'s':'')+' waiting over 30 min</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+longWait.map(function(x){return x.name+' ('+x.min+'m)';}).join(', ')+'</div></div>'+
+            '</div>';
+          }
+          // Progress summary
+          var pct = total>0?Math.round((done/total)*100):0;
+          alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6">'+
+            '<div style="width:8px;height:8px;border-radius:50%;background:#10B981;flex-shrink:0"></div>'+
+            '<div><div style="font-size:13px;font-weight:700;color:#0D1117">✅ '+done+' of '+total+' patients seen ('+pct+'%)</div>'+
+            '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+newP+' new · '+(total-newP)+' follow-up</div></div>'+
+          '</div>';
+          // Next patient
+          var nextPt=pts.filter(function(p){return p.status==='waiting';});
+          if(nextPt.length>0){
+            alerts+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0">'+
+              '<div style="width:8px;height:8px;border-radius:50%;background:#7C3AED;flex-shrink:0"></div>'+
+              '<div><div style="font-size:13px;font-weight:700;color:#0D1117">🚪 Next: '+nextPt[0].name+'</div>'+
+              '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+(nextPt[0].visitType==='new'?'New patient':'Follow-up')+' · Age '+nextPt[0].age+'</div></div>'+
+            '</div>';
+          }
+        }
+        var dbAlerts=document.getElementById('db-alerts');
+        if(dbAlerts) dbAlerts.innerHTML=alerts;
+
+        // Build hourly timeline
+        var hours={};
+        for(var ti=0;ti<pts.length;ti++){
+          var tp=pts[ti];
+          var tc2=tp.createdAt?tp.createdAt.toDate?tp.createdAt.toDate():new Date(tp.createdAt):null;
+          if(tc2){
+            var th=tc2.getHours();
+            hours[th]=(hours[th]||0)+1;
+          }
+        }
+        var maxH=Math.max.apply(null,Object.values(hours).concat([1]));
+        var timeline='<div style="display:flex;align-items:flex-end;gap:4px;height:60px;margin-bottom:8px">';
+        for(var h=7;h<=20;h++){
+          var hv=hours[h]||0;
+          var hpct=hv>0?Math.max(15,Math.round((hv/maxH)*100)):0;
+          var isnow=now.getHours()===h;
+          var barcolor=isnow?'#2563A8':hv>0?'#93C5FD':'#F3F4F6';
+          timeline+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'+
+            '<div style="width:100%;background:'+barcolor+';border-radius:3px 3px 0 0;height:'+hpct+'%;min-height:'+(hv>0?'4px':'2px')+';transition:height 0.3s"></div>'+
+          '</div>';
+        }
+        timeline+='</div>';
+        timeline+='<div style="display:flex;gap:4px">';
+        for(var hl=7;hl<=20;hl++){
+          timeline+='<div style="flex:1;text-align:center;font-size:8px;color:#9CA3AF;font-weight:'+(now.getHours()===hl?'800':'500')+';color:'+(now.getHours()===hl?'#2563A8':'#9CA3AF')+'">'+hl+'</div>';
+        }
+        timeline+='</div>';
+        timeline+='<div style="margin-top:10px;display:flex;align-items:center;gap:12px">'+
+          '<div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;border-radius:2px;background:#2563A8"></div><span style="font-size:10px;color:#9CA3AF">Current hour</span></div>'+
+          '<div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;border-radius:2px;background:#93C5FD"></div><span style="font-size:10px;color:#9CA3AF">Patients registered</span></div>'+
+        '</div>';
+        var dbTimeline=document.getElementById('db-timeline');
+        if(dbTimeline) dbTimeline.innerHTML=timeline;
+      });
+    }
     return;
   }
   if(u.role==='receptionist'){
