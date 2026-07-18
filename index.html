@@ -116,6 +116,23 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .mnav-btn.active::after{content:'';display:block;width:4px;height:4px;background:var(--green-l);border-radius:50%;margin:2px auto 0}
 .mnav-badge{position:absolute;top:-2px;right:-2px;background:#EF4444;color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #fff;line-height:1}
 .mnav-wrap{position:relative;display:inline-block}
+/* ── In-app notification ── */
+#notif-banner{
+  position:fixed;top:-100px;left:50%;transform:translateX(-50%);
+  background:#0D1117;color:#fff;
+  border-radius:14px;padding:14px 18px;
+  min-width:280px;max-width:340px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  z-index:9999;
+  transition:top 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  cursor:pointer;
+  border-left:4px solid #2563A8;
+}
+#notif-banner.emergency-notif{ border-left-color:#EF4444; }
+#notif-banner.show{ top:16px; }
+.notif-title{ font-size:13px;font-weight:800;color:#fff;margin-bottom:3px; }
+.notif-body{ font-size:12px;color:rgba(255,255,255,0.65); }
+.notif-dismiss{ position:absolute;top:10px;right:12px;font-size:16px;color:rgba(255,255,255,0.4);cursor:pointer; }
 @media print{
   body > *:not(#rx-print-overlay){ display:none !important; }
   #rx-print-overlay{ position:absolute !important; box-shadow:none !important; }
@@ -182,6 +199,13 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
     </div>
   </div>
   <div class="footer-txt">Made for Algeria - Shifaa v1.0</div>
+</div>
+
+<!-- IN-APP NOTIFICATION BANNER -->
+<div id="notif-banner" onclick="goPage('queue');dismissNotif()">
+  <span class="notif-dismiss" onclick="event.stopPropagation();dismissNotif()">✕</span>
+  <div class="notif-title" id="notif-title">🔔 New Patient Waiting</div>
+  <div class="notif-body" id="notif-body">Loading...</div>
 </div>
 
 <!-- DASHBOARD -->
@@ -288,15 +312,25 @@ function doLogin(){
             if(prof.phone) currentUser.phone=prof.phone;
           }
           showDashboard(currentUser);
+          // Start real-time listener for doctor
+          if(currentUser.role==='doctor' && currentUser.doctorId && window.fbStartListening){
+            window.fbStartListening(currentUser.doctorId);
+          }
         });
       } else {
         showDashboard(user);
+        // Start real-time listener for doctor
+        if(user.role==='doctor' && user.doctorId && window.fbStartListening){
+          window.fbStartListening(user.doctorId);
+        }
       }
     }
     else{showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;}
   },600);
 }
 function doLogout(){
+  if(window._unsubscribe){ window._unsubscribe(); window._unsubscribe=null; }
+  dismissNotif();
   currentUser=null;
   document.getElementById('dashboard-page').style.display='none';
   document.getElementById('login-page').style.display='flex';
@@ -353,6 +387,42 @@ function buildNav(user){
   }
   document.getElementById('sidebar-nav').innerHTML=sh;
   document.getElementById('mobile-nav').innerHTML=mh;
+}
+
+function showInAppNotification(p){
+  var isEmergency = p.priority==='emergency';
+  var banner = document.getElementById('notif-banner');
+  var title  = document.getElementById('notif-title');
+  var body   = document.getElementById('notif-body');
+  if(!banner) return;
+
+  var icon = isEmergency ? '🚨' : '🔔';
+  var visitLabel = p.visitType==='new' ? 'New Patient' : 'Follow-up';
+  var prioLabel  = isEmergency ? 'EMERGENCY' : 'Normal';
+
+  title.textContent = icon + ' ' + p.name + ' is waiting';
+  body.textContent  = visitLabel + ' · ' + prioLabel + ' · Registered just now';
+
+  if(isEmergency){
+    banner.classList.add('emergency-notif');
+  } else {
+    banner.classList.remove('emergency-notif');
+  }
+
+  // Show banner
+  banner.classList.add('show');
+
+  // Auto dismiss after 6 seconds (emergency stays 10 seconds)
+  if(window._notifTimer) clearTimeout(window._notifTimer);
+  window._notifTimer = setTimeout(function(){
+    dismissNotif();
+  }, isEmergency ? 10000 : 6000);
+}
+
+function dismissNotif(){
+  var banner = document.getElementById('notif-banner');
+  if(banner) banner.classList.remove('show');
+  if(window._notifTimer) clearTimeout(window._notifTimer);
 }
 
 function updateQueueBadge(waitingCount){
@@ -1623,861 +1693,3 @@ function printSavedRx(rx){
     '.sig-label-f{font-size:11px;color:#555;font-family:Arial,sans-serif}'+
     '.stamp-circle{width:110px;height:110px;border:2px dashed #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;font-family:Arial,sans-serif;margin:0 auto 6px}'+
     '.watermark{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) rotate(-30deg);font-size:80px;color:rgba(27,107,74,0.04);font-weight:900;pointer-events:none;white-space:nowrap;z-index:0}'+
-    '@media print{.no-print{display:none}body{margin:10px;padding:20px}.watermark{display:block}}'+
-    '</style></head><body>'+
-
-    '<div class="watermark">SHIFAA</div>'+
-
-
-
-    '<div class="top">'+
-      '<div class="clinic-block">'+
-        '<div class="clinic-name">🌿 Cabinet Médical</div>'+
-        '<div class="doctor-title">'+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'</div>'+
-        '<div class="doctor-sub">'+doctorSpecialty+'<br>'+doctorCity+'</div>'+
-      '</div>'+
-      '<div class="ordonnance-title">'+
-        '<div class="ord-word">Ordonnance</div>'+
-        '<div class="ord-date">Le : '+today_fr+'</div>'+
-      '</div>'+
-    '</div>'+
-
-    '<div style="padding:10px 0 18px 0;border-bottom:1px solid #e8f0eb;margin-bottom:18px">'+
-      '<div style="font-size:10px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;margin-bottom:6px">Nom du patient</div>'+
-      '<div style="font-size:22px;font-weight:900;color:#0F1F17;margin-bottom:4px">'+pname+'</div>'+
-      '<div style="font-size:13px;color:#555;">'+pinfo+(patAddr?' &nbsp;|&nbsp; '+patAddr:'')+'</div>'+
-    '</div>'+
-
-    '<div class="rx-header">'+
-      '<div class="rp-symbol">Rp/</div>'+
-      '<div class="rx-label">Médicaments prescrits</div>'+
-    '</div>'+
-
-    '<table>'+
-      '<thead><tr><th style="width:55%">Médicament</th><th>Posologie / Durée</th></tr></thead>'+
-      '<tbody>'+medsRows+'</tbody>'+
-    '</table>'+
-
-    (notes?
-      '<div class="instructions-box">'+
-        '<div class="inst-label">Instructions &amp; Conseils</div>'+
-        '<div class="inst-text">'+notes+'</div>'+
-      '</div>'
-    :'')+
-
-    '<div class="footer">'+
-      '<div class="sig-area">'+
-        '<div class="sig-line"></div>'+
-        '<div class="sig-label-f">Signature du médecin</div>'+
-      '</div>'+
-    '</div>'+
-
-    '</body></html>';
-
-  // Print in same tab using full overlay — works on all browsers without popup permission
-  var overlay = document.createElement('div');
-  overlay.id = 'rx-print-overlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:99999;overflow-y:auto';
-  // Append first so element exists in DOM, then set content
-  document.body.appendChild(overlay);
-  var toolbar = document.createElement('div');
-  toolbar.style.cssText = 'text-align:center;padding:16px;background:#f5f5f5;border-bottom:1px solid #ddd;font-family:Arial,sans-serif';
-  toolbar.innerHTML =
-    '<button onclick="document.getElementById(\'rx-print-overlay\').remove()" style="padding:10px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-right:10px">← Back</button>'+
-    '<button onclick="window.print()" style="padding:10px 28px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimer</button>';
-  var content = document.createElement('div');
-  content.style.cssText = 'max-width:680px;margin:20px auto;padding:20px';
-  content.innerHTML = rxHtml;
-  overlay.appendChild(toolbar);
-  overlay.appendChild(content);
-}
-
-function toggleRxForm(){
-  var rxForm    = document.getElementById('popup-rx-form');
-  var notesForm = document.getElementById('popup-notes-form');
-  var btn       = document.getElementById('rx-btn');
-  var notesBtn  = document.getElementById('write-notes-btn');
-
-  if(rxForm.style.display==='none'){
-    // Open rx, close notes
-    rxForm.style.display='block';
-    if(notesForm) notesForm.style.display='none';
-    // Reset notes button look
-    if(notesBtn){ notesBtn.textContent='Write Notes'; notesBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)'; notesBtn.style.color='#fff'; notesBtn.style.border='none'; }
-    btn.textContent='Cancel Prescription';
-    btn.style.background='#fff';
-    btn.style.color='#4A5E54';
-    btn.style.border='1px solid #D6E8DE';
-    // Load existing prescription into form
-    loadExistingRx();
-  } else {
-    rxForm.style.display='none';
-    btn.textContent='Prescription';
-    btn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
-    btn.style.color='#fff';
-    btn.style.border='none';
-  }
-}
-
-function loadExistingRx(){
-  if(!currentPatientId) return;
-  if(window.fbGetRx){
-    window.fbGetRx(currentPatientId).then(function(rxList){
-      if(rxList && rxList.length > 0){
-        var rx = rxList[rxList.length-1];
-        var medsContainer = document.getElementById('rx-medicines');
-        if(medsContainer && rx.medicines && rx.medicines.length > 0){
-          medsContainer.innerHTML='';
-          for(var m=0;m<rx.medicines.length;m++){
-            var div=document.createElement('div');
-            div.className='rx-line';
-            div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
-            div.innerHTML=
-              '<input type="text" placeholder="Medicine name" value="'+(rx.medicines[m].med||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-              '<input type="text" placeholder="Dose + duration" value="'+(rx.medicines[m].dose||'')+'" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-              '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
-            medsContainer.appendChild(div);
-          }
-        } else {
-          // Reset to one empty line
-          document.getElementById('rx-medicines').innerHTML=
-            '<div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">'+
-            '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-            '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-            '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button></div>';
-        }
-        var rxNotesEl=document.getElementById('rx-notes');
-        if(rxNotesEl) rxNotesEl.value=rx.notes||'';
-      } else {
-        // No existing rx — reset to empty
-        document.getElementById('rx-medicines').innerHTML=
-          '<div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">'+
-          '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-          '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-          '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button></div>';
-        document.getElementById('rx-notes').value='';
-      }
-    });
-  }
-}
-
-function addRxLine(){
-  var div = document.createElement('div');
-  div.className='rx-line';
-  div.style.cssText='display:flex;gap:8px;margin-bottom:8px';
-  div.innerHTML=
-    '<input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-    '<input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>'+
-    '<button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>';
-  document.getElementById('rx-medicines').appendChild(div);
-}
-
-function removeRxLine(btn){
-  var lines = document.querySelectorAll('.rx-line');
-  if(lines.length > 1) btn.parentElement.remove();
-}
-
-function saveAndPrintRx(){
-  // Gather medicines
-  var lines = document.querySelectorAll('.rx-line');
-  var medicines = [];
-  for(var i=0;i<lines.length;i++){
-    var inputs = lines[i].querySelectorAll('input');
-    var med  = inputs[0].value.trim();
-    var dose = inputs[1].value.trim();
-    if(med) medicines.push({med:med, dose:dose});
-  }
-  if(medicines.length===0){
-    alert('Please add at least one medicine.');
-    return;
-  }
-
-  var u       = currentUser;
-  var pname   = document.getElementById('popup-name').textContent;
-  var pinfo   = document.getElementById('popup-info').textContent;
-  var notes   = document.getElementById('rx-notes').value.trim();
-  var today   = new Date().toLocaleDateString('en-DZ',{day:'2-digit',month:'2-digit',year:'numeric'});
-
-  // Guard: must have a patient ID
-  if(!currentPatientId){
-    alert('Erreur: patient ID manquant. Fermez et rouvrez la fiche patient.');
-    return;
-  }
-
-  // Save prescription to Firebase - doctor saves only, receptionist prints
-  var rxBtn2 = document.querySelector('#popup-rx-form button:last-child');
-  if(window.fbSaveRx){
-    if(rxBtn2){ rxBtn2.textContent='Saving...'; rxBtn2.disabled=true; }
-    window.fbSaveRx(currentPatientId, {
-      medicines: medicines,
-      notes: notes,
-      doctor: u.name,
-      doctorSpecialty: u.specialty||'Médecine Générale',
-      doctorCity: u.city||'Algérie',
-      doctorId: u.doctorId,
-      patientName: pname,
-      patientPhone: currentPatientPhone||'',
-      savedAt: new Date().toISOString()
-    }).then(function(id){
-      // Keep form OPEN so doctor can keep editing — just confirm saved
-      if(rxBtn2){
-        rxBtn2.textContent='✅ Saved — click again to update';
-        rxBtn2.disabled=false;
-        rxBtn2.style.background='#E3F0FF';
-        rxBtn2.style.color='#1565C0';
-        setTimeout(function(){
-          rxBtn2.textContent='Save Prescription';
-          rxBtn2.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
-          rxBtn2.style.color='#fff';
-        }, 2000);
-      }
-    }).catch(function(){
-      if(rxBtn2){ rxBtn2.textContent='Save Prescription'; rxBtn2.disabled=false; }
-    });
-  } else {
-    if(rxBtn2){
-      rxBtn2.textContent='✅ Saved';
-      setTimeout(function(){ rxBtn2.textContent='Save Prescription'; },2000);
-    }
-  }
-}
-
-function closePopup(){
-  document.getElementById('patient-popup').style.display='none';
-}
-
-function openPatientPopup(el){
-  // Only doctors and receptionists can open popup
-  if(!currentUser) return;
-  var isDoctor = currentUser.role === 'doctor';
-  var isRecep  = currentUser.role === 'receptionist';
-  if(!isDoctor && !isRecep) return;
-  // Get patient data from data attributes
-  var details = el.querySelector('.patient-details');
-  if(!details) return;
-  var name   = details.getAttribute('data-name');
-  var age    = details.getAttribute('data-age');
-  var gender = details.getAttribute('data-gender');
-  var phone   = details.getAttribute('data-phone');
-  var address = details.getAttribute('data-address');
-  var doctor  = details.getAttribute('data-doctor');
-  var reason  = details.getAttribute('data-reason');
-  var status  = details.getAttribute('data-status');
-
-  // Store globally so prescription print can access them
-  currentPatientPhone   = phone;
-  currentPatientAddress = address;
-  currentPatientAge     = age;
-
-  // Fill popup header
-  document.getElementById('popup-name').textContent   = name;
-  document.getElementById('popup-info').textContent   = 'Age '+age+' - '+gender;
-  document.getElementById('popup-phone').textContent  = (phone ? 'Phone: '+phone : '') + (address ? '  |  '+address : '');
-
-  // Store current patient id for notes
-  currentPatientId    = el.getAttribute('data-pid');
-  currentPatientPhone = phone;
-  console.log('openPatientPopup: currentPatientId=', currentPatientId, 'status=', status);
-
-  // Always reset BOTH forms closed when opening any patient
-  var notesForm = document.getElementById('popup-notes-form');
-  var rxForm    = document.getElementById('popup-rx-form');
-  if(notesForm) notesForm.style.display='none';
-  if(rxForm)    rxForm.style.display='none';
-
-  var writeBtn = document.getElementById('write-notes-btn');
-  if(writeBtn){
-    writeBtn.textContent='Write Notes';
-    writeBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
-    writeBtn.style.color='#fff';
-    writeBtn.style.border='none';
-    writeBtn.disabled=false;
-  }
-  var rxBtnReset = document.getElementById('rx-btn');
-  if(rxBtnReset){
-    rxBtnReset.textContent='Prescription';
-    rxBtnReset.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
-    rxBtnReset.style.color='#fff';
-    rxBtnReset.style.border='none';
-    rxBtnReset.disabled=false;
-    rxBtnReset.style.opacity='1';
-    rxBtnReset.onclick=function(){ toggleRxForm(); };
-  }
-
-  // Show/hide sections based on role AND status
-  var histSection = document.querySelector('#patient-popup .popup-history-section');
-  var notesBtn    = document.getElementById('write-notes-btn');
-  var rxBtn       = document.getElementById('rx-btn');
-
-  if(isDoctor){
-    // Doctor: always sees history
-    if(histSection) histSection.style.display='';
-    // Notes + Prescription: ONLY when In Progress
-    if(status === 'inprogress'){
-      // Show Write Notes button, always editable
-      if(notesBtn){
-        notesBtn.style.display='';
-        notesBtn.textContent='Write Notes';
-        notesBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
-        notesBtn.style.color='#fff';
-        notesBtn.style.border='none';
-        notesBtn.disabled=false;
-      }
-      // Show Prescription button, always editable
-      if(rxBtn){
-        rxBtn.style.display='';
-        rxBtn.textContent='Prescription';
-        rxBtn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';
-        rxBtn.style.color='#fff';
-        rxBtn.style.border='none';
-        rxBtn.disabled=false;
-        rxBtn.onclick=function(){ toggleRxForm(); };
-      }
-      // Prescription loads on demand when doctor taps "Prescription" button (via loadExistingRx)
-    } else {
-      // Waiting or Done — hide notes + prescription buttons
-      if(notesBtn) notesBtn.style.display='none';
-      if(rxBtn) rxBtn.style.display='none';
-    }
-  } else if(isRecep){
-    // Receptionist: hide EVERYTHING medical
-    if(notesBtn) notesBtn.style.display='none';
-    if(histSection) histSection.style.display='none';
-    // Also hide both forms completely — receptionist never sees them
-    var nf=document.getElementById('popup-notes-form');
-    var rf=document.getElementById('popup-rx-form');
-    if(nf) nf.style.display='none';
-    if(rf) rf.style.display='none';
-
-    // Print button: ONLY when patient is Done
-    // First: kill onclick so it can NEVER open the prescription form
-    if(rxBtn) rxBtn.onclick=function(){ return false; };
-    if(rxBtn){
-      if(status==='done'){
-        rxBtn.style.display='';
-        rxBtn.textContent='⏳ Loading...';
-        rxBtn.style.background='linear-gradient(135deg,#1B6B4A,#2D9166)';
-        rxBtn.style.color='#fff';
-        rxBtn.style.border='none';
-        rxBtn.disabled=true;
-        if(window.fbGetRx && currentPatientId){
-          window.fbGetRx(currentPatientId).then(function(rxList){
-            var rxBtn2=document.getElementById('rx-btn');
-            if(!rxBtn2) return;
-            if(rxList && rxList.length>0){
-              var rx=rxList[rxList.length-1];
-              rxBtn2.textContent='🖨️ Print Prescription';
-              rxBtn2.disabled=false;
-              rxBtn2.onclick=function(e){ e.stopPropagation(); printSavedRx(rx); };
-            } else {
-              rxBtn2.textContent='No Prescription Yet';
-              rxBtn2.disabled=true;
-              rxBtn2.style.opacity='0.5';
-              rxBtn2.onclick=function(){ return false; };
-            }
-          });
-        }
-      } else {
-        rxBtn.style.display='none';
-      }
-    }
-  }
-
-  // Show popup
-  document.getElementById('patient-popup').style.display='block';
-
-  // Load visit history from Firebase
-  var historyEl = document.getElementById('popup-history');
-
-  // ── RECEPTIONIST: show last visit only when patient is Waiting, no notes ──
-  if(isRecep){
-    if(status !== 'waiting'){
-      historyEl.innerHTML='';
-      return;
-    }
-    historyEl.innerHTML='<div style="text-align:center;padding:10px;color:#8FA89D;font-size:13px">Loading...</div>';
-    if(window.fbGetPatientHistory && phone){
-      window.fbGetPatientHistory(phone).then(function(visits){
-        if(!visits||visits.length===0){
-          historyEl.innerHTML='<div style="font-size:13px;color:#8FA89D;padding:8px 0">First visit — no previous history.</div>';
-          return;
-        }
-        visits.sort(function(a,b){ return b.visitDate > a.visitDate ? 1 : -1; });
-        var last = visits[0];
-        var dName=last.doctor;
-        for(var j=0;j<ALL_DOCTORS.length;j++){ if(ALL_DOCTORS[j].id===last.doctor){ dName=ALL_DOCTORS[j].name; break; } }
-        historyEl.innerHTML=
-          '<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px">'+
-          '<div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Last visit</div>'+
-          '<div style="font-weight:700;font-size:14px;color:#0F1F17">'+last.visitDate+'</div>'+
-          '<div style="font-size:13px;color:#4A5E54;margin-top:3px">'+dName+'</div>'+
-          (last.reason?'<div style="font-size:12px;color:#8FA89D;margin-top:2px">'+last.reason+'</div>':'')+
-          '</div>';
-      });
-    }
-    return;
-  }
-
-  // ── DOCTOR: show last visit only, with notes ──
-  historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>';
-
-  if(window.fbGetPatientHistory && (phone || currentPatientId)){
-    Promise.all([
-      phone ? window.fbGetPatientHistory(phone) : window.fbGetPatientHistory2(currentPatientId),
-      window.fbGetNotes ? window.fbGetNotes(currentPatientId) : Promise.resolve([])
-    ]).then(function(results){
-      var visits = results[0];
-      var notes  = results[1];
-
-      // Index notes by visitDate+doctorId for matching with visits
-      var notesMap = {};
-      for(var n=0;n<notes.length;n++){
-        var note = notes[n];
-        var key = (note.savedAt||'').substring(0,10) + '_' + (note.doctorId||'');
-        if(!notesMap[key]) notesMap[key] = [];
-        notesMap[key].push(note);
-      }
-
-      if(!visits || visits.length===0){
-        historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">No previous visits found.</div>';
-        return;
-      }
-      visits.sort(function(a,b){ return b.visitDate > a.visitDate ? 1 : -1; });
-      // Doctor sees LAST visit only (previous visit, not today's current one)
-      // Use local date to match how visitDate was saved
-      var now = new Date();
-      var today = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-      var prevVisits = visits.filter(function(v){ return v.visitDate !== today; });
-      if(prevVisits.length === 0){
-        historyEl.innerHTML = '<div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">No previous visits — this is their first visit.</div>';
-        return;
-      }
-      var lastVisit = [prevVisits[0]]; // only the most recent past visit
-      var html = '<div style="font-size:12px;font-weight:700;color:#8FA89D;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Last Visit</div>';
-      for(var i=0;i<lastVisit.length;i++){
-        var v = visits[i];
-        var sc = v.status==='done'?'#1B6B4A':v.status==='inprogress'?'#F0A500':'#8FA89D';
-        var sl = v.status==='done'?'Closed':v.status==='inprogress'?'In Progress':'Waiting';
-        var dName = v.doctor;
-        for(var j=0;j<ALL_DOCTORS.length;j++){
-          if(ALL_DOCTORS[j].id===v.doctor){ dName=ALL_DOCTORS[j].name; break; }
-        }
-
-        // Find notes for this visit by date + doctor
-        var visitKey = v.visitDate + '_' + v.doctor;
-        var visitNotes = notesMap[visitKey] || [];
-
-        html += '<div style="padding:12px 0;border-bottom:1px solid #D6E8DE">';
-        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-        html += '<div style="flex:1">';
-        html += '<div style="font-size:12px;color:#8FA89D;margin-bottom:3px">'+v.visitDate+'</div>';
-        html += '<div style="font-weight:600;font-size:13px;color:#0F1F17">'+dName+'</div>';
-        if(v.reason) html += '<div style="font-size:12px;color:#4A5E54;margin-top:2px">'+v.reason+'</div>';
-
-        // Show notes if exist
-        if(visitNotes.length > 0){
-          var vn = visitNotes[0];
-          html += '<div style="margin-top:8px;background:#E8F5EF;border-radius:8px;padding:8px 10px">';
-          html += '<div style="font-size:11px;font-weight:700;color:#1B6B4A;margin-bottom:4px">Notes by '+vn.doctor+':</div>';
-          if(vn.diagnosis) html += '<div style="font-size:12px;color:#0F1F17"><b>Diagnosis:</b> '+vn.diagnosis+'</div>';
-          if(vn.treatment) html += '<div style="font-size:12px;color:#0F1F17;margin-top:2px"><b>Treatment:</b> '+vn.treatment+'</div>';
-          html += '<button data-noteid="'+vn.id+'" data-diagnosis="'+vn.diagnosis+'" data-treatment="'+vn.treatment+'" onclick="editNote(this)" style="margin-top:8px;background:#fff;color:#1B6B4A;border:1px solid #1B6B4A;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Edit Notes</button>';
-          html += '</div>';
-        }
-
-        html += '</div>';
-        html += '<span style="font-size:11px;font-weight:700;color:'+sc+';background:'+sc+'20;padding:3px 8px;border-radius:8px;white-space:nowrap;margin-left:8px">'+sl+'</span>';
-        html += '</div></div>';
-      }
-      historyEl.innerHTML = html;
-    });
-  } else {
-    // No Firebase or no phone - show current visit only
-    historyEl.innerHTML =
-      '<div style="padding:12px 0">' +
-      '<div style="font-size:12px;color:#8FA89D;margin-bottom:3px">Today</div>' +
-      '<div style="font-weight:600;font-size:13px;color:#0F1F17">'+doctor+'</div>' +
-      (reason ? '<div style="font-size:12px;color:#4A5E54;margin-top:2px">'+reason+'</div>' : '') +
-      '</div>';
-  }
-}
-
-function renderQueue(patients){
-  var list=document.getElementById('queue-list');
-  if(!list) return;
-  // Only show big empty state when NO patients at all today AND no filter active
-  if((!patients||patients.length===0) && !window.queueFilter){
-    list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No patients today.</p><button class="btn-filled" style="margin-top:14px" onclick="goPage(\'register\')">Register First Patient</button></div>';
-    return;
-  }
-  var pOrder={emergency:0,urgent:1,normal:2};
-  patients.sort(function(a,b){
-    // First sort by priority (emergency first)
-    var pd=(pOrder[a.priority]!==undefined?pOrder[a.priority]:99)-(pOrder[b.priority]!==undefined?pOrder[b.priority]:99);
-    if(pd!==0) return pd;
-    // Then by arrival time — oldest first (first registered = #1)
-    var ta=a.createdAt||''; var tb=b.createdAt||'';
-    return ta < tb ? -1 : ta > tb ? 1 : 0;
-  });
-
-  // Count by status
-  var cWaiting=0, cProgress=0, cDone=0;
-  for(var i=0;i<patients.length;i++){
-    if(patients[i].status==='waiting') cWaiting++;
-    else if(patients[i].status==='inprogress') cProgress++;
-    else if(patients[i].status==='done') cDone++;
-  }
-  // Update live stats bar numbers
-  var lsW=document.getElementById('ls-waiting');
-  var lsP=document.getElementById('ls-progress');
-  var lsD=document.getElementById('ls-done');
-  if(lsW) lsW.textContent=cWaiting;
-  if(lsP) lsP.textContent=cProgress;
-  if(lsD) lsD.textContent=cDone;
-  // Update queue tab badge with waiting count
-  updateQueueBadge(cWaiting);
-  // Highlight active filter box
-  var boxes={waiting:'ls-box-waiting',inprogress:'ls-box-progress',done:'ls-box-done'};
-  var colors={waiting:'#D97706',inprogress:'#2563A8',done:'#059669'};
-  var bgs={waiting:'#FEF3C7',inprogress:'#EEF2FF',done:'#ECFDF5'};
-  for(var bk in boxes){
-    var bEl=document.getElementById(boxes[bk]);
-    if(!bEl) continue;
-    if(window.queueFilter===bk){
-      bEl.style.background=colors[bk];
-      bEl.querySelector('div').style.color='#fff';
-    } else {
-      bEl.style.background=bgs[bk];
-      bEl.querySelector('div').style.color=colors[bk];
-    }
-  }
-
-  var html='';
-
-  // Show patients based on filter
-  // If filter active → show filtered, else show all except done
-  var active;
-  if(window.queueFilter){
-    active = patients.filter(function(p){ return p.status === window.queueFilter; });
-    // Done list: newest first (last finished shows at top)
-    if(window.queueFilter === 'done'){
-      active = active.slice().sort(function(a,b){
-        var ta=a.createdAt||''; var tb=b.createdAt||'';
-        return ta > tb ? -1 : ta < tb ? 1 : 0;
-      });
-    }
-  } else {
-    active = patients.filter(function(p){ return p.status !== 'done'; });
-  }
-
-  if(active.length === 0){
-    var msgs = {
-      waiting: 'No patients waiting right now.',
-      inprogress: 'No patients in progress right now.',
-      done: 'No patients done yet today.'
-    };
-    var msg = window.queueFilter ? msgs[window.queueFilter] : 'No active patients right now.';
-    list.innerHTML = html + '<div class="empty-state"><div style="font-size:40px">🏥</div><p>'+msg+'</p></div>';
-    return;
-  }
-
-  for(var i=0;i<active.length;i++){
-    var p = active[i];
-    var isEmergency = p.priority==='emergency';
-    var s = STATUS_DATA[p.status]||STATUS_DATA.waiting;
-    var tc = p.visitType==='new'?'type-new':'type-followup';
-    var tl = p.visitType==='new'?'NEW':'FOLLOW-UP';
-    var leftColor = p.status==='waiting'?'#F59E0B':p.status==='inprogress'?'#2563A8':'#10B981';
-    if(isEmergency) leftColor='#EF4444';
-    var cardBg = isEmergency?'background:#FFFAF9;border-color:#FECACA;':'background:#fff;';
-    var waitStr='';
-    if(p.createdAt && p.status==='waiting'){
-      var created=p.createdAt.toDate?p.createdAt.toDate():new Date(p.createdAt);
-      var diffMin=Math.floor((Date.now()-created.getTime())/60000);
-      if(diffMin<1) waitStr='Just arrived';
-      else if(diffMin<60) waitStr=diffMin+' min';
-      else waitStr=Math.floor(diffMin/60)+'h '+(diffMin%60)+'m';
-    }
-    var chipBg=p.status==='waiting'?'#FEF3C7':p.status==='inprogress'?'#EEF2FF':'#ECFDF5';
-    var chipColor=p.status==='waiting'?'#D97706':p.status==='inprogress'?'#2563A8':'#059669';
-    if(isEmergency && p.status==='waiting'){ chipBg='#FEE2E2'; chipColor='#EF4444'; }
-    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBg+'border-left:4px solid '+leftColor+';cursor:pointer;padding:0;" onclick="openPatientPopup(this)">';
-    html+='<div style="display:flex;align-items:stretch">';
-    html+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;padding:14px 0;border-right:1px solid #F3F4F6">';
-    html+='<span style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">No.</span>';
-    html+='<span style="font-size:24px;font-weight:900;color:'+(isEmergency?'#EF4444':'#0D1117')+';line-height:1;letter-spacing:-1px">'+(i+1)+'</span>';
-    html+='</div>';
-    html+='<div style="flex:1;padding:12px 14px">';
-    html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">';
-    html+='<span style="font-weight:800;font-size:15px;color:#0D1117;letter-spacing:-0.3px">'+p.name+'</span>';
-    if(isEmergency) html+='<span style="font-size:9px;font-weight:700;background:#FEE2E2;color:#EF4444;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px">Emergency</span>';
-    html+='<span class="'+tc+'">'+tl+'</span>';
-    html+='</div>';
-    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:8px;font-weight:500">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
-    html+='<div style="display:flex;align-items:center;justify-content:space-between">';
-    html+='<button data-status="'+p.status+'" onclick="event.stopPropagation();cycleStatus(\''+p.id+'\',this)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.2px">'+s[2]+'</button>';
-    if(waitStr) html+='<span style="font-size:11px;color:#F59E0B;font-weight:700">⏱ '+waitStr+'</span>';
-    html+='</div>';
-    html+='</div></div></div>';
-  }
-  list.innerHTML=html;
-}
-</script>
-
-<script type="module">
-try{
-  const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-  const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-  const config={apiKey:"AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",authDomain:"shiffa-fcae0.firebaseapp.com",projectId:"shiffa-fcae0",storageBucket:"shiffa-fcae0.firebasestorage.app",messagingSenderId:"48392150056",appId:"1:48392150056:web:3c89b803c4c8220298e91d"};
-  const app=initializeApp(config);
-  const db=getFirestore(app);
-  window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
-  window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
-  window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
-  // Get notes by patientId (for THIS specific visit - used by doctor writing notes)
-  // Search patients by phone for doctor
-  window.fbSearchPatientsByPhone=function(phoneQuery, doctorId){
-    return getDocs(query(collection(db,'patients'),where('doctor','==',doctorId)))
-      .then(function(snap){
-        var list=[];
-        snap.forEach(function(d){
-          var data=Object.assign({id:d.id},d.data());
-          // Return all if no query, else filter by phone
-          if(!phoneQuery || (data.phone && data.phone.includes(phoneQuery))) list.push(data);
-        });
-        return list;
-      }).catch(function(e){ console.error(e); return []; });
-  };
-
-  // Doctor profile save/load
-  window.fbSaveProfile=function(doctorId, data){
-    return getDocs(query(collection(db,'doctors'),where('doctorId','==',doctorId))).then(function(snap){
-      if(!snap.empty){
-        return updateDoc(doc(db,'doctors',snap.docs[0].id), Object.assign({doctorId:doctorId},data,{updatedAt:serverTimestamp()}));
-      } else {
-        return addDoc(collection(db,'doctors'), Object.assign({doctorId:doctorId},data,{createdAt:serverTimestamp()}));
-      }
-    }).catch(function(e){ console.error(e); });
-  };
-  window.fbGetProfile=function(doctorId){
-    return getDocs(query(collection(db,'doctors'),where('doctorId','==',doctorId)))
-      .then(function(snap){ return snap.empty?null:snap.docs[0].data(); })
-      .catch(function(e){ console.error(e); return null; });
-  };
-
-  window.fbGetNotesByPatientId=function(patientId){
-    return getDocs(query(collection(db,'notes'),where('patientId','==',patientId)))
-      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
-      .catch(function(e){console.error(e);return[];});
-  };
-  // Get notes by phone (for visit history - cross-doctor view)
-  window.fbGetNotes=function(patientId){
-    var phone = currentPatientPhone || '';
-    var q = phone
-      ? query(collection(db,'notes'), where('patientPhone','==',phone))
-      : query(collection(db,'notes'), where('patientId','==',patientId));
-    return getDocs(q)
-      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
-      .catch(function(e){console.error(e);return[];});
-  };
-  window.fbUpdateNote=function(noteId, data){
-    return updateDoc(doc(db,'notes',noteId), data)
-      .then(function(){return true;})
-      .catch(function(e){console.error(e);return false;});
-  };
-  window.fbSaveNotes=function(patientId, notesData){
-    var phone = notesData.patientPhone || currentPatientPhone || '';
-    // Check if note already exists for this patient → update it, don't duplicate
-    var q = query(collection(db,'notes'), where('patientId','==',patientId));
-    return getDocs(q).then(function(snap){
-      var payload = Object.assign({patientId:patientId, patientPhone:phone, savedAt:new Date().toISOString()}, notesData);
-      if(!snap.empty){
-        return updateDoc(doc(db,'notes',snap.docs[0].id), payload).then(function(){ return true; });
-      } else {
-        return addDoc(collection(db,'notes'), Object.assign(payload,{createdAt:serverTimestamp()})).then(function(){ return true; });
-      }
-    }).catch(function(e){ console.error('fbSaveNotes error:',e); return false; });
-  };
-  window.fbGetPatientHistory2=function(patientId){
-    return getDocs(query(collection(db,'patients'),where('patientId','==',patientId)))
-      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
-      .catch(function(e){console.error(e);return[];});
-  };
-  window.fbGetPatientHistory=function(phone){
-    return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){
-      var list=[];
-      snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});
-      return list;
-    }).catch(function(e){console.error(e);return[];});
-  };
-  window.fbSaveRx=function(patientId, rxData){
-    if(!patientId){ console.error('fbSaveRx: no patientId!'); return Promise.resolve(null); }
-    console.log('fbSaveRx: saving for patientId=',patientId);
-    var q=query(collection(db,'prescriptions'),where('patientId','==',patientId));
-    return getDocs(q).then(function(snap){
-      var payload = Object.assign({patientId:patientId},rxData);
-      if(!snap.empty){
-        var existingId=snap.docs[0].id;
-        console.log('fbSaveRx: updating existing',existingId);
-        return updateDoc(doc(db,'prescriptions',existingId), Object.assign(payload,{updatedAt:serverTimestamp()}))
-          .then(function(){ return existingId; });
-      } else {
-        console.log('fbSaveRx: creating new prescription');
-        return addDoc(collection(db,'prescriptions'), Object.assign(payload,{createdAt:serverTimestamp()}))
-          .then(function(r){ console.log('fbSaveRx: created',r.id); return r.id; });
-      }
-    }).catch(function(e){ console.error('fbSaveRx error:',e); return null; });
-  };
-  window.fbGetRx=function(patientId){
-    var q = patientId
-      ? query(collection(db,'prescriptions'), where('patientId','==',patientId))
-      : query(collection(db,'prescriptions'), where('patientId','==',''));
-    return getDocs(q)
-      .then(function(snap){ var list=[]; snap.forEach(function(d){ list.push(Object.assign({id:d.id},d.data())); }); return list; })
-      .catch(function(e){ console.error(e); return []; });
-  };
-  window.fbFindPatient=function(phone){return getDocs(query(collection(db,'patients'),where('phone','==',phone))).then(function(snap){if(snap.empty)return null;var d=snap.docs[0];return Object.assign({id:d.id},d.data());}).catch(function(e){console.error(e);return null;});};
-  var b=document.createElement('div');
-  b.style.cssText='position:fixed;bottom:80px;right:16px;background:#1B6B4A;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9999';
-  b.textContent='🔥 Firebase Connected!';
-  document.body.appendChild(b);
-  setTimeout(function(){b.remove();},4000);
-}catch(e){console.warn('Firebase:',e.message);}
-</script>
-
-<!-- REGISTER TEMPLATE - real HTML, no JS string issues -->
-<div id="reg-template" style="display:none">
-  <h2 style="color:#0F1F17;margin-bottom:18px">Register Patient</h2>
-  <div class="table-card" style="max-width:540px">
-    <div id="phone-search-box">
-      <p style="font-size:13px;color:#4A5E54;margin-bottom:14px">Search by phone number first:</p>
-      <div style="display:flex;gap:10px;margin-bottom:8px">
-        <input class="form-input" id="search-phone" type="tel" placeholder="0555 123 456" style="flex:1"/>
-        <button onclick="searchByPhone()" style="padding:11px 18px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
-      </div>
-      <div id="search-result"></div>
-      <hr style="border:none;border-top:1px solid #D6E8DE;margin:16px 0"/>
-    </div>
-    <div id="reg-form-box" style="display:none">
-      <div style="background:#E8F5EF;border-radius:10px;padding:10px 14px;margin-bottom:14px">
-        <span style="font-size:13px;font-weight:600;color:#1B6B4A">New patient - fill in all details</span>
-      </div>
-      <div class="form-error" id="form-err"></div>
-      <div class="form-field">
-        <label class="form-label">Full Name *</label>
-        <input class="form-input" id="r-name" type="text" placeholder="e.g. Bensalem Khaled"/>
-      </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label class="form-label">Age *</label>
-          <input class="form-input" id="r-age" type="number" placeholder="45"/>
-        </div>
-        <div class="form-field">
-          <label class="form-label">Phone *</label>
-          <input class="form-input" id="r-phone" type="tel" placeholder="0555 123 456"/>
-        </div>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Address *</label>
-        <input class="form-input" id="r-address" type="text" placeholder="e.g. Rue Didouche Mourad, Bou Saada"/>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Gender *</label>
-        <div class="toggle-group">
-          <button class="toggle-btn" onclick="pickGender(this,'male')">Male</button>
-          <button class="toggle-btn" onclick="pickGender(this,'female')">Female</button>
-        </div>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Visit Type</label>
-        <div class="toggle-group">
-          <button class="visit-btn active" onclick="pickVisit(this,'new')">New Patient</button>
-          <button class="visit-btn" onclick="pickVisit(this,'follow_up')">Follow-up</button>
-        </div>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Priority</label>
-        <div class="toggle-group">
-          <button class="prio-btn" onclick="pickPrio(this,'normal')" style="border-color:#1B6B4A;background:#E8F5EF;color:#1B6B4A">Normal</button>
-          <button class="prio-btn" onclick="pickPrio(this,'emergency')">Emergency</button>
-        </div>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Assign Doctor *</label>
-        <select class="form-select" id="r-doctor">
-          <option value="">Select a doctor...</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Reason for Visit</label>
-        <textarea class="form-textarea" id="r-reason" placeholder="Brief description of symptoms..."></textarea>
-      </div>
-      <button class="btn-primary" id="reg-btn" onclick="submitPatient()" style="margin-top:0">Register Patient</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- PATIENT POPUP MODAL -->
-<div id="patient-popup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:20px">
-  <div style="background:#fff;border-radius:20px;max-width:500px;margin:20px auto;overflow:hidden">
-    <div id="popup-header" style="padding:20px 20px 16px;border-bottom:1px solid #D6E8DE">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div id="popup-name" style="font-weight:800;font-size:18px;color:#0F1F17"></div>
-          <div id="popup-info" style="font-size:13px;color:#4A5E54;margin-top:3px"></div>
-          <div id="popup-phone" style="font-size:12px;color:#8FA89D;margin-top:2px"></div>
-        </div>
-        <button onclick="closePopup()" style="background:#F7FAF8;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#4A5E54;cursor:pointer">Close</button>
-      </div>
-    </div>
-    <div class="popup-history-section" style="padding:16px 20px">
-      <h3 style="font-size:14px;font-weight:700;color:#0F1F17;margin-bottom:12px">Visit History</h3>
-      <div id="popup-history">
-        <div style="text-align:center;padding:20px;color:#8FA89D;font-size:13px">Loading history...</div>
-      </div>
-    </div>
-    <!-- NOTES FORM (hidden until Write Notes tapped) -->
-    <div id="popup-notes-form" style="display:none;padding:0 20px 16px">
-      <hr style="border:none;border-top:1px solid #D6E8DE;margin-bottom:16px"/>
-      <div style="margin-bottom:12px">
-        <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Diagnosis</label>
-        <input id="note-diagnosis" type="text" placeholder="e.g. Hypertension, Diabetes..." style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box"/>
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Notes & Treatment</label>
-        <textarea id="note-treatment" placeholder="Treatment notes, observations..." style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;height:90px;resize:vertical"></textarea>
-      </div>
-      <div id="note-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:8px"></div>
-      <button onclick="saveNotes()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Save Notes</button>
-    </div>
-
-    <!-- PRESCRIPTION FORM (hidden until Generate Prescription tapped) -->
-    <div id="popup-rx-form" style="display:none;padding:0 20px 16px">
-      <hr style="border:none;border-top:1px solid #D6E8DE;margin-bottom:16px"/>
-      <div style="font-weight:700;font-size:14px;color:#0F1F17;margin-bottom:12px">Prescription</div>
-      <div id="rx-medicines">
-        <div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">
-          <input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>
-          <input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid #D6E8DE;border-radius:8px;font-size:13px;outline:none"/>
-          <button onclick="removeRxLine(this)" style="padding:9px 12px;background:#FDECEA;color:#D64045;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>
-        </div>
-      </div>
-      <button onclick="addRxLine()" style="width:100%;padding:9px;background:#F7FAF8;color:#1B6B4A;border:1.5px dashed #1B6B4A;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">+ Add Medicine</button>
-      <div style="margin-bottom:12px">
-        <label style="display:block;font-size:13px;font-weight:600;color:#4A5E54;margin-bottom:6px">Instructions / Notes</label>
-        <textarea id="rx-notes" placeholder="e.g. Rest for 3 days, avoid cold water..." style="width:100%;padding:11px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;height:70px;resize:vertical"></textarea>
-      </div>
-      <button onclick="saveAndPrintRx()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Prescription</button>
-    </div>
-
-    <div style="padding:0 20px 20px;display:flex;gap:8px;flex-wrap:wrap">
-      <button onclick="closePopup()" style="flex:1;padding:12px;background:#F7FAF8;color:#4A5E54;border:1px solid #D6E8DE;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Close</button>
-      <button onclick="toggleNotesForm()" id="write-notes-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Write Notes</button>
-      <button onclick="toggleRxForm()" id="rx-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Prescription</button>
-    </div>
-  </div>
-</div>
-
-</body>
-</html>
