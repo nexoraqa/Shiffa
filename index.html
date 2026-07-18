@@ -527,6 +527,7 @@ function loadPage(page){
       '</div>'+
       '<div id="queue-list"><div style="text-align:center;padding:20px;color:#8FA89D">Loading...</div></div>';
     window.queueDate = new Date().toISOString().split('T')[0];
+    window.queueFilter = null; // always show full queue on dashboard
     loadQueue(u.doctorId || null);
     return;
   }
