@@ -588,45 +588,13 @@ function loadPage(page){
   // NOTES PAGE
   if(page==='notes' && u.role==='doctor'){
     mc.innerHTML=
-      '<h2 style="color:#0F1F17;margin-bottom:6px">📝 Today Notes</h2>'+
-      '<div style="font-size:13px;color:#8FA89D;margin-bottom:16px">Your diagnoses for today</div>'+
+      '<h2 style="color:#0F1F17;margin-bottom:12px">📝 Notes</h2>'+
+      '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+        '<button id="notes-tab-today" onclick="loadNotesTab(\'today\')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #1B6B4A;background:#1B6B4A;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Today</button>'+
+        '<button id="notes-tab-all" onclick="loadNotesTab(\'all\')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #D6E8DE;background:#fff;color:#8FA89D;font-weight:700;font-size:13px;cursor:pointer">All Time</button>'+
+      '</div>'+
       '<div id="notes-list"><div style="text-align:center;padding:40px;color:#8FA89D">Loading...</div></div>';
-    // Load today's notes from Firebase
-    if(window.fbGetPatients){
-      var todayStr = (function(){ var n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); })();
-      window.fbGetPatients(todayStr).then(function(pts){
-        pts = pts.filter(function(p){ return p.doctor===u.doctorId; });
-        if(!pts.length){ document.getElementById('notes-list').innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes written today yet.</div>'; return; }
-        // Load notes for each patient
-        var promises = pts.map(function(p){ return window.fbGetNotesByPatientId ? window.fbGetNotesByPatientId(p.id).then(function(n){ return {patient:p,notes:n}; }) : Promise.resolve({patient:p,notes:[]}); });
-        Promise.all(promises).then(function(results){
-          var html='';
-          for(var i=0;i<results.length;i++){
-            var pt=results[i].patient;
-            var notes=results[i].notes;
-            var n=notes&&notes.length?notes[0]:null;
-            html+='<div style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;animation:slideIn 0.25s ease-out">';
-            html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
-            html+='<div><div style="font-weight:800;font-size:15px;color:#0F1F17">'+pt.name+'</div>';
-            html+='<div style="font-size:12px;color:#8FA89D">Age '+pt.age+' · '+pt.phone+'</div></div>';
-            html+='<span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:3px 8px;border-radius:8px;font-weight:600">'+(pt.visitType==='new'?'New':'Follow-up')+'</span>';
-            html+='</div>';
-            if(n){
-              html+='<div style="background:#F7FAF8;border-radius:8px;padding:12px">';
-              html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Diagnosis</div>';
-              html+='<div style="font-size:14px;font-weight:600;color:#0F1F17;margin-bottom:8px">'+(n.diagnosis||'—')+'</div>';
-              html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Treatment</div>';
-              html+='<div style="font-size:13px;color:#4A5E54">'+(n.treatment||'—')+'</div>';
-              html+='</div>';
-            } else {
-              html+='<div style="font-size:13px;color:#8FA89D;font-style:italic">No notes written yet</div>';
-            }
-            html+='</div>';
-          }
-          document.getElementById('notes-list').innerHTML=html;
-        });
-      });
-    }
+    loadNotesTab('today');
     return;
   }
 
@@ -657,6 +625,74 @@ function pickPrio(btn,val){
   if(val==='normal')   {btn.style.borderColor='#1B6B4A';btn.style.background='#E8F5EF';btn.style.color='#1B6B4A';}
 
   if(val==='emergency'){btn.style.borderColor='#D64045';btn.style.background='#FDECEA';btn.style.color='#D64045';}
+}
+
+function loadNotesTab(tab){
+  var u = currentUser;
+  // Update toggle button styles
+  var tToday = document.getElementById('notes-tab-today');
+  var tAll   = document.getElementById('notes-tab-all');
+  if(tToday && tAll){
+    if(tab==='today'){
+      tToday.style.background='#1B6B4A'; tToday.style.color='#fff'; tToday.style.borderColor='#1B6B4A';
+      tAll.style.background='#fff'; tAll.style.color='#8FA89D'; tAll.style.borderColor='#D6E8DE';
+    } else {
+      tAll.style.background='#1B6B4A'; tAll.style.color='#fff'; tAll.style.borderColor='#1B6B4A';
+      tToday.style.background='#fff'; tToday.style.color='#8FA89D'; tToday.style.borderColor='#D6E8DE';
+    }
+  }
+  var listEl = document.getElementById('notes-list');
+  if(!listEl) return;
+  listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">Loading...</div>';
+
+  function renderNotes(pts){
+    if(!pts.length){ listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes found.</div>'; return; }
+    var promises=pts.map(function(p){
+      return window.fbGetNotesByPatientId ? window.fbGetNotesByPatientId(p.id).then(function(n){ return {patient:p,notes:n}; }) : Promise.resolve({patient:p,notes:[]});
+    });
+    Promise.all(promises).then(function(results){
+      // Only show patients that have notes written
+      var html='';
+      for(var i=0;i<results.length;i++){
+        var pt=results[i].patient;
+        var notes=results[i].notes;
+        var n=notes&&notes.length?notes[0]:null;
+        if(!n) continue; // skip patients with no notes
+        html+='<div style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;animation:slideIn 0.25s ease-out">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
+        html+='<div><div style="font-weight:800;font-size:15px;color:#0F1F17">'+pt.name+'</div>';
+        html+='<div style="font-size:12px;color:#8FA89D">'+pt.visitDate+' · Age '+pt.age+'</div></div>';
+        html+='<span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:3px 8px;border-radius:8px;font-weight:600">'+(pt.visitType==='new'?'New':'Follow-up')+'</span>';
+        html+='</div>';
+        html+='<div style="background:#F7FAF8;border-radius:8px;padding:12px">';
+        html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Diagnosis</div>';
+        html+='<div style="font-size:14px;font-weight:600;color:#0F1F17;margin-bottom:8px">'+(n.diagnosis||'—')+'</div>';
+        html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Treatment</div>';
+        html+='<div style="font-size:13px;color:#4A5E54">'+(n.treatment||'—')+'</div>';
+        html+='</div></div>';
+      }
+      listEl.innerHTML=html||'<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes found.</div>';
+    });
+  }
+
+  if(tab==='today'){
+    var now=new Date();
+    var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    if(window.fbGetPatients){
+      window.fbGetPatients(todayStr).then(function(pts){
+        renderNotes(pts.filter(function(p){ return p.doctor===u.doctorId; }));
+      });
+    }
+  } else {
+    // All time — load all patients for this doctor
+    if(window.fbSearchPatientsByPhone){
+      window.fbSearchPatientsByPhone('', u.doctorId).then(function(pts){
+        // Sort by visitDate newest first
+        pts.sort(function(a,b){ return b.visitDate>a.visitDate?1:-1; });
+        renderNotes(pts);
+      });
+    }
+  }
 }
 
 function renderPatientsList(results){
