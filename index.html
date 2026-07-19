@@ -500,92 +500,81 @@ function loadPage(page){
   // ── SCHEDULE PAGE ──
   if(page==='schedule'){
     var isDoc = u.role==='doctor';
-    var docId = u.doctorId || null;
+    var DAYS = ['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+    var DAY_SHORT = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+
+    // Build day rows
+    var dayRows = '';
+    for(var di=0;di<DAYS.length;di++){
+      var d=DAYS[di]; var ds=DAY_SHORT[di];
+      dayRows +=
+        '<div style="display:grid;grid-template-columns:90px 1fr;border-bottom:1px solid #F3F4F6;align-items:center" id="row-'+ds+'">'+
+          '<div style="padding:12px 14px;font-size:13px;font-weight:700;color:#0D1117;border-right:1px solid #F3F4F6">'+d+'</div>'+
+          '<div style="padding:10px 12px">'+
+            // Shift selector
+            '<div style="display:flex;gap:6px;margin-bottom:'+(isDoc?'8px':'0')+'" id="shifts-'+ds+'">'+
+              '<button onclick="'+(isDoc?'setDayShift(\''+ds+'\',\'off\')':'')+'" id="s-'+ds+'-off" '+
+                'style="flex:1;padding:6px 4px;border-radius:8px;border:1.5px solid #E5E7EB;background:#F4F6FA;font-size:11px;font-weight:700;color:#9CA3AF;cursor:'+(isDoc?'pointer':'default')+'">Off</button>'+
+              '<button onclick="'+(isDoc?'setDayShift(\''+ds+'\',\'morning\')':'')+'" id="s-'+ds+'-morning" '+
+                'style="flex:1;padding:6px 4px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:11px;font-weight:700;color:#4B5563;cursor:'+(isDoc?'pointer':'default')+'">🌅 AM</button>'+
+              '<button onclick="'+(isDoc?'setDayShift(\''+ds+'\',\'evening\')':'')+'" id="s-'+ds+'-evening" '+
+                'style="flex:1;padding:6px 4px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:11px;font-weight:700;color:#4B5563;cursor:'+(isDoc?'pointer':'default')+'">🌆 PM</button>'+
+            '</div>'+
+            // Time inputs (only for doctor)
+            (isDoc?
+              '<div id="times-'+ds+'" style="display:none;display:flex;gap:6px;align-items:center">'+
+                '<input type="time" id="start-'+ds+'" value="08:00" style="flex:1;padding:6px 8px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:12px;font-weight:600;color:#0D1117;outline:none"/>'+
+                '<span style="font-size:11px;color:#9CA3AF">to</span>'+
+                '<input type="time" id="end-'+ds+'" value="12:00" style="flex:1;padding:6px 8px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:12px;font-weight:600;color:#0D1117;outline:none"/>'+
+                '<input type="number" id="slot-'+ds+'" value="15" min="5" max="60" style="width:48px;padding:6px 4px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:12px;font-weight:600;color:#0D1117;outline:none;text-align:center"/>'+
+                '<span style="font-size:10px;color:#9CA3AF">min</span>'+
+              '</div>'
+            :
+              '<div id="times-'+ds+'" style="display:none;font-size:12px;color:#4B5563;padding:4px 0" id="timeview-'+ds+'"></div>'
+            )+
+          '</div>'+
+        '</div>';
+    }
 
     mc.innerHTML =
-      '<h2 style="color:#0D1117;margin-bottom:6px">📅 Schedule</h2>'+
-      '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">'+(isDoc?'Set your working hours':'Doctor working hours')+'</div>'+
-
+      '<h2 style="color:#0D1117;margin-bottom:4px">📅 Schedule</h2>'+
+      '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">'+(isDoc?'Set your working hours per day':'Doctor working hours')+'</div>'+
       '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
-        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
-          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Working Days</div>'+
+        '<div style="display:grid;grid-template-columns:90px 1fr;background:#F8FAFF;border-bottom:2px solid #E5E7EB">'+
+          '<div style="padding:10px 14px;font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid #E5E7EB">Day</div>'+
+          '<div style="padding:10px 14px;font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Shift / Hours / Slot</div>'+
         '</div>'+
-        '<div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px" id="sched-days">'+
-          ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'].map(function(d,i){
-            return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:#F4F6FA;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#4B5563">'+
-              '<input type="checkbox" value="'+d+'" id="day-'+d+'" style="width:16px;height:16px;accent-color:#2563A8"'+(isDoc?'':' disabled')+'/> '+d+'</label>';
-          }).join('')+
-        '</div>'+
+        dayRows+
       '</div>'+
-
-      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
-        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
-          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Shift</div>'+
-        '</div>'+
-        '<div style="padding:14px 16px;display:flex;gap:8px">'+
-          '<button id="shift-morning" onclick="pickShift(\'morning\')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#4B5563"'+(isDoc?'':' disabled')+'>🌅 Morning</button>'+
-          '<button id="shift-evening" onclick="pickShift(\'evening\')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#4B5563"'+(isDoc?'':' disabled')+'>🌆 Evening</button>'+
-          '<button id="shift-both" onclick="pickShift(\'both\')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#4B5563"'+(isDoc?'':' disabled')+'>⏰ Both</button>'+
-        '</div>'+
-      '</div>'+
-
-      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
-        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
-          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Hours</div>'+
-        '</div>'+
-        '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">'+
-          '<div style="display:flex;align-items:center;gap:12px">'+
-            '<span style="font-size:13px;color:#4B5563;min-width:90px">Start Time</span>'+
-            '<input type="time" id="sched-start" value="08:00" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
-          '</div>'+
-          '<div style="display:flex;align-items:center;gap:12px">'+
-            '<span style="font-size:13px;color:#4B5563;min-width:90px">End Time</span>'+
-            '<input type="time" id="sched-end" value="12:00" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-
-      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:'+(isDoc?'14':'0')+'px">'+
-        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
-          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Capacity</div>'+
-        '</div>'+
-        '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">'+
-          '<div style="display:flex;align-items:center;gap:12px">'+
-            '<span style="font-size:13px;color:#4B5563;min-width:90px">Avg per patient</span>'+
-            '<input type="number" id="sched-avg" value="15" min="5" max="60" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
-            '<span style="font-size:12px;color:#9CA3AF">min</span>'+
-          '</div>'+
-          '<div style="display:flex;align-items:center;gap:12px">'+
-            '<span style="font-size:13px;color:#4B5563;min-width:90px">Max patients</span>'+
-            '<input type="number" id="sched-max" value="20" min="1" max="100" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
-            '<span style="font-size:12px;color:#9CA3AF">per day</span>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-
       (isDoc?
-        '<button onclick="saveSchedule()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">💾 Save Schedule</button>'
-      :'<div style="background:#F4F6FA;border-radius:10px;padding:12px 16px;text-align:center;font-size:13px;color:#9CA3AF">Read only — contact the doctor to change schedule</div>');
+        '<button onclick="saveSchedule()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:14px">💾 Save Schedule</button>'
+      :'<div style="background:#F4F6FA;border-radius:10px;padding:12px 16px;text-align:center;font-size:13px;color:#9CA3AF;margin-bottom:14px">Read only — contact the doctor to change the schedule</div>')+
+      // Slots preview
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden">'+
+        '<div style="padding:12px 16px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between">'+
+          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Time Slots Preview</div>'+
+          (isDoc?'<button onclick="previewSlots()" style="font-size:11px;color:#2563A8;background:#EEF2FF;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:700">Generate</button>':'')+ 
+        '</div>'+
+        '<div id="slots-preview" style="padding:14px 16px;font-size:13px;color:#9CA3AF;text-align:center">'+
+          (isDoc?'Click Generate to preview time slots':'No schedule set yet')+'</div>'+
+      '</div>';
 
     // Load saved schedule
-    var loadDocId = isDoc ? u.doctorId : u.doctorId;
-    if(window.fbGetSchedule && loadDocId){
-      window.fbGetSchedule(loadDocId).then(function(sched){
-        if(!sched) return;
-        // Days
-        if(sched.days) sched.days.forEach(function(d){ var el=document.getElementById('day-'+d); if(el) el.checked=true; });
-        // Shift
-        if(sched.shift) pickShift(sched.shift);
-        // Times
-        if(sched.start) document.getElementById('sched-start').value=sched.start;
-        if(sched.end) document.getElementById('sched-end').value=sched.end;
-        // Capacity
-        if(sched.avgTime) document.getElementById('sched-avg').value=sched.avgTime;
-        if(sched.maxPatients) document.getElementById('sched-max').value=sched.maxPatients;
+    if(window.fbGetSchedule && u.doctorId){
+      window.fbGetSchedule(u.doctorId).then(function(sched){
+        if(!sched||!sched.days) return;
+        sched.days.forEach(function(dayData){
+          if(dayData.shift) setDayShift(dayData.day, dayData.shift, true);
+          if(dayData.start){ var el=document.getElementById('start-'+dayData.day); if(el) el.value=dayData.start; }
+          if(dayData.end){ var el2=document.getElementById('end-'+dayData.day); if(el2) el2.value=dayData.end; }
+          if(dayData.slot){ var el3=document.getElementById('slot-'+dayData.day); if(el3) el3.value=dayData.slot; }
+        });
+        if(!isDoc) previewSlots(sched.days);
       });
     }
     return;
   }
+
 
   if(page==='profile' && u.role==='doctor'){
     mc.innerHTML=
@@ -1194,49 +1183,112 @@ function openPatientHistory(el){
   }
 }
 
-function pickShift(shift){
-  var btns=['morning','evening','both'];
-  btns.forEach(function(b){
-    var el=document.getElementById('shift-'+b);
-    if(!el) return;
-    if(b===shift){
-      el.style.background='#1A3A5C';el.style.color='#fff';el.style.borderColor='#1A3A5C';
+function setDayShift(day, shift, silent){
+  var shifts=['off','morning','evening'];
+  shifts.forEach(function(s){
+    var btn=document.getElementById('s-'+day+'-'+s);
+    if(!btn) return;
+    if(s===shift){
+      var colors={off:['#F4F6FA','#9CA3AF','#E5E7EB'],morning:['#FEF3C7','#D97706','#F59E0B'],evening:['#EEF2FF','#2563A8','#2563A8']};
+      var c=colors[s];
+      btn.style.background=c[0];btn.style.color=c[1];btn.style.borderColor=c[2];
     } else {
-      el.style.background='#fff';el.style.color='#4B5563';el.style.borderColor='#E5E7EB';
+      btn.style.background='#fff';btn.style.color='#4B5563';btn.style.borderColor='#E5E7EB';
     }
   });
-  window._selectedShift=shift;
+  // Show/hide time inputs
+  var timesEl=document.getElementById('times-'+day);
+  if(timesEl){
+    timesEl.style.display=(shift==='off')?'none':'flex';
+    if(shift==='morning' && !silent){
+      var s=document.getElementById('start-'+day); var e=document.getElementById('end-'+day);
+      if(s&&!s.value) s.value='08:00';
+      if(e&&!e.value) e.value='12:00';
+    }
+    if(shift==='evening' && !silent){
+      var s2=document.getElementById('start-'+day); var e2=document.getElementById('end-'+day);
+      if(s2&&!s2.value) s2.value='16:00';
+      if(e2&&!e2.value) e2.value='20:00';
+    }
+  }
+}
+
+function previewSlots(savedDays){
+  var DAY_SHORT=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+  var days=savedDays||[];
+  if(!savedDays){
+    DAY_SHORT.forEach(function(d){
+      var offBtn=document.getElementById('s-'+d+'-off');
+      var morBtn=document.getElementById('s-'+d+'-morning');
+      var eveBtn=document.getElementById('s-'+d+'-evening');
+      if(!offBtn) return;
+      var shift='off';
+      if(morBtn&&morBtn.style.background==='rgb(254, 243, 199)') shift='morning';
+      else if(eveBtn&&eveBtn.style.background==='rgb(238, 242, 255)') shift='evening';
+      if(shift!=='off'){
+        var start=document.getElementById('start-'+d)?document.getElementById('start-'+d).value:'08:00';
+        var end=document.getElementById('end-'+d)?document.getElementById('end-'+d).value:'12:00';
+        var slot=parseInt(document.getElementById('slot-'+d)?document.getElementById('slot-'+d).value:15)||15;
+        days.push({day:d,shift:shift,start:start,end:end,slot:slot});
+      }
+    });
+  }
+  var preview=document.getElementById('slots-preview');
+  if(!preview) return;
+  if(!days.length){ preview.innerHTML='<div style="text-align:center;color:#9CA3AF;font-size:13px">No working days set yet.</div>'; return; }
+  var html='';
+  days.forEach(function(d){
+    var startParts=d.start.split(':'); var endParts=d.end.split(':');
+    var startMin=parseInt(startParts[0])*60+parseInt(startParts[1]);
+    var endMin=parseInt(endParts[0])*60+parseInt(endParts[1]);
+    var slotMin=d.slot||15;
+    var slots=[];
+    for(var m=startMin;m<endMin;m+=slotMin){
+      var h=Math.floor(m/60); var mn=m%60;
+      slots.push((h<10?'0':'')+h+':'+(mn<10?'0':'')+mn);
+    }
+    html+='<div style="margin-bottom:14px">';
+    html+='<div style="font-size:12px;font-weight:800;color:#0D1117;margin-bottom:8px">'+d.day+' '+(d.shift==='morning'?'🌅':'🌆')+' &nbsp;<span style="font-size:11px;color:#9CA3AF;font-weight:500">'+d.start+' – '+d.end+' · '+slotMin+' min slots · '+slots.length+' appointments</span></div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:5px">';
+    slots.forEach(function(s){
+      html+='<span style="background:#F4F6FA;border:1px solid #E5E7EB;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#4B5563">'+s+'</span>';
+    });
+    html+='</div></div>';
+  });
+  preview.innerHTML=html;
 }
 
 function saveSchedule(){
+  var DAY_SHORT=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
   var days=[];
-  ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'].forEach(function(d){
-    var el=document.getElementById('day-'+d);
-    if(el&&el.checked) days.push(d);
+  DAY_SHORT.forEach(function(d){
+    var morBtn=document.getElementById('s-'+d+'-morning');
+    var eveBtn=document.getElementById('s-'+d+'-evening');
+    var shift='off';
+    if(morBtn&&morBtn.style.background==='rgb(254, 243, 199)') shift='morning';
+    else if(eveBtn&&eveBtn.style.background==='rgb(238, 242, 255)') shift='evening';
+    if(shift!=='off'){
+      var start=document.getElementById('start-'+d)?document.getElementById('start-'+d).value:'08:00';
+      var end=document.getElementById('end-'+d)?document.getElementById('end-'+d).value:'12:00';
+      var slot=parseInt(document.getElementById('slot-'+d)?document.getElementById('slot-'+d).value:15)||15;
+      days.push({day:d,shift:shift,start:start,end:end,slot:slot});
+    }
   });
-  var shift=window._selectedShift||'morning';
-  var start=document.getElementById('sched-start').value;
-  var end=document.getElementById('sched-end').value;
-  var avgTime=parseInt(document.getElementById('sched-avg').value)||15;
-  var maxPatients=parseInt(document.getElementById('sched-max').value)||20;
-
-  if(!days.length){ alert('Please select at least one working day.'); return; }
-
+  if(!days.length){ alert('Please set at least one working day.'); return; }
   var btn=document.querySelector('[onclick="saveSchedule()"]');
   if(btn){btn.textContent='Saving...';btn.disabled=true;}
-
-  var data={days:days,shift:shift,start:start,end:end,avgTime:avgTime,maxPatients:maxPatients};
-
   if(window.fbSaveSchedule){
-    window.fbSaveSchedule(currentUser.doctorId,data).then(function(){
+    window.fbSaveSchedule(currentUser.doctorId,{days:days}).then(function(){
       if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
       setTimeout(function(){if(btn)btn.textContent='💾 Save Schedule';},2000);
+      previewSlots(days);
     }).catch(function(){
       if(btn){btn.textContent='💾 Save Schedule';btn.disabled=false;}
     });
   } else {
     if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
     setTimeout(function(){if(btn)btn.textContent='💾 Save Schedule';},2000);
+    previewSlots(days);
   }
 }
 
