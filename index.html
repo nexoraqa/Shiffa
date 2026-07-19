@@ -1194,19 +1194,24 @@ function setDayShift(day, shift, silent){
       btn.style.background='#fff';btn.style.color='#4B5563';btn.style.borderColor='#E5E7EB';
     }
   });
-  // Show/hide time inputs
-  var timesEl=document.getElementById('times-'+day);
+  // Show/hide time inputs — always visible when shift is active
+  var timesEl=document.getElementById('time-config-'+day);
   if(timesEl){
-    timesEl.style.display=(shift==='off')?'none':'flex';
-    if(shift==='morning' && !silent){
-      var s=document.getElementById('start-'+day); var e=document.getElementById('end-'+day);
-      if(s&&!s.value) s.value='08:00';
-      if(e&&!e.value) e.value='12:00';
-    }
-    if(shift==='evening' && !silent){
-      var s2=document.getElementById('start-'+day); var e2=document.getElementById('end-'+day);
-      if(s2&&!s2.value) s2.value='16:00';
-      if(e2&&!e2.value) e2.value='20:00';
+    timesEl.style.display=(shift==='off')?'none':'block';
+    // Set default times only when first selecting (not silent/loading)
+    if(!silent){
+      var startEl=document.getElementById('start-'+day);
+      var endEl=document.getElementById('end-'+day);
+      if(shift==='morning'){
+        if(startEl && startEl.value==='08:00') startEl.value='08:00';
+        if(endEl && endEl.value==='12:00') endEl.value='12:00';
+        if(startEl && !startEl.value) startEl.value='08:00';
+        if(endEl && !endEl.value) endEl.value='12:00';
+      }
+      if(shift==='evening'){
+        if(startEl && !startEl.value) startEl.value='16:00';
+        if(endEl && !endEl.value) endEl.value='20:00';
+      }
     }
   }
 }
