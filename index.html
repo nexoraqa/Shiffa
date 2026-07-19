@@ -116,27 +116,12 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .mnav-btn.active::after{content:'';display:block;width:4px;height:4px;background:var(--green-l);border-radius:50%;margin:2px auto 0}
 .mnav-badge{position:absolute;top:-2px;right:-2px;background:#EF4444;color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #fff;line-height:1}
 .mnav-wrap{position:relative;display:inline-block}
-/* ── In-app notification ── */
-#notif-banner{
-  position:fixed;top:-100px;left:50%;transform:translateX(-50%);
-  background:#0D1117;color:#fff;
-  border-radius:14px;padding:14px 18px;
-  min-width:280px;max-width:340px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3);
-  z-index:9999;
-  transition:top 0.4s cubic-bezier(0.34,1.56,0.64,1);
-  cursor:pointer;
-  border-left:4px solid #2563A8;
-}
-#notif-banner.emergency-notif{ border-left-color:#EF4444; }
-#notif-banner.show{ top:16px; }
-.notif-title{ font-size:13px;font-weight:800;color:#fff;margin-bottom:3px; }
-.notif-body{ font-size:12px;color:rgba(255,255,255,0.65); }
-.notif-dismiss{ position:absolute;top:10px;right:12px;font-size:16px;color:rgba(255,255,255,0.4);cursor:pointer; }
+#notif-banner{ display:none; }
 @media print{
-  body > *:not(#rx-print-overlay){ display:none !important; }
-  #rx-print-overlay{ position:absolute !important; box-shadow:none !important; }
-  #rx-print-overlay > div:first-child{ display:none !important; }
+  body > *{ display:none !important; }
+  #rx-print-overlay{ display:block !important; position:absolute !important; top:0 !important; left:0 !important; width:100% !important; box-shadow:none !important; background:#fff !important; }
+  #rx-print-overlay .no-print{ display:none !important; }
+  #rx-print-overlay *{ display:revert !important; }
 }
 @media(max-width:640px){
   .sidebar{display:none}
