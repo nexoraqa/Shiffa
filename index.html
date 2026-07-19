@@ -320,8 +320,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser
 var NAV={
   superadmin:  [['📊 Overview','dashboard'],['🏥 Clinics','clinics'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
   clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
-  doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['👤 Profile','profile']],
-  receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue']]
+  doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
+  receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule']]
 };
 var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100'};
 var ROLE_DESCS={superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management'};
@@ -497,6 +497,96 @@ function loadPage(page){
   }
 
   // PROFILE PAGE (must be before role checks)
+  // ── SCHEDULE PAGE ──
+  if(page==='schedule'){
+    var isDoc = u.role==='doctor';
+    var docId = u.doctorId || null;
+
+    mc.innerHTML =
+      '<h2 style="color:#0D1117;margin-bottom:6px">📅 Schedule</h2>'+
+      '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">'+(isDoc?'Set your working hours':'Doctor working hours')+'</div>'+
+
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
+        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
+          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Working Days</div>'+
+        '</div>'+
+        '<div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px" id="sched-days">'+
+          ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'].map(function(d,i){
+            return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:#F4F6FA;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#4B5563">'+
+              '<input type="checkbox" value="'+d+'" id="day-'+d+'" style="width:16px;height:16px;accent-color:#2563A8"'+(isDoc?'':' disabled')+'/> '+d+'</label>';
+          }).join('')+
+        '</div>'+
+      '</div>'+
+
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
+        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
+          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Shift</div>'+
+        '</div>'+
+        '<div style="padding:14px 16px;display:flex;gap:8px">'+
+          '<button id="shift-morning" onclick="pickShift(\'morning\')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#4B5563"'+(isDoc?'':' disabled')+'>🌅 Morning</button>'+
+          '<button id="shift-evening" onclick="pickShift(\'evening\')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#4B5563"'+(isDoc?'':' disabled')+'>🌆 Evening</button>'+
+          '<button id="shift-both" onclick="pickShift(\'both\')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#4B5563"'+(isDoc?'':' disabled')+'>⏰ Both</button>'+
+        '</div>'+
+      '</div>'+
+
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
+        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
+          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Hours</div>'+
+        '</div>'+
+        '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">'+
+          '<div style="display:flex;align-items:center;gap:12px">'+
+            '<span style="font-size:13px;color:#4B5563;min-width:90px">Start Time</span>'+
+            '<input type="time" id="sched-start" value="08:00" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:12px">'+
+            '<span style="font-size:13px;color:#4B5563;min-width:90px">End Time</span>'+
+            '<input type="time" id="sched-end" value="12:00" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+
+      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:'+(isDoc?'14':'0')+'px">'+
+        '<div style="padding:14px 16px;border-bottom:1px solid #F3F4F6">'+
+          '<div style="font-size:12px;font-weight:800;color:#0D1117;text-transform:uppercase;letter-spacing:0.5px">Capacity</div>'+
+        '</div>'+
+        '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">'+
+          '<div style="display:flex;align-items:center;gap:12px">'+
+            '<span style="font-size:13px;color:#4B5563;min-width:90px">Avg per patient</span>'+
+            '<input type="number" id="sched-avg" value="15" min="5" max="60" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
+            '<span style="font-size:12px;color:#9CA3AF">min</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:12px">'+
+            '<span style="font-size:13px;color:#4B5563;min-width:90px">Max patients</span>'+
+            '<input type="number" id="sched-max" value="20" min="1" max="100" style="flex:1;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;font-weight:600;color:#0D1117;outline:none"'+(isDoc?'':' disabled')+'/>'+
+            '<span style="font-size:12px;color:#9CA3AF">per day</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+
+      (isDoc?
+        '<button onclick="saveSchedule()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">💾 Save Schedule</button>'
+      :'<div style="background:#F4F6FA;border-radius:10px;padding:12px 16px;text-align:center;font-size:13px;color:#9CA3AF">Read only — contact the doctor to change schedule</div>');
+
+    // Load saved schedule
+    var loadDocId = isDoc ? u.doctorId : u.doctorId;
+    if(window.fbGetSchedule && loadDocId){
+      window.fbGetSchedule(loadDocId).then(function(sched){
+        if(!sched) return;
+        // Days
+        if(sched.days) sched.days.forEach(function(d){ var el=document.getElementById('day-'+d); if(el) el.checked=true; });
+        // Shift
+        if(sched.shift) pickShift(sched.shift);
+        // Times
+        if(sched.start) document.getElementById('sched-start').value=sched.start;
+        if(sched.end) document.getElementById('sched-end').value=sched.end;
+        // Capacity
+        if(sched.avgTime) document.getElementById('sched-avg').value=sched.avgTime;
+        if(sched.maxPatients) document.getElementById('sched-max').value=sched.maxPatients;
+      });
+    }
+    return;
+  }
+
   if(page==='profile' && u.role==='doctor'){
     mc.innerHTML=
       '<h2 style="color:#0F1F17;margin-bottom:20px">👤 Mon Profil</h2>'+
@@ -1101,6 +1191,52 @@ function openPatientHistory(el){
       }
       historyEl.innerHTML=html;
     });
+  }
+}
+
+function pickShift(shift){
+  var btns=['morning','evening','both'];
+  btns.forEach(function(b){
+    var el=document.getElementById('shift-'+b);
+    if(!el) return;
+    if(b===shift){
+      el.style.background='#1A3A5C';el.style.color='#fff';el.style.borderColor='#1A3A5C';
+    } else {
+      el.style.background='#fff';el.style.color='#4B5563';el.style.borderColor='#E5E7EB';
+    }
+  });
+  window._selectedShift=shift;
+}
+
+function saveSchedule(){
+  var days=[];
+  ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'].forEach(function(d){
+    var el=document.getElementById('day-'+d);
+    if(el&&el.checked) days.push(d);
+  });
+  var shift=window._selectedShift||'morning';
+  var start=document.getElementById('sched-start').value;
+  var end=document.getElementById('sched-end').value;
+  var avgTime=parseInt(document.getElementById('sched-avg').value)||15;
+  var maxPatients=parseInt(document.getElementById('sched-max').value)||20;
+
+  if(!days.length){ alert('Please select at least one working day.'); return; }
+
+  var btn=document.querySelector('[onclick="saveSchedule()"]');
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+
+  var data={days:days,shift:shift,start:start,end:end,avgTime:avgTime,maxPatients:maxPatients};
+
+  if(window.fbSaveSchedule){
+    window.fbSaveSchedule(currentUser.doctorId,data).then(function(){
+      if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
+      setTimeout(function(){if(btn)btn.textContent='💾 Save Schedule';},2000);
+    }).catch(function(){
+      if(btn){btn.textContent='💾 Save Schedule';btn.disabled=false;}
+    });
+  } else {
+    if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
+    setTimeout(function(){if(btn)btn.textContent='💾 Save Schedule';},2000);
   }
 }
 
@@ -2247,6 +2383,19 @@ try{
     return getDocs(query(collection(db,'patients'),where('doctor','==',doctorId)))
       .then(function(snap){var list=[];snap.forEach(function(d){var data=Object.assign({id:d.id},d.data());if(!phoneQuery||(data.phone&&data.phone.includes(phoneQuery)))list.push(data);});return list;})
       .catch(function(e){console.error(e);return[];});
+  };
+
+  window.fbSaveSchedule=function(doctorId,data){
+    return getDocs(query(collection(db,'schedules'),where('doctorId','==',doctorId))).then(function(snap){
+      var payload=Object.assign({doctorId:doctorId},data,{updatedAt:serverTimestamp()});
+      if(!snap.empty){return updateDoc(doc(db,'schedules',snap.docs[0].id),payload);}
+      else{return addDoc(collection(db,'schedules'),Object.assign(payload,{createdAt:serverTimestamp()}));}
+    }).catch(function(e){console.error(e);});
+  };
+  window.fbGetSchedule=function(doctorId){
+    return getDocs(query(collection(db,'schedules'),where('doctorId','==',doctorId)))
+      .then(function(snap){return snap.empty?null:snap.docs[0].data();})
+      .catch(function(e){console.error(e);return null;});
   };
 
   window.fbSaveProfile=function(doctorId,data){
