@@ -500,52 +500,54 @@ function loadPage(page){
   // ── SCHEDULE PAGE ──
   if(page==='schedule'){
     var isDoc = u.role==='doctor';
-    var DAY_SHORT = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+    var DAY_SHORT=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+    var DAY_FULL=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
 
-    // Header row - days as columns
-    var headerCols = '<div style="min-width:60px;padding:10px 6px;font-size:10px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid #E5E7EB;flex-shrink:0">Time</div>';
-    DAY_SHORT.forEach(function(d){
-      headerCols += '<div style="flex:1;padding:10px 4px;text-align:center;border-right:1px solid #E5E7EB;min-width:0">'+
-        '<div style="font-size:12px;font-weight:800;color:#0D1117">'+d+'</div>'+
-        (isDoc?
-          '<div style="display:flex;gap:2px;margin-top:6px;justify-content:center">'+
-            '<button onclick="setDayShift(\''+d+'\',\'off\')" id="s-'+d+'-off" style="flex:1;padding:3px 2px;border-radius:5px;border:1px solid #E5E7EB;background:#F4F6FA;font-size:9px;font-weight:700;color:#9CA3AF;cursor:pointer">Off</button>'+
-            '<button onclick="setDayShift(\''+d+'\',\'morning\')" id="s-'+d+'-morning" style="flex:1;padding:3px 2px;border-radius:5px;border:1px solid #E5E7EB;background:#fff;font-size:9px;font-weight:700;color:#4B5563;cursor:pointer">AM</button>'+
-            '<button onclick="setDayShift(\''+d+'\',\'evening\')" id="s-'+d+'-evening" style="flex:1;padding:3px 2px;border-radius:5px;border:1px solid #E5E7EB;background:#fff;font-size:9px;font-weight:700;color:#4B5563;cursor:pointer">PM</button>'+
-          '</div>'+
-          '<div id="time-config-'+d+'" style="display:none;margin-top:6px">'+
-            '<input type="time" id="start-'+d+'" value="08:00" style="width:100%;padding:3px 4px;border:1px solid #E5E7EB;border-radius:5px;font-size:10px;font-weight:600;color:#0D1117;outline:none;margin-bottom:2px"/>'+
-            '<input type="time" id="end-'+d+'" value="12:00" style="width:100%;padding:3px 4px;border:1px solid #E5E7EB;border-radius:5px;font-size:10px;font-weight:600;color:#0D1117;outline:none;margin-bottom:2px"/>'+
-            '<div style="display:flex;align-items:center;gap:2px"><input type="number" id="slot-'+d+'" value="15" min="5" max="60" style="width:36px;padding:3px 4px;border:1px solid #E5E7EB;border-radius:5px;font-size:10px;font-weight:600;color:#0D1117;outline:none;text-align:center"/><span style="font-size:9px;color:#9CA3AF">min</span></div>'+
-          '</div>'
-        :
-          '<div id="s-'+d+'-label" style="margin-top:4px;font-size:10px;font-weight:700;color:#9CA3AF">Off</div>'
-        )+
-      '</div>';
-    });
+    // Build header columns
+    var headerCols='<div style="min-width:54px;flex-shrink:0;padding:10px 6px;font-size:10px;font-weight:800;color:#9CA3AF;text-transform:uppercase;border-right:1px solid #E5E7EB">Time</div>';
+    for(var di=0;di<DAY_SHORT.length;di++){
+      var ds=DAY_SHORT[di];
+      headerCols+='<div style="flex:1;min-width:80px;padding:8px 4px;text-align:center;border-right:1px solid #E5E7EB">';
+      headerCols+='<div style="font-size:11px;font-weight:800;color:#0D1117;margin-bottom:6px">'+ds+'</div>';
+      if(isDoc){
+        // 4 buttons: Off / AM / PM / Both
+        headerCols+='<div style="display:flex;gap:2px;margin-bottom:6px">';
+        headerCols+='<button onclick="setDayShift(\''+ds+'\',\'off\')" id="s-'+ds+'-off" style="flex:1;padding:3px 2px;border-radius:5px;border:1.5px solid #E5E7EB;background:#F4F6FA;font-size:9px;font-weight:700;color:#9CA3AF;cursor:pointer">Off</button>';
+        headerCols+='<button onclick="setDayShift(\''+ds+'\',\'am\')" id="s-'+ds+'-am" style="flex:1;padding:3px 2px;border-radius:5px;border:1.5px solid #E5E7EB;background:#fff;font-size:9px;font-weight:700;color:#4B5563;cursor:pointer">AM</button>';
+        headerCols+='<button onclick="setDayShift(\''+ds+'\',\'pm\')" id="s-'+ds+'-pm" style="flex:1;padding:3px 2px;border-radius:5px;border:1.5px solid #E5E7EB;background:#fff;font-size:9px;font-weight:700;color:#4B5563;cursor:pointer">PM</button>';
+        headerCols+='<button onclick="setDayShift(\''+ds+'\',\'both\')" id="s-'+ds+'-both" style="flex:1;padding:3px 2px;border-radius:5px;border:1.5px solid #E5E7EB;background:#fff;font-size:9px;font-weight:700;color:#4B5563;cursor:pointer">Both</button>';
+        headerCols+='</div>';
+        // AM time inputs
+        headerCols+='<div id="tc-'+ds+'-am" style="display:none;margin-bottom:4px;background:#FFFBEB;border-radius:6px;padding:4px">';
+        headerCols+='<div style="font-size:9px;color:#D97706;font-weight:700;margin-bottom:3px">🌅 AM</div>';
+        headerCols+='<input type="time" id="am-start-'+ds+'" value="08:00" style="width:100%;padding:2px 4px;border:1px solid #F59E0B;border-radius:4px;font-size:10px;font-weight:600;outline:none;margin-bottom:2px"/>';
+        headerCols+='<input type="time" id="am-end-'+ds+'" value="12:00" style="width:100%;padding:2px 4px;border:1px solid #F59E0B;border-radius:4px;font-size:10px;font-weight:600;outline:none;margin-bottom:2px"/>';
+        headerCols+='<div style="display:flex;align-items:center;gap:2px"><input type="number" id="am-slot-'+ds+'" value="15" min="5" max="60" style="width:36px;padding:2px 3px;border:1px solid #F59E0B;border-radius:4px;font-size:10px;font-weight:600;outline:none;text-align:center"/><span style="font-size:9px;color:#D97706">min</span></div>';
+        headerCols+='</div>';
+        // PM time inputs
+        headerCols+='<div id="tc-'+ds+'-pm" style="display:none;background:#EEF2FF;border-radius:6px;padding:4px">';
+        headerCols+='<div style="font-size:9px;color:#2563A8;font-weight:700;margin-bottom:3px">🌆 PM</div>';
+        headerCols+='<input type="time" id="pm-start-'+ds+'" value="16:00" style="width:100%;padding:2px 4px;border:1px solid #2563A8;border-radius:4px;font-size:10px;font-weight:600;outline:none;margin-bottom:2px"/>';
+        headerCols+='<input type="time" id="pm-end-'+ds+'" value="20:00" style="width:100%;padding:2px 4px;border:1px solid #2563A8;border-radius:4px;font-size:10px;font-weight:600;outline:none;margin-bottom:2px"/>';
+        headerCols+='<div style="display:flex;align-items:center;gap:2px"><input type="number" id="pm-slot-'+ds+'" value="15" min="5" max="60" style="width:36px;padding:2px 3px;border:1px solid #2563A8;border-radius:4px;font-size:10px;font-weight:600;outline:none;text-align:center"/><span style="font-size:9px;color:#2563A8">min</span></div>';
+        headerCols+='</div>';
+      } else {
+        headerCols+='<div id="s-'+ds+'-label" style="font-size:10px;font-weight:700;color:#9CA3AF">Off</div>';
+      }
+      headerCols+='</div>';
+    }
 
-    mc.innerHTML =
-      '<h2 style="color:#0D1117;margin-bottom:4px">📅 Schedule</h2>'+
+    mc.innerHTML=
+      '<h2 style="color:#0D1117;margin-bottom:4px">\u{1F4C5} Schedule</h2>'+
       '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">'+(isDoc?'Set your working hours per day':'Doctor working hours — read only')+'</div>'+
-
-      // Calendar table
       '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
-
-        // Header
-        '<div style="display:flex;background:#F8FAFF;border-bottom:2px solid #E5E7EB;overflow-x:auto">'+
-          headerCols+
-        '</div>'+
-
-        // Slots area
-        '<div id="slots-grid" style="overflow-x:auto">'+
-          '<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">'+(isDoc?'Set shift above then click Generate':'Loading schedule...')+'</div>'+
-        '</div>'+
+        '<div style="display:flex;background:#F8FAFF;border-bottom:2px solid #E5E7EB;overflow-x:auto">'+headerCols+'</div>'+
+        '<div id="slots-grid" style="overflow-x:auto"><div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">'+(isDoc?'Set shifts above then click Generate':'Loading...')+'</div></div>'+
       '</div>'+
-
       (isDoc?
         '<div style="display:flex;gap:10px;margin-bottom:14px">'+
-          '<button onclick="previewSlots()" style="flex:1;padding:12px;background:#EEF2FF;color:#2563A8;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">👁 Preview Slots</button>'+
-          '<button onclick="saveSchedule()" style="flex:2;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Schedule</button>'+
+          '<button onclick="previewSlots()" style="flex:1;padding:12px;background:#EEF2FF;color:#2563A8;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">\u{1F441} Preview</button>'+
+          '<button onclick="saveSchedule()" style="flex:2;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">\u{1F4BE} Save Schedule</button>'+
         '</div>'
       :'<div style="background:#F4F6FA;border-radius:10px;padding:12px 16px;text-align:center;font-size:13px;color:#9CA3AF;margin-bottom:14px">Read only</div>');
 
@@ -555,16 +557,19 @@ function loadPage(page){
         if(!sched||!sched.days) return;
         sched.days.forEach(function(dayData){
           if(isDoc){
-            if(dayData.shift) setDayShift(dayData.day, dayData.shift, true);
-            if(dayData.start){ var el=document.getElementById('start-'+dayData.day); if(el) el.value=dayData.start; }
-            if(dayData.end){ var el2=document.getElementById('end-'+dayData.day); if(el2) el2.value=dayData.end; }
-            if(dayData.slot){ var el3=document.getElementById('slot-'+dayData.day); if(el3) el3.value=dayData.slot; }
+            setDayShift(dayData.day, dayData.shift, true);
+            if(dayData.amStart){ var e=document.getElementById('am-start-'+dayData.day); if(e) e.value=dayData.amStart; }
+            if(dayData.amEnd){ var e2=document.getElementById('am-end-'+dayData.day); if(e2) e2.value=dayData.amEnd; }
+            if(dayData.amSlot){ var e3=document.getElementById('am-slot-'+dayData.day); if(e3) e3.value=dayData.amSlot; }
+            if(dayData.pmStart){ var e4=document.getElementById('pm-start-'+dayData.day); if(e4) e4.value=dayData.pmStart; }
+            if(dayData.pmEnd){ var e5=document.getElementById('pm-end-'+dayData.day); if(e5) e5.value=dayData.pmEnd; }
+            if(dayData.pmSlot){ var e6=document.getElementById('pm-slot-'+dayData.day); if(e6) e6.value=dayData.pmSlot; }
           } else {
-            // Receptionist: just show label
             var lbl=document.getElementById('s-'+dayData.day+'-label');
             if(lbl){
-              lbl.textContent=(dayData.shift==='morning'?'🌅 AM':'🌆 PM')+' '+dayData.start+'-'+dayData.end;
-              lbl.style.color=dayData.shift==='morning'?'#D97706':'#2563A8';
+              var shiftLabel={am:'\uD83C\uDF05 AM',pm:'\uD83C\uDF06 PM',both:'\uD83C\uDF05 AM + \uD83C\uDF06 PM',off:'Off'};
+              lbl.textContent=shiftLabel[dayData.shift]||'Off';
+              lbl.style.color=dayData.shift==='off'?'#9CA3AF':dayData.shift==='am'?'#D97706':'#2563A8';
             }
           }
         });
@@ -1182,38 +1187,27 @@ function openPatientHistory(el){
 }
 
 function setDayShift(day, shift, silent){
-  var shifts=['off','morning','evening'];
-  shifts.forEach(function(s){
+  var allShifts=['off','am','pm','both'];
+  allShifts.forEach(function(s){
     var btn=document.getElementById('s-'+day+'-'+s);
     if(!btn) return;
-    if(s===shift){
-      var colors={off:['#F4F6FA','#9CA3AF','#E5E7EB'],morning:['#FEF3C7','#D97706','#F59E0B'],evening:['#EEF2FF','#2563A8','#2563A8']};
-      var c=colors[s];
-      btn.style.background=c[0];btn.style.color=c[1];btn.style.borderColor=c[2];
-    } else {
-      btn.style.background='#fff';btn.style.color='#4B5563';btn.style.borderColor='#E5E7EB';
-    }
+    var active=(s===shift);
+    var styles={
+      off:  active?['#F4F6FA','#6B7280','#9CA3AF']:['#fff','#4B5563','#E5E7EB'],
+      am:   active?['#FEF3C7','#D97706','#F59E0B']:['#fff','#4B5563','#E5E7EB'],
+      pm:   active?['#EEF2FF','#2563A8','#2563A8']:['#fff','#4B5563','#E5E7EB'],
+      both: active?['#F0FDF4','#059669','#10B981']:['#fff','#4B5563','#E5E7EB']
+    };
+    var st=styles[s];
+    btn.style.background=st[0]; btn.style.color=st[1]; btn.style.borderColor=st[2];
   });
-  // Show/hide time inputs — always visible when shift is active
-  var timesEl=document.getElementById('time-config-'+day);
-  if(timesEl){
-    timesEl.style.display=(shift==='off')?'none':'block';
-    // Set default times only when first selecting (not silent/loading)
-    if(!silent){
-      var startEl=document.getElementById('start-'+day);
-      var endEl=document.getElementById('end-'+day);
-      if(shift==='morning'){
-        if(startEl && startEl.value==='08:00') startEl.value='08:00';
-        if(endEl && endEl.value==='12:00') endEl.value='12:00';
-        if(startEl && !startEl.value) startEl.value='08:00';
-        if(endEl && !endEl.value) endEl.value='12:00';
-      }
-      if(shift==='evening'){
-        if(startEl && !startEl.value) startEl.value='16:00';
-        if(endEl && !endEl.value) endEl.value='20:00';
-      }
-    }
-  }
+  // Show correct time inputs
+  var showAm=(shift==='am'||shift==='both');
+  var showPm=(shift==='pm'||shift==='both');
+  var amEl=document.getElementById('tc-'+day+'-am');
+  var pmEl=document.getElementById('tc-'+day+'-pm');
+  if(amEl) amEl.style.display=showAm?'block':'none';
+  if(pmEl) pmEl.style.display=showPm?'block':'none';
 }
 
 function previewSlots(savedDays){
@@ -1224,90 +1218,77 @@ function previewSlots(savedDays){
     savedDays.forEach(function(d){ dayData[d.day]=d; });
   } else {
     DAY_SHORT.forEach(function(d){
-      var morBtn=document.getElementById('s-'+d+'-morning');
-      var eveBtn=document.getElementById('s-'+d+'-evening');
       var shift='off';
-      if(morBtn&&morBtn.style.background==='rgb(254, 243, 199)') shift='morning';
-      else if(eveBtn&&eveBtn.style.background==='rgb(238, 242, 255)') shift='evening';
-      if(shift!=='off'){
-        var start=(document.getElementById('start-'+d)||{value:'08:00'}).value;
-        var end=(document.getElementById('end-'+d)||{value:'12:00'}).value;
-        var slot=parseInt((document.getElementById('slot-'+d)||{value:15}).value)||15;
-        dayData[d]={day:d,shift:shift,start:start,end:end,slot:slot};
-      }
+      ['off','am','pm','both'].forEach(function(s){
+        var btn=document.getElementById('s-'+d+'-'+s);
+        if(btn&&btn.style.background&&btn.style.background!=='rgb(255, 255, 255)'&&btn.style.background!=='') shift=s;
+      });
+      if(shift==='off') return;
+      var amStart=(document.getElementById('am-start-'+d)||{value:'08:00'}).value;
+      var amEnd=(document.getElementById('am-end-'+d)||{value:'12:00'}).value;
+      var amSlot=parseInt((document.getElementById('am-slot-'+d)||{value:15}).value)||15;
+      var pmStart=(document.getElementById('pm-start-'+d)||{value:'16:00'}).value;
+      var pmEnd=(document.getElementById('pm-end-'+d)||{value:'20:00'}).value;
+      var pmSlot=parseInt((document.getElementById('pm-slot-'+d)||{value:15}).value)||15;
+      dayData[d]={day:d,shift:shift,amStart:amStart,amEnd:amEnd,amSlot:amSlot,pmStart:pmStart,pmEnd:pmEnd,pmSlot:pmSlot};
     });
   }
 
   var grid=document.getElementById('slots-grid');
   if(!grid) return;
 
-  // Collect all unique time slots across all working days
-  var allSlots={};
-  DAY_SHORT.forEach(function(d){
-    if(!dayData[d]) return;
-    var dd=dayData[d];
-    var sp=dd.start.split(':'); var ep=dd.end.split(':');
+  // Calculate all slots per day
+  function getSlots(start,end,slotMin){
+    var sp=start.split(':'); var ep=end.split(':');
     var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
     var eMin=parseInt(ep[0])*60+parseInt(ep[1]);
-    var slotMin=dd.slot||15;
+    var slots=[];
     for(var m=sMin;m<eMin;m+=slotMin){
       var h=Math.floor(m/60); var mn=m%60;
-      var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
-      if(!allSlots[m]) allSlots[m]=t;
+      slots.push({time:(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn, min:m});
     }
-  });
-
-  var sortedMins=Object.keys(allSlots).map(Number).sort(function(a,b){return a-b;});
-
-  if(!sortedMins.length){
-    grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
-    return;
+    return slots;
   }
 
-  // Build grid: time column + one column per day
-  var html='<div style="display:flex;min-width:100%">';
-
-  // Time column
-  html+='<div style="min-width:60px;flex-shrink:0;border-right:1px solid #E5E7EB">';
-  sortedMins.forEach(function(m){
-    html+='<div style="padding:7px 8px;font-size:11px;font-weight:600;color:#9CA3AF;border-bottom:1px solid #F3F4F6;text-align:right">'+allSlots[m]+'</div>';
+  // Collect all unique minutes
+  var allMins={};
+  DAY_SHORT.forEach(function(d){
+    var dd=dayData[d]; if(!dd) return;
+    if(dd.shift==='am'||dd.shift==='both') getSlots(dd.amStart,dd.amEnd,dd.amSlot).forEach(function(s){allMins[s.min]=s.time;});
+    if(dd.shift==='pm'||dd.shift==='both') getSlots(dd.pmStart,dd.pmEnd,dd.pmSlot).forEach(function(s){allMins[s.min]=s.time;});
   });
+
+  var sortedMins=Object.keys(allMins).map(Number).sort(function(a,b){return a-b;});
+  if(!sortedMins.length){ grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>'; return; }
+
+  var html='<div style="display:flex;min-width:100%">';
+  // Time column
+  html+='<div style="min-width:54px;flex-shrink:0;border-right:1px solid #E5E7EB">';
+  sortedMins.forEach(function(m){ html+='<div style="padding:6px 6px;font-size:10px;font-weight:600;color:#9CA3AF;border-bottom:1px solid #F3F4F6;text-align:right;white-space:nowrap">'+allMins[m]+'</div>'; });
   html+='</div>';
 
   // Day columns
   DAY_SHORT.forEach(function(d){
     var dd=dayData[d];
-    html+='<div style="flex:1;border-right:1px solid #E5E7EB;min-width:0">';
-
+    html+='<div style="flex:1;min-width:80px;border-right:1px solid #E5E7EB">';
     if(!dd){
-      // Off day - grey column
-      sortedMins.forEach(function(){
-        html+='<div style="padding:7px 4px;border-bottom:1px solid #F3F4F6;background:#FAFAFA"></div>';
-      });
+      sortedMins.forEach(function(){ html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#FAFAFA"></div>'; });
     } else {
-      var sp=dd.start.split(':'); var ep=dd.end.split(':');
-      var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
-      var eMin=parseInt(ep[0])*60+parseInt(ep[1]);
-      var slotMin=dd.slot||15;
-      var activeMins={};
-      for(var m=sMin;m<eMin;m+=slotMin) activeMins[m]=true;
-
-      var bgColor=dd.shift==='morning'?'#FFFBEB':'#EEF2FF';
-      var dotColor=dd.shift==='morning'?'#F59E0B':'#2563A8';
-
+      var amSlots={}, pmSlots={};
+      if(dd.shift==='am'||dd.shift==='both') getSlots(dd.amStart,dd.amEnd,dd.amSlot).forEach(function(s){amSlots[s.min]=true;});
+      if(dd.shift==='pm'||dd.shift==='both') getSlots(dd.pmStart,dd.pmEnd,dd.pmSlot).forEach(function(s){pmSlots[s.min]=true;});
       sortedMins.forEach(function(m){
-        if(activeMins[m]){
-          html+='<div style="padding:7px 4px;border-bottom:1px solid #F3F4F6;background:'+bgColor+';text-align:center">'+
-            '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+dotColor+'"></span>'+
-          '</div>';
+        if(amSlots[m]){
+          html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#FFFBEB;text-align:center"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B"></span></div>';
+        } else if(pmSlots[m]){
+          html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#EEF2FF;text-align:center"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563A8"></span></div>';
         } else {
-          html+='<div style="padding:7px 4px;border-bottom:1px solid #F3F4F6;background:#FAFAFA"></div>';
+          html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#FAFAFA"></div>';
         }
       });
     }
     html+='</div>';
   });
-
   html+='</div>';
   grid.innerHTML=html;
 }
@@ -1316,32 +1297,33 @@ function saveSchedule(){
   var DAY_SHORT=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
   var days=[];
   DAY_SHORT.forEach(function(d){
-    var morBtn=document.getElementById('s-'+d+'-morning');
-    var eveBtn=document.getElementById('s-'+d+'-evening');
     var shift='off';
-    if(morBtn&&morBtn.style.background==='rgb(254, 243, 199)') shift='morning';
-    else if(eveBtn&&eveBtn.style.background==='rgb(238, 242, 255)') shift='evening';
-    if(shift!=='off'){
-      var start=document.getElementById('start-'+d)?document.getElementById('start-'+d).value:'08:00';
-      var end=document.getElementById('end-'+d)?document.getElementById('end-'+d).value:'12:00';
-      var slot=parseInt(document.getElementById('slot-'+d)?document.getElementById('slot-'+d).value:15)||15;
-      days.push({day:d,shift:shift,start:start,end:end,slot:slot});
-    }
+    ['off','am','pm','both'].forEach(function(s){
+      var btn=document.getElementById('s-'+d+'-'+s);
+      if(btn&&btn.style.background&&btn.style.background!=='rgb(255, 255, 255)'&&btn.style.background!=='') shift=s;
+    });
+    if(shift==='off') return;
+    days.push({
+      day:d, shift:shift,
+      amStart:(document.getElementById('am-start-'+d)||{value:'08:00'}).value,
+      amEnd:(document.getElementById('am-end-'+d)||{value:'12:00'}).value,
+      amSlot:parseInt((document.getElementById('am-slot-'+d)||{value:15}).value)||15,
+      pmStart:(document.getElementById('pm-start-'+d)||{value:'16:00'}).value,
+      pmEnd:(document.getElementById('pm-end-'+d)||{value:'20:00'}).value,
+      pmSlot:parseInt((document.getElementById('pm-slot-'+d)||{value:15}).value)||15
+    });
   });
   if(!days.length){ alert('Please set at least one working day.'); return; }
   var btn=document.querySelector('[onclick="saveSchedule()"]');
   if(btn){btn.textContent='Saving...';btn.disabled=true;}
   if(window.fbSaveSchedule){
     window.fbSaveSchedule(currentUser.doctorId,{days:days}).then(function(){
-      if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
-      setTimeout(function(){if(btn)btn.textContent='💾 Save Schedule';},2000);
+      if(btn){btn.textContent='\u2705 Saved!';btn.disabled=false;}
+      setTimeout(function(){if(btn)btn.textContent='\U0001f4be Save Schedule';},2000);
       previewSlots(days);
-    }).catch(function(){
-      if(btn){btn.textContent='💾 Save Schedule';btn.disabled=false;}
-    });
+    }).catch(function(){ if(btn){btn.textContent='\U0001f4be Save Schedule';btn.disabled=false;} });
   } else {
-    if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
-    setTimeout(function(){if(btn)btn.textContent='💾 Save Schedule';},2000);
+    if(btn){btn.textContent='\u2705 Saved!';btn.disabled=false;}
     previewSlots(days);
   }
 }
