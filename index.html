@@ -546,8 +546,8 @@ function loadPage(page){
       '</div>'+
       (isDoc?
         '<div style="display:flex;gap:10px;margin-bottom:14px">'+
-          '<button onclick="previewSlots()" style="flex:1;padding:12px;background:#EEF2FF;color:#2563A8;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">\u{1F441} Preview</button>'+
-          '<button onclick="saveSchedule()" style="flex:2;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">\u{1F4BE} Save Schedule</button>'+
+          '<button onclick="previewSlots()" style="flex:1;padding:12px;background:#EEF2FF;color:#2563A8;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">👁 Preview</button>'+
+          '<button onclick="saveSchedule()" style="flex:2;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Schedule</button>'+
         '</div>'
       :'<div style="background:#F4F6FA;border-radius:10px;padding:12px 16px;text-align:center;font-size:13px;color:#9CA3AF;margin-bottom:14px">Read only</div>');
 
@@ -1318,12 +1318,12 @@ function saveSchedule(){
   if(btn){btn.textContent='Saving...';btn.disabled=true;}
   if(window.fbSaveSchedule){
     window.fbSaveSchedule(currentUser.doctorId,{days:days}).then(function(){
-      if(btn){btn.textContent='\u2705 Saved!';btn.disabled=false;}
-      setTimeout(function(){if(btn)btn.textContent='\U0001f4be Save Schedule';},2000);
+      if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
+      setTimeout(function(){if(btn)btn.textContent='💾 Save Schedule';},2000);
       previewSlots(days);
-    }).catch(function(){ if(btn){btn.textContent='\U0001f4be Save Schedule';btn.disabled=false;} });
+    }).catch(function(){ if(btn){btn.textContent='💾 Save Schedule';btn.disabled=false;} });
   } else {
-    if(btn){btn.textContent='\u2705 Saved!';btn.disabled=false;}
+    if(btn){btn.textContent='✅ Saved!';btn.disabled=false;}
     previewSlots(days);
   }
 }
