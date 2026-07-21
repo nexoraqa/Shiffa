@@ -1237,57 +1237,62 @@ function previewSlots(savedDays){
   var grid=document.getElementById('slots-grid');
   if(!grid) return;
 
-  // Calculate all slots per day
-  function getSlots(start,end,slotMin){
+  function countSlots(start,end,slotMin){
     var sp=start.split(':'); var ep=end.split(':');
     var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
     var eMin=parseInt(ep[0])*60+parseInt(ep[1]);
-    var slots=[];
-    for(var m=sMin;m<eMin;m+=slotMin){
-      var h=Math.floor(m/60); var mn=m%60;
-      slots.push({time:(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn, min:m});
-    }
-    return slots;
+    return Math.max(0,Math.floor((eMin-sMin)/slotMin));
   }
 
-  // Collect all unique minutes
-  var allMins={};
-  DAY_SHORT.forEach(function(d){
-    var dd=dayData[d]; if(!dd) return;
-    if(dd.shift==='am'||dd.shift==='both') getSlots(dd.amStart,dd.amEnd,dd.amSlot).forEach(function(s){allMins[s.min]=s.time;});
-    if(dd.shift==='pm'||dd.shift==='both') getSlots(dd.pmStart,dd.pmEnd,dd.pmSlot).forEach(function(s){allMins[s.min]=s.time;});
-  });
+  var DAY_FULL={Sat:'Saturday',Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'};
+  var workingDays=DAY_SHORT.filter(function(d){return dayData[d];});
 
-  var sortedMins=Object.keys(allMins).map(Number).sort(function(a,b){return a-b;});
-  if(!sortedMins.length){ grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>'; return; }
+  if(!workingDays.length){
+    grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
+    return;
+  }
 
-  var html='<div style="display:flex;min-width:100%">';
-  // Time column
-  html+='<div style="min-width:54px;flex-shrink:0;border-right:1px solid #E5E7EB">';
-  sortedMins.forEach(function(m){ html+='<div style="padding:6px 6px;font-size:10px;font-weight:600;color:#9CA3AF;border-bottom:1px solid #F3F4F6;text-align:right;white-space:nowrap">'+allMins[m]+'</div>'; });
-  html+='</div>';
-
-  // Day columns
-  DAY_SHORT.forEach(function(d){
+  var html='<div style="display:flex;flex-wrap:wrap;gap:12px;padding:16px">';
+  workingDays.forEach(function(d){
     var dd=dayData[d];
-    html+='<div style="flex:1;min-width:80px;border-right:1px solid #E5E7EB">';
-    if(!dd){
-      sortedMins.forEach(function(){ html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#FAFAFA"></div>'; });
-    } else {
-      var amSlots={}, pmSlots={};
-      if(dd.shift==='am'||dd.shift==='both') getSlots(dd.amStart,dd.amEnd,dd.amSlot).forEach(function(s){amSlots[s.min]=true;});
-      if(dd.shift==='pm'||dd.shift==='both') getSlots(dd.pmStart,dd.pmEnd,dd.pmSlot).forEach(function(s){pmSlots[s.min]=true;});
-      sortedMins.forEach(function(m){
-        if(amSlots[m]){
-          html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#FFFBEB;text-align:center"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B"></span></div>';
-        } else if(pmSlots[m]){
-          html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#EEF2FF;text-align:center"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563A8"></span></div>';
-        } else {
-          html+='<div style="padding:6px 4px;border-bottom:1px solid #F3F4F6;background:#FAFAFA"></div>';
-        }
-      });
+    var totalSlots=0;
+    var shiftDetails='';
+
+    if(dd.shift==='am'||dd.shift==='both'){
+      var n=countSlots(dd.amStart,dd.amEnd,dd.amSlot);
+      totalSlots+=n;
+      shiftDetails+=
+        '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding:10px;background:#FFFBEB;border-radius:8px;border:1px solid #FEF3C7">'+
+        '<span style="font-size:16px">&#127749;</span>'+
+        '<div>'+
+          '<div style="font-size:12px;font-weight:700;color:#D97706">Morning</div>'+
+          '<div style="font-size:12px;color:#4B5563;margin-top:2px">'+dd.amStart+' &ndash; '+dd.amEnd+'</div>'+
+          '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+dd.amSlot+' min &middot; '+n+' slots</div>'+
+        '</div>'+
+        '</div>';
     }
-    html+='</div>';
+    if(dd.shift==='pm'||dd.shift==='both'){
+      var n2=countSlots(dd.pmStart,dd.pmEnd,dd.pmSlot);
+      totalSlots+=n2;
+      shiftDetails+=
+        '<div style="display:flex;align-items:flex-start;gap:8px;padding:10px;background:#EEF2FF;border-radius:8px;border:1px solid #DBEAFE">'+
+        '<span style="font-size:16px">&#127750;</span>'+
+        '<div>'+
+          '<div style="font-size:12px;font-weight:700;color:#2563A8">Evening</div>'+
+          '<div style="font-size:12px;color:#4B5563;margin-top:2px">'+dd.pmStart+' &ndash; '+dd.pmEnd+'</div>'+
+          '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+dd.pmSlot+' min &middot; '+n2+' slots</div>'+
+        '</div>'+
+        '</div>';
+    }
+
+    html+=
+      '<div style="flex:1;min-width:140px;max-width:220px;background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04)">'+
+        '<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);padding:12px 14px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="font-size:14px;font-weight:800;color:#fff">'+DAY_FULL[d]+'</div>'+
+          '<div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:3px 8px;font-size:11px;font-weight:700;color:#fff">'+totalSlots+' slots</div>'+
+        '</div>'+
+        '<div style="padding:12px">'+shiftDetails+'</div>'+
+      '</div>';
   });
   html+='</div>';
   grid.innerHTML=html;
