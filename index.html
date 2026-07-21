@@ -2514,6 +2514,29 @@ try{
       .catch(function(e){console.error(e);return[];});
   };
 
+  // ── Appointments collection ──
+  window.fbSaveAppointment=function(data){
+    return addDoc(collection(db,'appointments'),Object.assign({},data,{createdAt:serverTimestamp()}))
+      .then(function(r){return r.id;})
+      .catch(function(e){console.error('fbSaveAppointment:',e);return null;});
+  };
+  window.fbGetAppointments=function(doctorId,date){
+    var q=query(collection(db,'appointments'),where('doctorId','==',doctorId),where('date','==',date));
+    return getDocs(q)
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error('fbGetAppointments:',e);return[];});
+  };
+  window.fbCancelAppointment=function(id){
+    return updateDoc(doc(db,'appointments',id),{status:'cancelled',cancelledAt:serverTimestamp()})
+      .catch(function(e){console.error('fbCancelAppointment:',e);});
+  };
+  window.fbGetAppointmentsByDate=function(date){
+    var q=query(collection(db,'appointments'),where('date','==',date),where('status','!=','cancelled'));
+    return getDocs(q)
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error('fbGetAppointmentsByDate:',e);return[];});
+  };
+
   window.fbSaveSchedule=function(doctorId,data){
     return getDocs(query(collection(db,'schedules'),where('doctorId','==',doctorId))).then(function(snap){
       var payload=Object.assign({doctorId:doctorId},data,{updatedAt:serverTimestamp()});
