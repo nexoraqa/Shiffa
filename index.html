@@ -554,7 +554,11 @@ function loadPage(page){
     // Load saved schedule
     if(window.fbGetSchedule && u.doctorId){
       window.fbGetSchedule(u.doctorId).then(function(sched){
-        if(!sched||!sched.days) return;
+        if(!sched||!sched.days){
+          var grid2=document.getElementById('slots-grid');
+          if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule set by the doctor yet.</div>';
+          return;
+        }
         sched.days.forEach(function(dayData){
           if(isDoc){
             setDayShift(dayData.day, dayData.shift, true);
@@ -574,13 +578,10 @@ function loadPage(page){
           }
         });
         // Load appointments to show booked slots in green
+        // Show schedule immediately, then update booked slots in background
+        previewSlots(sched.days, {});
         if(window.fbGetAppointments && u.doctorId){
-          // Load with timeout fallback so it never blocks the schedule view
-          var apptTimeout=setTimeout(function(){
-            previewSlots(sched.days, {});
-          }, 3000);
           window.fbGetAppointments(u.doctorId, null).then(function(appts){
-            clearTimeout(apptTimeout);
             var bookedMap={};
             for(var ai=0;ai<appts.length;ai++){
               var ap=appts[ai];
@@ -589,13 +590,9 @@ function loadPage(page){
                 bookedMap[ap.day][ap.time]=true;
               }
             }
-            previewSlots(sched.days, bookedMap);
-          }).catch(function(){
-            clearTimeout(apptTimeout);
-            previewSlots(sched.days, {});
-          });
-        } else {
-          previewSlots(sched.days, {});
+            // Only re-render if there are booked slots
+            if(Object.keys(bookedMap).length>0) previewSlots(sched.days, bookedMap);
+          }).catch(function(){ /* silent fail, schedule already showing */ });
         }
       });
     }
