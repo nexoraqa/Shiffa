@@ -575,18 +575,23 @@ function loadPage(page){
         });
         // Load appointments to show booked slots in green
         if(window.fbGetAppointments && u.doctorId){
+          // Load with timeout fallback so it never blocks the schedule view
+          var apptTimeout=setTimeout(function(){
+            previewSlots(sched.days, {});
+          }, 3000);
           window.fbGetAppointments(u.doctorId, null).then(function(appts){
-            // Build bookedMap per day: {day: {time: true}}
+            clearTimeout(apptTimeout);
             var bookedMap={};
             for(var ai=0;ai<appts.length;ai++){
               var ap=appts[ai];
-              if(ap.status==='scheduled'||ap.status==='booked'){
+              if(ap.status!=='cancelled'){
                 if(!bookedMap[ap.day]) bookedMap[ap.day]={};
                 bookedMap[ap.day][ap.time]=true;
               }
             }
             previewSlots(sched.days, bookedMap);
           }).catch(function(){
+            clearTimeout(apptTimeout);
             previewSlots(sched.days, {});
           });
         } else {
