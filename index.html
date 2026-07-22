@@ -573,7 +573,25 @@ function loadPage(page){
             }
           }
         });
-        previewSlots(sched.days);
+        // Load appointments to show booked slots in green
+        if(window.fbGetAppointments && u.doctorId){
+          window.fbGetAppointments(u.doctorId, null).then(function(appts){
+            // Build bookedMap per day: {day: {time: true}}
+            var bookedMap={};
+            for(var ai=0;ai<appts.length;ai++){
+              var ap=appts[ai];
+              if(ap.status==='scheduled'||ap.status==='booked'){
+                if(!bookedMap[ap.day]) bookedMap[ap.day]={};
+                bookedMap[ap.day][ap.time]=true;
+              }
+            }
+            previewSlots(sched.days, bookedMap);
+          }).catch(function(){
+            previewSlots(sched.days, {});
+          });
+        } else {
+          previewSlots(sched.days, {});
+        }
       });
     }
     return;
@@ -1210,7 +1228,7 @@ function setDayShift(day, shift, silent){
   if(pmEl) pmEl.style.display=showPm?'block':'none';
 }
 
-function previewSlots(savedDays){
+function previewSlots(savedDays, bookedMap){
   var DAY_SHORT=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
   var dayData={};
 
@@ -1290,8 +1308,9 @@ function previewSlots(savedDays){
 
     // Build slot badges
     var slotBadges='';
-    var isRecepView=(currentUser&&currentUser.role==='receptionist');
-    function buildBadges(start,end,slotMin,color,bg,dayName,bookedMap){
+    var dayBooked=(bookedMap&&bookedMap[d])||{};
+    var isRecepView2=(currentUser&&currentUser.role==='receptionist');
+    function buildBadges(start,end,slotMin,color,bg){
       var sp=start.split(':'),ep=end.split(':');
       var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
       var eMin=parseInt(ep[0])*60+parseInt(ep[1]);
@@ -1299,18 +1318,17 @@ function previewSlots(savedDays){
       for(var m=sMin;m<eMin;m+=slotMin){
         var h=Math.floor(m/60),mn=m%60;
         var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
-        var isBooked=bookedMap&&bookedMap[t];
+        var isBooked=dayBooked[t];
         var badgeBg=isBooked?'#DCFCE7':bg;
         var badgeColor=isBooked?'#15803D':color;
-        var cursor=isRecepView&&!isBooked?'pointer':'default';
-        var onclick=isRecepView&&!isBooked?'openSlotBooking(\''+dayName+'\',\''+t+'\',\''+currentUser.doctorId+'\')':'';
-        var title=isBooked?'Booked':'Click to book';
-        result+='<span onclick="'+onclick+'" title="'+title+'" style="display:inline-block;background:'+badgeBg+';color:'+badgeColor+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:'+cursor+';border:1px solid '+(isBooked?'#86EFAC':'transparent')+'">'+t+(isBooked?' ✓':'')+'</span>';
+        var cursor=isRecepView2&&!isBooked?'pointer':'default';
+        var onclick2=isRecepView2&&!isBooked?'openSlotBooking(\''+d+'\',\''+t+'\',\''+(_slotDoctorId||currentUser.doctorId)+'\')':'';
+        result+='<span onclick="'+onclick2+'" title="'+(isBooked?'Booked':'Click to book')+'" style="display:inline-block;background:'+badgeBg+';color:'+badgeColor+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:'+cursor+';border:1px solid '+(isBooked?'#86EFAC':'transparent')+'">'+t+(isBooked?' ✓':'')+'</span>';
       }
       return result;
     }
-    if(dd.shift==='am'||dd.shift==='both') slotBadges+='<div style="margin-bottom:6px">'+buildBadges(dd.amStart,dd.amEnd,dd.amSlot,'#D97706','#FEF3C7',d,null)+'</div>';
-    if(dd.shift==='pm'||dd.shift==='both') slotBadges+='<div>'+buildBadges(dd.pmStart,dd.pmEnd,dd.pmSlot,'#2563A8','#EEF2FF',d,null)+'</div>';
+    if(dd.shift==='am'||dd.shift==='both') slotBadges+='<div style="margin-bottom:6px">'+buildBadges(dd.amStart,dd.amEnd,dd.amSlot,'#D97706','#FEF3C7')+'</div>';
+    if(dd.shift==='pm'||dd.shift==='both') slotBadges+='<div>'+buildBadges(dd.pmStart,dd.pmEnd,dd.pmSlot,'#2563A8','#EEF2FF')+'</div>';
 
     html+=
       '<div style="flex:1;min-width:140px;max-width:220px;background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04)">'+
@@ -1330,156 +1348,6 @@ function previewSlots(savedDays){
   });
   html+='</div>';
   grid.innerHTML=html;
-}
-
-// ── Slot Booking Functions ──
-var _slotDay=null, _slotTime=null, _slotDoctorId=null;
-var _slotVisit=null, _slotGender=null, _slotPatient=null;
-
-function openSlotBooking(day,time,doctorId){
-  _slotDay=day; _slotTime=time; _slotDoctorId=doctorId;
-  _slotVisit=null; _slotGender=null; _slotPatient=null;
-
-  // Reset popup
-  document.getElementById('slot-popup-title').textContent='Book Appointment';
-  document.getElementById('slot-popup-subtitle').textContent=day+' at '+time;
-  document.getElementById('slot-search-section').style.display='none';
-  document.getElementById('slot-new-patient-section').style.display='none';
-  document.getElementById('slot-err').style.display='none';
-  document.getElementById('slot-search-result').innerHTML='';
-  document.getElementById('slot-confirm-btn').textContent='Confirm Appointment';
-  document.getElementById('slot-confirm-btn').disabled=false;
-  // Reset visit type buttons
-  ['new','followup'].forEach(function(b){
-    var el=document.getElementById('slot-btn-'+b);
-    if(el){el.style.background='#fff';el.style.color='#4B5563';el.style.borderColor='#E5E7EB';}
-  });
-  document.getElementById('slot-booking-popup').style.display='block';
-}
-
-function closeSlotBooking(){
-  document.getElementById('slot-booking-popup').style.display='none';
-}
-
-function pickSlotVisit(type){
-  _slotVisit=type;
-  _slotPatient=null;
-  var isNew=(type==='new');
-  // Highlight selected button
-  var activeBtn=document.getElementById(isNew?'slot-btn-new':'slot-btn-followup');
-  var inactiveBtn=document.getElementById(isNew?'slot-btn-followup':'slot-btn-new');
-  activeBtn.style.background='#1A3A5C'; activeBtn.style.color='#fff'; activeBtn.style.borderColor='#1A3A5C';
-  inactiveBtn.style.background='#fff'; inactiveBtn.style.color='#4B5563'; inactiveBtn.style.borderColor='#E5E7EB';
-  // Show correct section
-  document.getElementById('slot-search-section').style.display=isNew?'none':'block';
-  document.getElementById('slot-new-patient-section').style.display=isNew?'block':'none';
-  document.getElementById('slot-err').style.display='none';
-  document.getElementById('slot-search-result').innerHTML='';
-}
-
-function pickSlotGender(g){
-  _slotGender=g;
-  ['male','female'].forEach(function(s){
-    var el=document.getElementById('slot-gender-'+s);
-    if(!el) return;
-    if(s===g){el.style.background='#1A3A5C';el.style.color='#fff';el.style.borderColor='#1A3A5C';}
-    else{el.style.background='#fff';el.style.color='#4B5563';el.style.borderColor='#E5E7EB';}
-  });
-}
-
-function searchSlotPatient(){
-  var phone=document.getElementById('slot-search-phone').value.trim();
-  var res=document.getElementById('slot-search-result');
-  if(!phone){res.innerHTML='<div style="color:#EF4444;font-size:13px">Please enter a phone number.</div>';return;}
-  res.innerHTML='<div style="font-size:13px;color:#9CA3AF">Searching...</div>';
-  if(window.fbGetPatientHistory){
-    window.fbGetPatientHistory(phone).then(function(visits){
-      if(!visits||!visits.length){
-        res.innerHTML='<div style="font-size:13px;color:#EF4444">No patient found with this number.</div>';
-        _slotPatient=null;
-        return;
-      }
-      visits.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;});
-      var p=visits[0];
-      _slotPatient={name:p.name,age:p.age,phone:phone,gender:p.gender,address:p.address||''};
-      res.innerHTML=
-        '<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:6px">'+
-        '<div style="font-weight:800;font-size:14px;color:#065F46">'+p.name+'</div>'+
-        '<div style="font-size:12px;color:#4B5563;margin-top:3px">Age '+p.age+' · '+phone+'</div>'+
-        '<div style="font-size:12px;color:#059669;margin-top:4px;font-weight:600">Patient found ✓</div>'+
-        '</div>';
-    });
-  }
-}
-
-function confirmSlotBooking(){
-  var errEl=document.getElementById('slot-err');
-  var btn=document.getElementById('slot-confirm-btn');
-  errEl.style.display='none';
-
-  if(!_slotVisit){errEl.textContent='Please select New Patient or Follow-up.';errEl.style.display='block';return;}
-
-  var patientData=null;
-
-  if(_slotVisit==='follow_up'){
-    if(!_slotPatient){errEl.textContent='Please search and select a patient.';errEl.style.display='block';return;}
-    patientData=_slotPatient;
-  } else {
-    var name=document.getElementById('slot-name').value.trim();
-    var phone=document.getElementById('slot-phone').value.trim();
-    var age=document.getElementById('slot-age').value.trim();
-    var address=document.getElementById('slot-address').value.trim();
-    if(!name||!phone||!age||!address||!_slotGender){
-      errEl.textContent='Please fill in all patient details and select gender.';
-      errEl.style.display='block';return;
-    }
-    patientData={name:name,age:parseInt(age),phone:phone,address:address,gender:_slotGender};
-  }
-
-  btn.textContent='Saving...'; btn.disabled=true;
-
-  var appointmentData={
-    doctorId:_slotDoctorId,
-    day:_slotDay,
-    time:_slotTime,
-    date:null, // will be set when actually booking for a specific date
-    visitType:_slotVisit,
-    status:'scheduled',
-    patientName:patientData.name,
-    patientAge:patientData.age,
-    patientPhone:patientData.phone,
-    patientGender:patientData.gender,
-    patientAddress:patientData.address||'',
-    createdBy:currentUser.name,
-    clinicId:'clinic_001'
-  };
-
-  // Also save to patients collection if new patient
-  var savePatient = (_slotVisit==='new' && window.fbSave) ?
-    window.fbSave(Object.assign({},patientData,{
-      visitType:'new',priority:'normal',doctor:_slotDoctorId,
-      visitDate:new Date().toISOString().split('T')[0],
-      status:'scheduled',clinicId:'clinic_001'
-    })) : Promise.resolve(null);
-
-  savePatient.then(function(){
-    if(window.fbSaveAppointment){
-      return window.fbSaveAppointment(appointmentData);
-    }
-    return Promise.resolve('demo');
-  }).then(function(id){
-    if(id){
-      btn.textContent='✅ Appointment Booked!';
-      setTimeout(function(){
-        closeSlotBooking();
-        // Reload schedule to show green slot
-        goPage('schedule');
-      },1500);
-    } else {
-      btn.textContent='Confirm Appointment'; btn.disabled=false;
-      errEl.textContent='Could not save. Try again.'; errEl.style.display='block';
-    }
-  });
 }
 
 function toggleSlots(id){
@@ -2671,6 +2539,24 @@ try{
       .catch(function(e){console.error(e);return[];});
   };
 
+  // ── Appointments ──
+  window.fbSaveAppointment=function(data){
+    return addDoc(collection(db,'appointments'),Object.assign({},data,{createdAt:serverTimestamp()}))
+      .then(function(r){return r.id;})
+      .catch(function(e){console.error('fbSaveAppointment:',e);return null;});
+  };
+  window.fbGetAppointments=function(doctorId,date){
+    var q=date
+      ?query(collection(db,'appointments'),where('doctorId','==',doctorId),where('date','==',date))
+      :query(collection(db,'appointments'),where('doctorId','==',doctorId));
+    return getDocs(q)
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+  window.fbCancelAppointment=function(id){
+    return updateDoc(doc(db,'appointments',id),{status:'cancelled'}).catch(function(e){console.error(e);});
+  };
+
   window.fbSaveSchedule=function(doctorId,data){
     return getDocs(query(collection(db,'schedules'),where('doctorId','==',doctorId))).then(function(snap){
       var payload=Object.assign({doctorId:doctorId},data,{updatedAt:serverTimestamp()});
@@ -2703,62 +2589,6 @@ try{
   var fs2=document.getElementById('firebase-status'); if(fs2){fs2.textContent='Firebase offline - demo mode';fs2.style.display='block';}
 }
 </script>
-
-<!-- SLOT BOOKING POPUP -->
-<div id="slot-booking-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto">
-  <div style="background:#fff;border-radius:20px;margin:40px auto;max-width:420px;width:90%;overflow:hidden">
-    <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-size:16px;font-weight:800;color:#fff" id="slot-popup-title">Book Appointment</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px" id="slot-popup-subtitle"></div>
-      </div>
-      <button onclick="closeSlotBooking()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer">✕</button>
-    </div>
-
-    <div style="padding:20px">
-      <!-- Visit type -->
-      <div style="margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Visit Type</div>
-        <div style="display:flex;gap:8px">
-          <button id="slot-btn-new" onclick="pickSlotVisit('new')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;color:#4B5563;cursor:pointer">New Patient</button>
-          <button id="slot-btn-followup" onclick="pickSlotVisit('follow_up')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;color:#4B5563;cursor:pointer">Follow-up</button>
-        </div>
-      </div>
-
-      <!-- Search existing patient -->
-      <div id="slot-search-section" style="display:none;margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Search Patient by Phone</div>
-        <div style="display:flex;gap:8px">
-          <input type="tel" id="slot-search-phone" placeholder="Phone number..." style="flex:1;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
-          <button onclick="searchSlotPatient()" style="padding:10px 16px;background:#1A3A5C;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
-        </div>
-        <div id="slot-search-result" style="margin-top:10px"></div>
-      </div>
-
-      <!-- New patient form -->
-      <div id="slot-new-patient-section" style="display:none;margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Patient Details</div>
-        <input type="text" id="slot-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <input type="tel" id="slot-phone" placeholder="Phone *" style="flex:1;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
-          <input type="number" id="slot-age" placeholder="Age *" style="width:70px;padding:10px 8px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
-        </div>
-        <input type="text" id="slot-address" placeholder="Address *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>
-        <div style="display:flex;gap:8px">
-          <button id="slot-gender-male" onclick="pickSlotGender('male')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;cursor:pointer">Male</button>
-          <button id="slot-gender-female" onclick="pickSlotGender('female')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;cursor:pointer">Female</button>
-        </div>
-      </div>
-
-      <!-- Error -->
-      <div id="slot-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:12px"></div>
-
-      <!-- Confirm button -->
-      <button id="slot-confirm-btn" onclick="confirmSlotBooking()" style="width:100%;padding:14px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Confirm Appointment</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
