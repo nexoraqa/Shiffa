@@ -553,7 +553,13 @@ function loadPage(page){
 
     // Load saved schedule
     if(window.fbGetSchedule && u.doctorId){
+      // Set a fallback in case Firebase is slow
+      var schedTimeout=setTimeout(function(){
+        var g=document.getElementById('slots-grid');
+        if(g&&g.innerHTML.indexOf('Loading')>-1) g.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule set by the doctor yet.</div>';
+      },4000);
       window.fbGetSchedule(u.doctorId).then(function(sched){
+        clearTimeout(schedTimeout);
         if(!sched||!sched.days){
           var grid2=document.getElementById('slots-grid');
           if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule set by the doctor yet.</div>';
