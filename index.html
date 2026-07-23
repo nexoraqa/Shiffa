@@ -563,13 +563,11 @@ function loadPage(page){
         return;
       }
       window.fbGetSchedule(u.doctorId).then(function(sched){
-        console.log('Schedule loaded:', JSON.stringify(sched));
         if(!sched||!sched.days){
           var grid2=document.getElementById('slots-grid');
-          if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#EF4444;font-size:13px">DEBUG: sched='+JSON.stringify(sched)+'</div>';
+          if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule set by the doctor yet.</div>';
           return;
         }
-        console.log('Days count:', sched.days.length);
         sched.days.forEach(function(dayData){
           if(isDoc){
             setDayShift(dayData.day, dayData.shift, true);
@@ -582,15 +580,15 @@ function loadPage(page){
           } else {
             var lbl=document.getElementById('s-'+dayData.day+'-label');
             if(lbl){
-              var shiftLabel={am:'\uD83C\uDF05 AM',pm:'\uD83C\uDF06 PM',both:'\uD83C\uDF05 AM + \uD83C\uDF06 PM',off:'Off'};
+              var shiftLabel={am:'🌅 AM',pm:'🌆 PM',both:'🌅 AM + 🌆 PM',off:'Off',morning:'🌅 AM',evening:'🌆 PM'};
               lbl.textContent=shiftLabel[dayData.shift]||'Off';
-              lbl.style.color=dayData.shift==='off'?'#9CA3AF':dayData.shift==='am'?'#D97706':'#2563A8';
+              var sc=dayData.shift;
+              lbl.style.color=(sc==='off')?'#9CA3AF':(sc==='am'||sc==='morning')?'#D97706':'#2563A8';
             }
           }
         });
         // Load appointments to show booked slots in green
         // Show schedule immediately, then update booked slots in background
-        console.log('Calling previewSlots with days:', sched.days.length);
         previewSlots(sched.days, {});
         if(window.fbGetAppointments && u.doctorId){
           window.fbGetAppointments(u.doctorId, null).then(function(appts){
@@ -1248,7 +1246,14 @@ function previewSlots(savedDays, bookedMap){
   var dayData={};
 
   if(savedDays){
-    savedDays.forEach(function(d){ dayData[d.day]=d; });
+    savedDays.forEach(function(d){
+      // Normalize old shift values (morning->am, evening->pm)
+      if(d.shift==='morning') d.shift='am';
+      if(d.shift==='evening') d.shift='pm';
+      // Normalize old time field names (start->amStart, end->amEnd etc)
+      if(d.start && !d.amStart){ d.amStart=d.start; d.amEnd=d.end; d.amSlot=d.avgTime||15; }
+      dayData[d.day]=d;
+    });
   } else {
     DAY_SHORT.forEach(function(d){
       var shift='off';
