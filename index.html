@@ -563,11 +563,13 @@ function loadPage(page){
         return;
       }
       window.fbGetSchedule(u.doctorId).then(function(sched){
+        console.log('Schedule loaded:', JSON.stringify(sched));
         if(!sched||!sched.days){
           var grid2=document.getElementById('slots-grid');
-          if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule set by the doctor yet.</div>';
+          if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#EF4444;font-size:13px">DEBUG: sched='+JSON.stringify(sched)+'</div>';
           return;
         }
+        console.log('Days count:', sched.days.length);
         sched.days.forEach(function(dayData){
           if(isDoc){
             setDayShift(dayData.day, dayData.shift, true);
@@ -588,6 +590,7 @@ function loadPage(page){
         });
         // Load appointments to show booked slots in green
         // Show schedule immediately, then update booked slots in background
+        console.log('Calling previewSlots with days:', sched.days.length);
         previewSlots(sched.days, {});
         if(window.fbGetAppointments && u.doctorId){
           window.fbGetAppointments(u.doctorId, null).then(function(appts){
