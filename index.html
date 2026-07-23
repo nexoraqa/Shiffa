@@ -551,15 +551,18 @@ function loadPage(page){
         '</div>'
       :'<div style="background:#F4F6FA;border-radius:10px;padding:12px 16px;text-align:center;font-size:13px;color:#9CA3AF;margin-bottom:14px">Read only</div>');
 
-    // Load saved schedule
-    if(window.fbGetSchedule && u.doctorId){
-      // Set a fallback in case Firebase is slow
-      var schedTimeout=setTimeout(function(){
+    // Load saved schedule — retry until Firebase is ready
+    function tryLoadSchedule(attempt){
+      if(attempt>10){
         var g=document.getElementById('slots-grid');
-        if(g&&g.innerHTML.indexOf('Loading')>-1) g.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule set by the doctor yet.</div>';
-      },4000);
+        if(g) g.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule available.</div>';
+        return;
+      }
+      if(!window.fbGetSchedule||!u.doctorId){
+        setTimeout(function(){tryLoadSchedule(attempt+1);},500);
+        return;
+      }
       window.fbGetSchedule(u.doctorId).then(function(sched){
-        clearTimeout(schedTimeout);
         if(!sched||!sched.days){
           var grid2=document.getElementById('slots-grid');
           if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No schedule set by the doctor yet.</div>';
@@ -601,6 +604,7 @@ function loadPage(page){
           }).catch(function(){ /* silent fail, schedule already showing */ });
         }
       });
+    tryLoadSchedule(0);
     }
     return;
   }
