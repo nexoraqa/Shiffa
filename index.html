@@ -588,14 +588,23 @@ function loadPage(page){
           }
         });
         // Normalize days format before passing to previewSlots
-        var normalizedDays=sched.days.map(function(d){
+        // Ensure sched.days is an array
+        var rawDays=Array.isArray(sched.days)?sched.days:Object.values(sched.days||{});
+        var normalizedDays=rawDays.map(function(d){
           var nd=Object.assign({},d);
           if(nd.shift==='morning') nd.shift='am';
           if(nd.shift==='evening') nd.shift='pm';
           if(nd.start && !nd.amStart){ nd.amStart=nd.start; nd.amEnd=nd.end||'12:00'; nd.amSlot=nd.avgTime||nd.slot||15; }
           return nd;
         });
-        previewSlots(normalizedDays, {});
+        // Direct render - don't rely on DAY_SHORT filter
+        var grid=document.getElementById('slots-grid');
+        if(!grid) return;
+        if(!normalizedDays||!normalizedDays.length){
+          grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
+        } else {
+          previewSlots(normalizedDays, {});
+        }
         if(window.fbGetAppointments && u.doctorId){
           window.fbGetAppointments(u.doctorId, null).then(function(appts){
             var bookedMap={};
