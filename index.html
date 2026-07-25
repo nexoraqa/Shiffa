@@ -617,9 +617,11 @@ function loadPage(page){
                 bookedMap[ap.day][ap.time]=true;
               }
             }
-            // Only re-render if there are booked slots
-            if(Object.keys(bookedMap).length>0) previewSlots(sched.days, bookedMap);
-          }).catch(function(){ /* silent fail, schedule already showing */ });
+            // Re-render with booked slots marked green
+            if(!isDoc){
+              renderRecepSchedule(normalizedDays, u.doctorId, bookedMap);
+            }
+          }).catch(function(){ /* silent fail */ });
         }
       });
     }
@@ -1387,7 +1389,7 @@ function previewSlots(savedDays, bookedMap){
   grid.innerHTML=html;
 }
 
-function renderRecepSchedule(days, doctorId){
+function renderRecepSchedule(days, doctorId, bookedMap){
   var grid=document.getElementById('slots-grid');
   if(!grid) return;
 
@@ -1398,6 +1400,7 @@ function renderRecepSchedule(days, doctorId){
     return Math.max(0,Math.floor((eMin-sMin)/slotMin));
   }
 
+  var bMap=bookedMap||{};
   function makeSlotBadges(start,end,slotMin,bg,color,day){
     var sp=start.split(':'),ep=end.split(':');
     var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
@@ -1406,8 +1409,13 @@ function renderRecepSchedule(days, doctorId){
     for(var m=sMin;m<eMin;m+=slotMin){
       var h=Math.floor(m/60),mn=m%60;
       var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
-      html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
-        'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
+      var isBooked=bMap[day]&&bMap[day][t];
+      if(isBooked){
+        html+='<span style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:not-allowed" title="Already booked">'+t+' ✓</span>';
+      } else {
+        html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
+          'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
+      }
     }
     return html;
   }
@@ -1573,6 +1581,20 @@ function confirmSlotBooking(){
     if(!name||!phone||!age||!address||!_slotGender){errEl.textContent='Please fill in all details and select gender.';errEl.style.display='block';return;}
     patientData={name:name,age:parseInt(age),phone:phone,address:address,gender:_slotGender};
   }
+  btn.textContent='Checking...';btn.disabled=true;
+  // Check for duplicate booking first
+  var dupCheck=window.fbGetAppointments?window.fbGetAppointments(_slotDoctorId,null):Promise.resolve([]);
+  dupCheck.then(function(existing){
+    var isDup=existing.some(function(a){return a.day===_slotDay&&a.time===_slotTime&&a.status!=='cancelled';});
+    if(isDup){
+      btn.textContent='Confirm Appointment';btn.disabled=false;
+      errEl.textContent='This slot is already booked. Please choose another.';errEl.style.display='block';
+      return;
+    }
+    doConfirmBooking();
+  }).catch(function(){doConfirmBooking();});
+
+  function doConfirmBooking(){
   btn.textContent='Saving...';btn.disabled=true;
   var apptData={doctorId:_slotDoctorId,day:_slotDay,time:_slotTime,date:null,visitType:_slotVisit,status:'scheduled',patientName:patientData.name,patientAge:patientData.age,patientPhone:patientData.phone,patientGender:patientData.gender,patientAddress:patientData.address||'',createdBy:currentUser.name,clinicId:'clinic_001'};
   var saveP=(_slotVisit==='new'&&window.fbSave)?window.fbSave(Object.assign({},patientData,{visitType:'new',priority:'normal',doctor:_slotDoctorId,visitDate:new Date().toISOString().split('T')[0],status:'scheduled',clinicId:'clinic_001'})):Promise.resolve(null);
@@ -1587,6 +1609,7 @@ function confirmSlotBooking(){
       errEl.textContent='Could not save. Try again.';errEl.style.display='block';
     }
   });
+  } // end doConfirmBooking
 }
 
 function saveSchedule(){
