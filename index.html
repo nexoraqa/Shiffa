@@ -597,11 +597,13 @@ function loadPage(page){
           if(nd.start && !nd.amStart){ nd.amStart=nd.start; nd.amEnd=nd.end||'12:00'; nd.amSlot=nd.avgTime||nd.slot||15; }
           return nd;
         });
-        // Direct render - don't rely on DAY_SHORT filter
         var grid=document.getElementById('slots-grid');
         if(!grid) return;
         if(!normalizedDays||!normalizedDays.length){
           grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
+        } else if(!isDoc){
+          // Receptionist: simple direct render without complex previewSlots
+          renderRecepSchedule(normalizedDays, u.doctorId);
         } else {
           previewSlots(normalizedDays, {});
         }
@@ -1385,6 +1387,79 @@ function previewSlots(savedDays, bookedMap){
   grid.innerHTML=html;
 }
 
+function renderRecepSchedule(days, doctorId){
+  var grid=document.getElementById('slots-grid');
+  if(!grid) return;
+
+  function countSlots(start,end,slotMin){
+    var sp=start.split(':'),ep=end.split(':');
+    var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
+    var eMin=parseInt(ep[0])*60+parseInt(ep[1]);
+    return Math.max(0,Math.floor((eMin-sMin)/slotMin));
+  }
+
+  function makeSlotBadges(start,end,slotMin,bg,color,day){
+    var sp=start.split(':'),ep=end.split(':');
+    var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
+    var eMin=parseInt(ep[0])*60+parseInt(ep[1]);
+    var html='';
+    for(var m=sMin;m<eMin;m+=slotMin){
+      var h=Math.floor(m/60),mn=m%60;
+      var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
+      html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
+        'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
+    }
+    return html;
+  }
+
+  var DAY_FULL={Sat:'Saturday',Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'};
+  var html='<div style="display:flex;flex-wrap:wrap;gap:12px;padding:16px">';
+
+  days.forEach(function(d){
+    if(!d||!d.day||d.shift==='off') return;
+    var totalSlots=0;
+    var shiftCards='';
+
+    if(d.shift==='am'||d.shift==='both'){
+      var n=countSlots(d.amStart||'08:00',d.amEnd||'12:00',d.amSlot||15);
+      totalSlots+=n;
+      shiftCards+=
+        '<div style="margin-bottom:8px;padding:10px;background:#FFFBEB;border-radius:8px;border:1px solid #FEF3C7">'+
+        '<div style="font-size:12px;font-weight:700;color:#D97706;margin-bottom:4px">🌅 Morning &bull; '+n+' slots</div>'+
+        '<div style="font-size:11px;color:#4B5563;margin-bottom:6px">'+(d.amStart||'08:00')+' – '+(d.amEnd||'12:00')+' &bull; '+(d.amSlot||15)+' min</div>'+
+        '<div>'+makeSlotBadges(d.amStart||'08:00',d.amEnd||'12:00',d.amSlot||15,'#FEF3C7','#D97706',d.day)+'</div>'+
+        '</div>';
+    }
+    if(d.shift==='pm'||d.shift==='both'){
+      var n2=countSlots(d.pmStart||'16:00',d.pmEnd||'20:00',d.pmSlot||15);
+      totalSlots+=n2;
+      shiftCards+=
+        '<div style="padding:10px;background:#EEF2FF;border-radius:8px;border:1px solid #DBEAFE">'+
+        '<div style="font-size:12px;font-weight:700;color:#2563A8;margin-bottom:4px">🌆 Evening &bull; '+n2+' slots</div>'+
+        '<div style="font-size:11px;color:#4B5563;margin-bottom:6px">'+(d.pmStart||'16:00')+' – '+(d.pmEnd||'20:00')+' &bull; '+(d.pmSlot||15)+' min</div>'+
+        '<div>'+makeSlotBadges(d.pmStart||'16:00',d.pmEnd||'20:00',d.pmSlot||15,'#EEF2FF','#2563A8',d.day)+'</div>'+
+        '</div>';
+    }
+
+    html+=
+      '<div style="flex:1;min-width:200px;background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04)">'+
+        '<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);padding:12px 14px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="font-size:14px;font-weight:800;color:#fff">'+(DAY_FULL[d.day]||d.day)+'</div>'+
+          '<div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:3px 8px;font-size:11px;font-weight:700;color:#fff">'+totalSlots+' slots</div>'+
+        '</div>'+
+        '<div style="padding:12px">'+shiftCards+'</div>'+
+      '</div>';
+  });
+
+  html+='</div>';
+
+  if(html==='<div style="display:flex;flex-wrap:wrap;gap:12px;padding:16px"></div>'){
+    grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
+  } else {
+    grid.innerHTML=html;
+  }
+}
+
 function toggleSlots(id){
   var el=document.getElementById(id);
   var arr=document.getElementById('arr-'+id);
@@ -1392,6 +1467,110 @@ function toggleSlots(id){
   var isOpen=el.style.display!=='none';
   el.style.display=isOpen?'none':'block';
   if(arr) arr.innerHTML=isOpen?'&#9660;':'&#9650;';
+}
+
+// ── Slot Booking ──
+var _slotDay=null,_slotTime=null,_slotDoctorId=null,_slotVisit=null,_slotGender=null,_slotPatient=null;
+
+function openSlotBooking(el){
+  if(typeof el==='object'&&el&&el.getAttribute){
+    _slotDay=el.getAttribute('data-day');
+    _slotTime=el.getAttribute('data-time');
+    _slotDoctorId=el.getAttribute('data-docid')||currentUser.doctorId;
+  } else {
+    _slotDay=arguments[0];_slotTime=arguments[1];_slotDoctorId=arguments[2];
+  }
+  _slotVisit=null;_slotGender=null;_slotPatient=null;
+  var popup=document.getElementById('slot-booking-popup');
+  if(!popup) return;
+  document.getElementById('slot-popup-subtitle').textContent=(_slotDay||'')+' at '+(_slotTime||'');
+  document.getElementById('slot-search-section').style.display='none';
+  document.getElementById('slot-new-patient-section').style.display='none';
+  document.getElementById('slot-err').style.display='none';
+  document.getElementById('slot-search-result').innerHTML='';
+  document.getElementById('slot-confirm-btn').textContent='Confirm Appointment';
+  document.getElementById('slot-confirm-btn').disabled=false;
+  ['new','followup'].forEach(function(b){
+    var e=document.getElementById('slot-btn-'+b);
+    if(e){e.style.background='#fff';e.style.color='#4B5563';e.style.borderColor='#E5E7EB';}
+  });
+  popup.style.display='block';
+}
+
+function closeSlotBooking(){
+  var popup=document.getElementById('slot-booking-popup');
+  if(popup) popup.style.display='none';
+}
+
+function pickSlotVisit(type){
+  _slotVisit=type;_slotPatient=null;
+  var isNew=(type==='new');
+  var ab=document.getElementById(isNew?'slot-btn-new':'slot-btn-followup');
+  var ib=document.getElementById(isNew?'slot-btn-followup':'slot-btn-new');
+  if(ab){ab.style.background='#1A3A5C';ab.style.color='#fff';ab.style.borderColor='#1A3A5C';}
+  if(ib){ib.style.background='#fff';ib.style.color='#4B5563';ib.style.borderColor='#E5E7EB';}
+  document.getElementById('slot-search-section').style.display=isNew?'none':'block';
+  document.getElementById('slot-new-patient-section').style.display=isNew?'block':'none';
+  document.getElementById('slot-err').style.display='none';
+}
+
+function pickSlotGender(g){
+  _slotGender=g;
+  ['male','female'].forEach(function(s){
+    var e=document.getElementById('slot-gender-'+s);
+    if(!e) return;
+    if(s===g){e.style.background='#1A3A5C';e.style.color='#fff';e.style.borderColor='#1A3A5C';}
+    else{e.style.background='#fff';e.style.color='#4B5563';e.style.borderColor='#E5E7EB';}
+  });
+}
+
+function searchSlotPatient(){
+  var phone=document.getElementById('slot-search-phone').value.trim();
+  var res=document.getElementById('slot-search-result');
+  if(!phone){res.innerHTML='<div style="color:#EF4444;font-size:13px">Please enter a phone number.</div>';return;}
+  res.innerHTML='<div style="font-size:13px;color:#9CA3AF">Searching...</div>';
+  if(window.fbGetPatientHistory){
+    window.fbGetPatientHistory(phone).then(function(visits){
+      if(!visits||!visits.length){res.innerHTML='<div style="color:#EF4444;font-size:13px">No patient found.</div>';_slotPatient=null;return;}
+      visits.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;});
+      var p=visits[0];
+      _slotPatient={name:p.name,age:p.age,phone:phone,gender:p.gender,address:p.address||''};
+      res.innerHTML='<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:6px"><div style="font-weight:800;font-size:14px;color:#065F46">'+p.name+'</div><div style="font-size:12px;color:#4B5563;margin-top:3px">Age '+p.age+' - '+phone+'</div><div style="font-size:12px;color:#059669;margin-top:4px;font-weight:600">Patient found ✓</div></div>';
+    });
+  }
+}
+
+function confirmSlotBooking(){
+  var errEl=document.getElementById('slot-err');
+  var btn=document.getElementById('slot-confirm-btn');
+  errEl.style.display='none';
+  if(!_slotVisit){errEl.textContent='Please select New Patient or Follow-up.';errEl.style.display='block';return;}
+  var patientData=null;
+  if(_slotVisit==='follow_up'){
+    if(!_slotPatient){errEl.textContent='Please search and select a patient.';errEl.style.display='block';return;}
+    patientData=_slotPatient;
+  } else {
+    var name=document.getElementById('slot-name').value.trim();
+    var phone=document.getElementById('slot-phone').value.trim();
+    var age=document.getElementById('slot-age').value.trim();
+    var address=document.getElementById('slot-address').value.trim();
+    if(!name||!phone||!age||!address||!_slotGender){errEl.textContent='Please fill in all details and select gender.';errEl.style.display='block';return;}
+    patientData={name:name,age:parseInt(age),phone:phone,address:address,gender:_slotGender};
+  }
+  btn.textContent='Saving...';btn.disabled=true;
+  var apptData={doctorId:_slotDoctorId,day:_slotDay,time:_slotTime,date:null,visitType:_slotVisit,status:'scheduled',patientName:patientData.name,patientAge:patientData.age,patientPhone:patientData.phone,patientGender:patientData.gender,patientAddress:patientData.address||'',createdBy:currentUser.name,clinicId:'clinic_001'};
+  var saveP=(_slotVisit==='new'&&window.fbSave)?window.fbSave(Object.assign({},patientData,{visitType:'new',priority:'normal',doctor:_slotDoctorId,visitDate:new Date().toISOString().split('T')[0],status:'scheduled',clinicId:'clinic_001'})):Promise.resolve(null);
+  saveP.then(function(){
+    return window.fbSaveAppointment?window.fbSaveAppointment(apptData):Promise.resolve('demo');
+  }).then(function(id){
+    if(id){
+      btn.textContent='✅ Appointment Booked!';
+      setTimeout(function(){closeSlotBooking();goPage('schedule');},1500);
+    } else {
+      btn.textContent='Confirm Appointment';btn.disabled=false;
+      errEl.textContent='Could not save. Try again.';errEl.style.display='block';
+    }
+  });
 }
 
 function saveSchedule(){
