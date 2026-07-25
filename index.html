@@ -2835,5 +2835,46 @@ try{
 }
 </script>
 
+<!-- SLOT BOOKING POPUP -->
+<div id="slot-booking-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto">
+  <div style="background:#fff;border-radius:20px;margin:40px auto;max-width:420px;width:90%;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:16px;font-weight:800;color:#fff">Book Appointment</div><div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px" id="slot-popup-subtitle"></div></div>
+      <button onclick="closeSlotBooking()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Visit Type</div>
+        <div style="display:flex;gap:8px">
+          <button id="slot-btn-new" onclick="pickSlotVisit('new')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;color:#4B5563;cursor:pointer">New Patient</button>
+          <button id="slot-btn-followup" onclick="pickSlotVisit('follow_up')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;color:#4B5563;cursor:pointer">Follow-up</button>
+        </div>
+      </div>
+      <div id="slot-search-section" style="display:none;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Search Patient by Phone</div>
+        <div style="display:flex;gap:8px">
+          <input type="tel" id="slot-search-phone" placeholder="Phone number..." style="flex:1;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
+          <button onclick="searchSlotPatient()" style="padding:10px 16px;background:#1A3A5C;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
+        </div>
+        <div id="slot-search-result" style="margin-top:10px"></div>
+      </div>
+      <div id="slot-new-patient-section" style="display:none;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Patient Details</div>
+        <input type="text" id="slot-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="tel" id="slot-phone" placeholder="Phone *" style="flex:1;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
+          <input type="number" id="slot-age" placeholder="Age *" style="width:70px;padding:10px 8px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
+        </div>
+        <input type="text" id="slot-address" placeholder="Address *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>
+        <div style="display:flex;gap:8px">
+          <button id="slot-gender-male" onclick="pickSlotGender('male')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;cursor:pointer">Male</button>
+          <button id="slot-gender-female" onclick="pickSlotGender('female')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;cursor:pointer">Female</button>
+        </div>
+      </div>
+      <div id="slot-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:12px"></div>
+      <button id="slot-confirm-btn" onclick="confirmSlotBooking()" style="width:100%;padding:14px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Confirm Appointment</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
