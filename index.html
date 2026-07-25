@@ -1895,15 +1895,33 @@ function loadQueue(doctorFilter){
   var list=document.getElementById('queue-list');
   if(!list) return;
   if(window.fbGetPatients){
-    var date = window.queueDate || new Date().toISOString().split('T')[0];
+    var date=window.queueDate||new Date().toISOString().split('T')[0];
+    var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var todayName=dayNames[new Date().getDay()];
+    var todayStr=new Date().toISOString().split('T')[0];
     window.fbGetPatients(date).then(function(pts){
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
-      window._allQueuePatients = pts;
-      window._queueDoctorFilter = doctorFilter;
-      renderQueue(pts);
+      var docId=doctorFilter||currentUser.doctorId||'';
+      var apptP=(window.fbGetAppointments&&date===todayStr&&docId)
+        ?window.fbGetAppointments(docId,null):Promise.resolve([]);
+      apptP.then(function(appts){
+        var todayAppts=(appts||[]).filter(function(a){return a.day===todayName&&a.status==='scheduled';});
+        var existingPhones={};
+        pts.forEach(function(p){if(p.phone)existingPhones[p.phone]=true;});
+        var apptPts=todayAppts.filter(function(a){return!existingPhones[a.patientPhone];}).map(function(a){
+          return {id:'appt_'+a.id,apptId:a.id,name:a.patientName,age:a.patientAge,phone:a.patientPhone,
+            gender:a.patientGender,address:a.patientAddress||'',doctor:a.doctorId,
+            visitType:'appointment',priority:'normal',status:'waiting',
+            isAppointment:true,appointmentTime:a.time,createdAt:a.createdAt};
+        });
+        var merged=pts.concat(apptPts);
+        window._allQueuePatients=merged;
+        window._queueDoctorFilter=doctorFilter;
+        renderQueue(merged);
+      }).catch(function(){renderQueue(pts);});
     });
   } else {
-    list.innerHTML='<div class="empty-state"><div style="font-size:40px">\U0001f3e5</div><p>No patients.</p></div>';
+    list.innerHTML='<div class="empty-state"><p>No patients.</p></div>';
   }
 }
 
@@ -2461,6 +2479,7 @@ function renderQueue(patients){
     html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">';
     html+='<span style="font-weight:800;font-size:15px;color:#0D1117;letter-spacing:-0.3px">'+p.name+'</span>';
     if(isEmergency) html+='<span style="font-size:9px;font-weight:700;background:#FEE2E2;color:#EF4444;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px">Emergency</span>';
+    if(p.isAppointment) html+='<span style="font-size:9px;font-weight:700;background:#EDE9FE;color:#7C3AED;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px">📅 '+(p.appointmentTime||'Appt')+'</span>';
     html+='<span class="'+tc+'">'+tl+'</span>';
     html+='</div>';
     html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:8px;font-weight:500">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
