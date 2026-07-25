@@ -540,6 +540,14 @@ function loadPage(page){
     mc.innerHTML=
       '<h2 style="color:#0D1117;margin-bottom:4px">\u{1F4C5} Schedule</h2>'+
       '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">'+(isDoc?'Set your working hours per day':'Doctor working hours — read only')+'</div>'+
+      ((!isDoc&&window._pendingBookingPatient)?
+        '<div style="background:#EEF2FF;border:1.5px solid #2563A8;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">'+
+        '<div><div style="font-size:12px;font-weight:700;color:#2563A8;margin-bottom:2px">&#x1F4C5; Booking appointment for:</div>'+
+        '<div style="font-size:15px;font-weight:800;color:#0D1117">'+window._pendingBookingPatient.name+'</div>'+
+        '<div style="font-size:12px;color:#4B5563">'+window._pendingBookingPatient.phone+' · '+(window._pendingBookingPatient.visitType==='new'?'New Patient':'Follow-up')+'</div></div>'+
+        '<button onclick="window._pendingBookingPatient=null;goPage(\'schedule\')" style="background:#fff;border:1px solid #DBEAFE;border-radius:8px;padding:6px 12px;font-size:12px;color:#2563A8;cursor:pointer">Cancel</button>'+
+        '</div>'
+      :'')+
       '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
         '<div style="display:flex;background:#F8FAFF;border-bottom:2px solid #E5E7EB;overflow-x:auto">'+headerCols+'</div>'+
         '<div id="slots-grid" style="overflow-x:auto"><div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">'+(isDoc?'Set shifts above then click Generate':'Loading...')+'</div></div>'+
@@ -1498,10 +1506,20 @@ function openSlotBooking(el){
   document.getElementById('slot-search-phone').value='';
   document.getElementById('slot-confirm-btn').textContent='Confirm Appointment';
   document.getElementById('slot-confirm-btn').disabled=false;
-  ['new','followup'].forEach(function(b){
-    var e=document.getElementById('slot-btn-'+b);
-    if(e){e.style.background='#fff';e.style.color='#4B5563';e.style.borderColor='#E5E7EB';}
-  });
+  // If coming from Register with patient already loaded
+  if(window._pendingBookingPatient){
+    var pb=window._pendingBookingPatient;
+    _slotVisit=pb.visitType||'new';
+    _slotPatient={name:pb.name,age:pb.age,phone:pb.phone,gender:pb.gender,address:pb.address};
+    if(pb.doctor) _slotDoctorId=pb.doctor;
+    document.getElementById('slot-search-phone').value=pb.phone;
+    document.getElementById('slot-search-result').innerHTML=
+      '<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:6px">'+
+      '<div style="font-size:10px;font-weight:700;color:#059669;margin-bottom:3px">'+(pb.visitType==='new'?'New Patient':'Follow-up \u2713')+'</div>'+
+      '<div style="font-weight:800;font-size:15px;color:#065F46">'+pb.name+'</div>'+
+      '<div style="font-size:12px;color:#4B5563;margin-top:2px">Age '+pb.age+' \u00b7 '+pb.phone+'</div>'+
+      '</div>';
+  }
   popup.style.display='block';
 }
 
@@ -1603,6 +1621,7 @@ function confirmSlotBooking(){
   }).then(function(id){
     if(id){
       btn.textContent='✅ Appointment Booked!';
+      window._pendingBookingPatient=null;
       setTimeout(function(){closeSlotBooking();goPage('schedule');},1500);
     } else {
       btn.textContent='Confirm Appointment';btn.disabled=false;
@@ -1740,7 +1759,7 @@ function searchByPhone(){
           '<div style="font-weight:800;font-size:16px;color:#0F1F17;margin-bottom:4px">'+latest.name+'</div>'+
           '<div style="font-size:12px;color:#4A5E54;margin-bottom:12px">Age '+latest.age+' · '+latest.gender+' · '+phone+'</div>'+
           '<div style="font-size:13px;font-weight:600;color:#1B6B4A;margin-bottom:10px">Patient found! Add to today’s queue?</div>'+
-          '<button onclick="addReturnPatient()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Add to Queue</button>'+
+          '<button onclick="addReturnPatient()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">Add to Queue</button>'+'<button onclick="bookReturnPatient()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">&#x1F4C5; Book Appointment</button>'+
           '</div>';
         document.getElementById('new-patient-form').style.display='none';
       } else {
@@ -1851,6 +1870,39 @@ function confirmReturnPatient(){
 // ═══════════════
 // REGISTER
 // ===============
+function bookFromRegister(){
+  // Collect new patient data from form
+  var name=document.getElementById('r-name').value.trim();
+  var phone=document.getElementById('r-phone').value.trim();
+  var age=document.getElementById('r-age').value.trim();
+  var address=document.getElementById('r-address').value.trim();
+  var gender=window._regGender||'';
+  var doctor=document.getElementById('r-doctor').value;
+  var err=document.getElementById('form-err');
+  if(!name||!phone||!age||!address||!gender||!doctor){
+    if(err){err.textContent='Please fill all fields before booking an appointment.';err.style.display='block';}
+    return;
+  }
+  // Store patient data for booking
+  window._pendingBookingPatient={name:name,phone:phone,age:parseInt(age),address:address,gender:gender,doctor:doctor,visitType:'new'};
+  window._pendingBookingIsNew=true;
+  // Go to schedule to pick a slot
+  goPage('schedule');
+}
+
+function bookReturnPatient(){
+  // Use already found return patient data
+  if(!retPatient){return;}
+  window._pendingBookingPatient={
+    name:retPatient.name,phone:retPatient.phone,
+    age:retPatient.age,address:retPatient.address||'',
+    gender:retPatient.gender||'',doctor:retPatient.doctor||currentUser.doctorId,
+    visitType:'follow_up'
+  };
+  window._pendingBookingIsNew=false;
+  goPage('schedule');
+}
+
 function submitPatient(){
   var name=document.getElementById('r-name').value.trim();
   var age=document.getElementById('r-age').value;
@@ -2697,6 +2749,7 @@ function printSavedRx(rx){
     <div class="btn-row">
       <button class="btn-outline" onclick="goPage('queue')">Cancel</button>
       <button class="btn-filled" onclick="submitPatient()">Add to Queue</button>
+      <button class="btn-filled" onclick="bookFromRegister()" style="background:linear-gradient(135deg,#1A3A5C,#2563A8)">&#x1F4C5; Book Appointment</button>
     </div>
   </div>
 </div>
