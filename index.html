@@ -2557,12 +2557,17 @@ function renderQueue(patients){
     if(isEmergency) leftColor='#EF4444';
     var cardBg=isEmergency?'background:#FFFAF9;border-color:#FECACA;':'background:#fff;';
     var waitStr='';
-    if(p.createdAt&&p.status==='waiting'){
-      var created=p.createdAt.toDate?p.createdAt.toDate():new Date(p.createdAt);
-      var diffMin=Math.floor((Date.now()-created.getTime())/60000);
-      if(diffMin<1) waitStr='Just arrived';
-      else if(diffMin<60) waitStr=diffMin+' min';
-      else waitStr=Math.floor(diffMin/60)+'h '+(diffMin%60)+'m';
+    if(p.status==='waiting'&&!p.isAppointment){
+      if(p.createdAt){
+        try{
+          var created=p.createdAt.toDate?p.createdAt.toDate():new Date(p.createdAt);
+          var diffMin=Math.floor((Date.now()-created.getTime())/60000);
+          if(isNaN(diffMin)||diffMin<0) waitStr='Just arrived';
+          else if(diffMin<1) waitStr='Just arrived';
+          else if(diffMin<60) waitStr=diffMin+' min';
+          else waitStr=Math.floor(diffMin/60)+'h '+(diffMin%60)+'m';
+        }catch(e){ waitStr='Just arrived'; }
+      } else { waitStr='Just arrived'; }
     }
     var chipBg=p.status==='waiting'?'#FEF3C7':p.status==='inprogress'?'#EEF2FF':'#ECFDF5';
     var chipColor=p.status==='waiting'?'#D97706':p.status==='inprogress'?'#2563A8':'#059669';
