@@ -1990,26 +1990,33 @@ function loadQueue(doctorFilter){
     var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     var todayName=dayNames[new Date().getDay()];
     var todayStr=new Date().toISOString().split('T')[0];
-    window.fbGetPatients(date).then(function(pts){
+    // Run both Firebase calls in parallel for speed
+    var docId=doctorFilter||currentUser.doctorId||'';
+    var ptsP=window.fbGetPatients(date);
+    var apptP=(window.fbGetAppointments&&date===todayStr&&docId)
+      ?window.fbGetAppointments(docId,null):Promise.resolve([]);
+    Promise.all([ptsP,apptP]).then(function(results){
+      var pts=results[0]||[];
+      var appts=results[1]||[];
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
-      var docId=doctorFilter||currentUser.doctorId||'';
-      var apptP=(window.fbGetAppointments&&date===todayStr&&docId)
-        ?window.fbGetAppointments(docId,null):Promise.resolve([]);
-      apptP.then(function(appts){
-        var todayAppts=(appts||[]).filter(function(a){return a.day===todayName&&a.status==='scheduled';});
-        var existingPhones={};
-        pts.forEach(function(p){if(p.phone)existingPhones[p.phone]=true;});
-        var apptPts=todayAppts.filter(function(a){return!existingPhones[a.patientPhone];}).map(function(a){
-          return {id:'appt_'+a.id,apptId:a.id,name:a.patientName,age:a.patientAge,phone:a.patientPhone,
-            gender:a.patientGender,address:a.patientAddress||'',doctor:a.doctorId,
-            visitType:'appointment',priority:'normal',status:'waiting',
-            isAppointment:true,appointmentTime:a.time,createdAt:a.createdAt};
-        });
-        var merged=pts.concat(apptPts);
-        window._allQueuePatients=merged;
-        window._queueDoctorFilter=doctorFilter;
-        renderQueue(merged);
-      }).catch(function(){renderQueue(pts);});
+      var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status==='scheduled';});
+      var existingPhones={};
+      pts.forEach(function(p){if(p.phone)existingPhones[p.phone]=true;});
+      var apptPts=todayAppts.filter(function(a){return!existingPhones[a.patientPhone];}).map(function(a){
+        return {id:'appt_'+a.id,apptId:a.id,name:a.patientName,age:a.patientAge,phone:a.patientPhone,
+          gender:a.patientGender,address:a.patientAddress||'',doctor:a.doctorId,
+          visitType:'appointment',priority:'normal',status:'waiting',
+          isAppointment:true,appointmentTime:a.time,createdAt:a.createdAt};
+      });
+      var merged=pts.concat(apptPts);
+      window._allQueuePatients=merged;
+      window._queueDoctorFilter=doctorFilter;
+      renderQueue(merged);
+    }).catch(function(){
+      window.fbGetPatients(date).then(function(pts){
+        if(doctorFilter) pts=pts.filter(function(p){return p.doctor===doctorFilter;});
+        renderQueue(pts);
+      });
     });
   } else {
     list.innerHTML='<div class="empty-state"><p>No patients.</p></div>';
@@ -2576,7 +2583,12 @@ function renderQueue(patients){
     html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:8px;font-weight:500">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
     html+='<div style="display:flex;align-items:center;justify-content:space-between">';
     html+='<button data-status="'+p.status+'" onclick="event.stopPropagation();cycleStatus(\''+p.id+'\',this)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.2px">'+s[2]+'</button>';
-    if(waitStr) html+='<span style="font-size:11px;color:#F59E0B;font-weight:700">⏱ '+waitStr+'</span>';
+    // Show appointment time OR waiting time
+    if(p.isAppointment&&p.appointmentTime){
+      html+='<span style="font-size:11px;color:#7C3AED;font-weight:700">&#x1F4C5; '+p.appointmentTime+'</span>';
+    } else if(waitStr){
+      html+='<span style="font-size:11px;color:#F59E0B;font-weight:700">⏱ '+waitStr+'</span>';
+    }
     html+='</div>';
     html+='</div></div></div>';
   }
