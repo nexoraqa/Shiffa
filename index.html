@@ -1484,10 +1484,10 @@ function openSlotBooking(el){
   var popup=document.getElementById('slot-booking-popup');
   if(!popup) return;
   document.getElementById('slot-popup-subtitle').textContent=(_slotDay||'')+' at '+(_slotTime||'');
-  document.getElementById('slot-search-section').style.display='none';
   document.getElementById('slot-new-patient-section').style.display='none';
   document.getElementById('slot-err').style.display='none';
   document.getElementById('slot-search-result').innerHTML='';
+  document.getElementById('slot-search-phone').value='';
   document.getElementById('slot-confirm-btn').textContent='Confirm Appointment';
   document.getElementById('slot-confirm-btn').disabled=false;
   ['new','followup'].forEach(function(b){
@@ -1529,13 +1529,29 @@ function searchSlotPatient(){
   var res=document.getElementById('slot-search-result');
   if(!phone){res.innerHTML='<div style="color:#EF4444;font-size:13px">Please enter a phone number.</div>';return;}
   res.innerHTML='<div style="font-size:13px;color:#9CA3AF">Searching...</div>';
+  var newSection=document.getElementById('slot-new-patient-section');
   if(window.fbGetPatientHistory){
     window.fbGetPatientHistory(phone).then(function(visits){
-      if(!visits||!visits.length){res.innerHTML='<div style="color:#EF4444;font-size:13px">No patient found.</div>';_slotPatient=null;return;}
+      if(!visits||!visits.length){
+        // NOT FOUND — new patient, show form
+        _slotVisit='new'; _slotPatient=null;
+        res.innerHTML='<div style="background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:10px;padding:10px;margin-top:6px;font-size:13px;font-weight:600;color:#D97706">New patient — please fill in the details below.</div>';
+        if(newSection){ newSection.style.display='block'; document.getElementById('slot-phone').value=phone; document.getElementById('slot-name').focus(); }
+        return;
+      }
+      // FOUND — follow-up
       visits.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;});
       var p=visits[0];
-      _slotPatient={name:p.name,age:p.age,phone:phone,gender:p.gender,address:p.address||''};
-      res.innerHTML='<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:6px"><div style="font-weight:800;font-size:14px;color:#065F46">'+p.name+'</div><div style="font-size:12px;color:#4B5563;margin-top:3px">Age '+p.age+' - '+phone+'</div><div style="font-size:12px;color:#059669;margin-top:4px;font-weight:600">Patient found ✓</div></div>';
+      _slotVisit='follow_up';
+      _slotPatient={name:p.name,age:p.age,phone:phone,gender:p.gender||'',address:p.address||''};
+      if(newSection) newSection.style.display='none';
+      res.innerHTML=
+        '<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:6px">'+
+        '<div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Follow-up ✓</div>'+
+        '<div style="font-weight:800;font-size:15px;color:#065F46">'+p.name+'</div>'+
+        '<div style="font-size:12px;color:#4B5563;margin-top:3px">Age '+p.age+' · '+phone+'</div>'+
+        '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">Last visit: '+p.visitDate+'</div>'+
+        '</div>';
     });
   }
 }
@@ -2843,20 +2859,20 @@ try{
       <button onclick="closeSlotBooking()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer">✕</button>
     </div>
     <div style="padding:20px">
+      <!-- Step 1: Phone search always first -->
       <div style="margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Visit Type</div>
-        <div style="display:flex;gap:8px">
-          <button id="slot-btn-new" onclick="pickSlotVisit('new')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;color:#4B5563;cursor:pointer">New Patient</button>
-          <button id="slot-btn-followup" onclick="pickSlotVisit('follow_up')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;color:#4B5563;cursor:pointer">Follow-up</button>
-        </div>
-      </div>
-      <div id="slot-search-section" style="display:none;margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Search Patient by Phone</div>
+        <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Search by Phone Number</div>
         <div style="display:flex;gap:8px">
           <input type="tel" id="slot-search-phone" placeholder="Phone number..." style="flex:1;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
           <button onclick="searchSlotPatient()" style="padding:10px 16px;background:#1A3A5C;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
         </div>
         <div id="slot-search-result" style="margin-top:10px"></div>
+      </div>
+      <!-- Hidden visit type buttons kept for JS compatibility -->
+      <div style="display:none">
+        <button id="slot-btn-new"></button>
+        <button id="slot-btn-followup"></button>
+        <div id="slot-search-section"></div>
       </div>
       <div id="slot-new-patient-section" style="display:none;margin-bottom:16px">
         <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Patient Details</div>
