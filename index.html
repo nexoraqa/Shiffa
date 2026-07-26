@@ -492,7 +492,7 @@ function loadPage(page){
     window._queueTimer = setInterval(function(){
       if(document.getElementById('queue-list')) loadQueue(qDocFilter);
       else clearInterval(window._queueTimer);
-    }, 30000);
+    }, 10000);
     return;
   }
 
