@@ -490,8 +490,11 @@ function loadPage(page){
     // Auto-refresh every 30 seconds
     if(window._queueTimer) clearInterval(window._queueTimer);
     window._queueTimer = setInterval(function(){
-      if(document.getElementById('queue-list')) loadQueue(qDocFilter);
-      else clearInterval(window._queueTimer);
+      if(!document.getElementById('queue-list')){ clearInterval(window._queueTimer); return; }
+      // Don't refresh if there's a patient in progress — avoid reverting local status
+      var hasInProgress=window._allQueuePatients&&window._allQueuePatients.some(function(p){return p.status==='inprogress';});
+      if(!hasInProgress) loadQueue(qDocFilter);
+      else renderQueue(window._allQueuePatients);
     }, 10000);
     return;
   }
