@@ -2019,7 +2019,13 @@ function cycleStatus(pid,btn){
     renderQueue(window._allQueuePatients);
   }
   // Persist to Firebase in background
-  if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
+  if(pid.indexOf('appt_')===0){
+    // Appointment patient — update appointments collection
+    var apptId=pid.replace('appt_','');
+    if(window.fbUpdateAppointmentStatus) window.fbUpdateAppointmentStatus(apptId,next);
+  } else {
+    if(window.fbUpdateStatus) window.fbUpdateStatus(pid,next);
+  }
 
   // When receptionist moves to Done → just close the popup
   if(role==='receptionist' && next==='done'){
@@ -2943,6 +2949,10 @@ try{
         return list;
       })
       .catch(function(e){console.error(e);return[];});
+  };
+  window.fbUpdateAppointmentStatus=function(id,status){
+    return updateDoc(doc(db,'appointments',id),{status:status})
+      .catch(function(e){console.error('fbUpdateAppointmentStatus:',e);});
   };
   window.fbCancelAppointment=function(id){
     return updateDoc(doc(db,'appointments',id),{status:'cancelled'}).catch(function(e){console.error(e);});
