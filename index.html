@@ -2049,7 +2049,7 @@ function loadQueue(doctorFilter){
       var pts=results[0]||[];
       var appts=results[1]||[];
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
-      var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status==='scheduled';});
+      var todayAppts=appts.filter(function(a){return a.day===todayName&&(a.status==='scheduled'||a.status==='waiting'||a.status==='inprogress');});
       var existingPhones={};
       pts.forEach(function(p){if(p.phone)existingPhones[p.phone]=true;});
       var apptPts=todayAppts.filter(function(a){return!existingPhones[a.patientPhone];}).map(function(a){
