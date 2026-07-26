@@ -2052,13 +2052,14 @@ function loadQueue(doctorFilter){
       var pts=results[0]||[];
       var appts=results[1]||[];
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
-      var todayAppts=appts.filter(function(a){return a.day===todayName&&(a.status==='scheduled'||a.status==='waiting'||a.status==='inprogress');});
+      var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status!=='cancelled'&&a.status!=='done';});
       var existingPhones={};
       pts.forEach(function(p){if(p.phone)existingPhones[p.phone]=true;});
       var apptPts=todayAppts.filter(function(a){return!existingPhones[a.patientPhone];}).map(function(a){
+        var apptStatus=a.status==='inprogress'?'inprogress':a.status==='done'?'done':'waiting';
         return {id:'appt_'+a.id,apptId:a.id,name:a.patientName,age:a.patientAge,phone:a.patientPhone,
           gender:a.patientGender,address:a.patientAddress||'',doctor:a.doctorId,
-          visitType:'appointment',priority:'normal',status:'waiting',
+          visitType:'appointment',priority:'normal',status:apptStatus,
           isAppointment:true,appointmentTime:a.time,createdAt:a.createdAt};
       });
       var merged=pts.concat(apptPts);
@@ -2954,8 +2955,10 @@ try{
       .catch(function(e){console.error(e);return[];});
   };
   window.fbUpdateAppointmentStatus=function(id,status){
-    return updateDoc(doc(db,'appointments',id),{status:status})
-      .catch(function(e){console.error('fbUpdateAppointmentStatus:',e);});
+    console.log('Updating appointment',id,'to',status);
+    return updateDoc(doc(db,'appointments',id),{status:status,updatedAt:serverTimestamp()})
+      .then(function(){console.log('Appointment status updated OK');})
+      .catch(function(e){console.error('fbUpdateAppointmentStatus ERROR:',e);});
   };
   window.fbCancelAppointment=function(id){
     return updateDoc(doc(db,'appointments',id),{status:'cancelled'}).catch(function(e){console.error(e);});
