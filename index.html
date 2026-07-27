@@ -1496,9 +1496,9 @@ function renderRecepSchedule(days, doctorId, bookedMap){
       var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
       var isBooked=bMap[day]&&bMap[day][t];
       if(isBooked){
-        var bookedApptObj=bMap[day]&&bMap[day][t]?bMap[day][t]:{};
+        var bookedApptObj=bMap[day][t]||{};
         var bookedApptId=typeof bookedApptObj==='object'?(bookedApptObj.id||''):bookedApptObj;
-      } else {
+        html+='<span onclick="openBookedSlot(this)" data-day="'+day+'" data-time="'+t+'" data-apptid="'+bookedApptId+'" data-docid="'+doctorId+'" style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:pointer" title="Click to manage">'+t+' \u2713</span>';
         html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
           'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
       }
