@@ -625,9 +625,13 @@ function loadPage(page){
               var ap=appts[ai];
               if(ap.status!=='cancelled'){
                 if(!bookedMap[ap.day]) bookedMap[ap.day]={};
-                bookedMap[ap.day][ap.time]=true;
+                // Store appointment ID and patient name
+                bookedMap[ap.day][ap.time]={id:ap.id,name:ap.patientName,phone:ap.patientPhone,visitType:ap.visitType};
               }
             }
+            window._scheduleBookedMap=bookedMap;
+            window._scheduleDays=normalizedDays;
+            window._scheduleDocId=u.doctorId;
             // Re-render with booked slots marked green
             if(!isDoc){
               renderRecepSchedule(normalizedDays, u.doctorId, bookedMap);
@@ -1400,6 +1404,69 @@ function previewSlots(savedDays, bookedMap){
   grid.innerHTML=html;
 }
 
+function openBookedSlot(el){
+  var day=el.getAttribute('data-day');
+  var time=el.getAttribute('data-time');
+  var docId=el.getAttribute('data-docid');
+  var apptId=el.getAttribute('data-apptid');
+
+  // Get patient info from bookedMap
+  var bMap=window._scheduleBookedMap||{};
+  var apptInfo=(bMap[day]&&bMap[day][time])||{};
+  var patientName=apptInfo.name||'Patient';
+  var patientPhone=apptInfo.phone||'';
+  var visitType=apptInfo.visitType||'';
+  var realApptId=apptInfo.id||apptId;
+
+  // Show manage popup
+  var popup=document.getElementById('manage-slot-popup');
+  if(!popup) return;
+  document.getElementById('mslot-title').textContent=day+' at '+time;
+  document.getElementById('mslot-patient').textContent=patientName;
+  document.getElementById('mslot-phone').textContent=patientPhone?(patientPhone+' · '+(visitType==='follow_up'?'Follow-up':'New Patient')):'';
+
+  // Store for actions
+  window._managingSlot={day:day,time:time,docId:docId,apptId:realApptId,patientName:patientName,patientPhone:patientPhone,visitType:visitType};
+  popup.style.display='block';
+}
+
+function closeManageSlot(){
+  var popup=document.getElementById('manage-slot-popup');
+  if(popup) popup.style.display='none';
+  window._managingSlot=null;
+}
+
+function cancelBookedSlot(){
+  var s=window._managingSlot;
+  if(!s||!s.apptId) return;
+  if(!confirm('Cancel appointment for '+s.patientName+'?')) return;
+  var btn=document.getElementById('mslot-cancel-btn');
+  if(btn){btn.textContent='Cancelling...';btn.disabled=true;}
+  if(window.fbCancelAppointment){
+    window.fbCancelAppointment(s.apptId).then(function(){
+      closeManageSlot();
+      goPage('schedule'); // Reload schedule
+    });
+  }
+}
+
+function rescheduleBookedSlot(){
+  var s=window._managingSlot;
+  if(!s) return;
+  // Store patient for rescheduling - set as pending booking
+  window._pendingBookingPatient={
+    name:s.patientName,
+    phone:s.patientPhone,
+    visitType:s.visitType||'follow_up',
+    doctor:s.docId,
+    isReschedule:true,
+    oldApptId:s.apptId
+  };
+  closeManageSlot();
+  // Highlight available slots for picking
+  goPage('schedule');
+}
+
 function renderRecepSchedule(days, doctorId, bookedMap){
   var grid=document.getElementById('slots-grid');
   if(!grid) return;
@@ -1422,7 +1489,8 @@ function renderRecepSchedule(days, doctorId, bookedMap){
       var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
       var isBooked=bMap[day]&&bMap[day][t];
       if(isBooked){
-        html+='<span style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:not-allowed" title="Already booked">'+t+' ✓</span>';
+        var bookedApptId=bMap[day]&&bMap[day][t]?bMap[day][t]:'';
+        html+='<span onclick="openBookedSlot(this)" data-day="'+day+'" data-time="'+t+'" data-apptid="'+bookedApptId+'" data-docid="'+doctorId+'" style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:pointer" title="Click to manage">'+t+' ✓</span>';
       } else {
         html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
           'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
@@ -1603,6 +1671,13 @@ function confirmSlotBooking(){
     patientData={name:name,age:parseInt(age),phone:phone,address:address,gender:_slotGender};
   }
   btn.textContent='Checking...';btn.disabled=true;
+
+  // If rescheduling, cancel old appointment first
+  var rescheduleCancel=Promise.resolve();
+  if(window._pendingBookingPatient&&window._pendingBookingPatient.isReschedule&&window._pendingBookingPatient.oldApptId){
+    rescheduleCancel=window.fbCancelAppointment?window.fbCancelAppointment(window._pendingBookingPatient.oldApptId):Promise.resolve();
+  }
+
   // Check for duplicate booking first
   var dupCheck=window.fbGetAppointments?window.fbGetAppointments(_slotDoctorId,null):Promise.resolve([]);
   dupCheck.then(function(existing){
@@ -3043,6 +3118,26 @@ try{
       </div>
       <div id="slot-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:12px"></div>
       <button id="slot-confirm-btn" onclick="confirmSlotBooking()" style="width:100%;padding:14px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Confirm Appointment</button>
+    </div>
+  </div>
+</div>
+<!-- MANAGE BOOKED SLOT POPUP -->
+<div id="manage-slot-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto">
+  <div style="background:#fff;border-radius:20px;margin:80px auto;max-width:360px;width:90%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="background:linear-gradient(135deg,#059669,#10B981);padding:16px 20px">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Booked Slot</div>
+      <div style="font-size:17px;font-weight:800;color:#fff" id="mslot-title"></div>
+    </div>
+    <div style="padding:20px">
+      <div style="background:#F0FDF4;border-radius:12px;padding:14px;margin-bottom:20px">
+        <div style="font-size:14px;font-weight:800;color:#065F46" id="mslot-patient"></div>
+        <div style="font-size:12px;color:#4B5563;margin-top:3px" id="mslot-phone"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="rescheduleBookedSlot()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">&#x1F4C5; Reschedule</button>
+        <button id="mslot-cancel-btn" onclick="cancelBookedSlot()" style="width:100%;padding:13px;background:#FEF2F2;color:#EF4444;border:1.5px solid #FECACA;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">&#x274C; Cancel Appointment</button>
+        <button onclick="closeManageSlot()" style="width:100%;padding:11px;background:#fff;color:#9CA3AF;border:1.5px solid #E5E7EB;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer">Back</button>
+      </div>
     </div>
   </div>
 </div>
