@@ -1442,11 +1442,18 @@ function cancelBookedSlot(){
   if(!confirm('Cancel appointment for '+s.patientName+'?')) return;
   var btn=document.getElementById('mslot-cancel-btn');
   if(btn){btn.textContent='Cancelling...';btn.disabled=true;}
-  if(window.fbCancelAppointment){
+  if(window.fbCancelAppointment&&s.apptId){
     window.fbCancelAppointment(s.apptId).then(function(){
       closeManageSlot();
-      goPage('schedule'); // Reload schedule
+      goPage('schedule');
+    }).catch(function(e){
+      console.error('Cancel error:',e);
+      var btn2=document.getElementById('mslot-cancel-btn');
+      if(btn2){btn2.textContent='❌ Cancel Appointment';btn2.disabled=false;}
     });
+  } else {
+    closeManageSlot();
+    goPage('schedule');
   }
 }
 
@@ -1489,8 +1496,8 @@ function renderRecepSchedule(days, doctorId, bookedMap){
       var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
       var isBooked=bMap[day]&&bMap[day][t];
       if(isBooked){
-        var bookedApptId=bMap[day]&&bMap[day][t]?bMap[day][t]:'';
-        html+='<span onclick="openBookedSlot(this)" data-day="'+day+'" data-time="'+t+'" data-apptid="'+bookedApptId+'" data-docid="'+doctorId+'" style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:pointer" title="Click to manage">'+t+' ✓</span>';
+        var bookedApptObj=bMap[day]&&bMap[day][t]?bMap[day][t]:{};
+        var bookedApptId=typeof bookedApptObj==='object'?(bookedApptObj.id||''):bookedApptObj;
       } else {
         html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
           'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
@@ -1577,8 +1584,8 @@ function openSlotBooking(el){
   document.getElementById('slot-search-phone').value='';
   document.getElementById('slot-confirm-btn').textContent='Confirm Appointment';
   document.getElementById('slot-confirm-btn').disabled=false;
-  // If coming from Register with patient already loaded
-  if(window._pendingBookingPatient){
+  // If coming from Register or rescheduling with patient already loaded
+  if(window._pendingBookingPatient&&(window._pendingBookingPatient.fromRegister||window._pendingBookingPatient.isReschedule)){
     var pb=window._pendingBookingPatient;
     _slotVisit=pb.visitType||'new';
     _slotPatient={name:pb.name,age:pb.age,phone:pb.phone,gender:pb.gender,address:pb.address};
@@ -1597,6 +1604,10 @@ function openSlotBooking(el){
 function closeSlotBooking(){
   var popup=document.getElementById('slot-booking-popup');
   if(popup) popup.style.display='none';
+  // Only clear pending if not a reschedule in progress
+  if(window._pendingBookingPatient&&!window._pendingBookingPatient.isReschedule){
+    window._pendingBookingPatient=null;
+  }
 }
 
 function pickSlotVisit(type){
@@ -1673,12 +1684,12 @@ function confirmSlotBooking(){
   btn.textContent='Checking...';btn.disabled=true;
 
   // If rescheduling, cancel old appointment first
-  var rescheduleCancel=Promise.resolve();
-  if(window._pendingBookingPatient&&window._pendingBookingPatient.isReschedule&&window._pendingBookingPatient.oldApptId){
-    rescheduleCancel=window.fbCancelAppointment?window.fbCancelAppointment(window._pendingBookingPatient.oldApptId):Promise.resolve();
-  }
+  var isReschedule=window._pendingBookingPatient&&window._pendingBookingPatient.isReschedule;
+  var oldApptId=isReschedule?window._pendingBookingPatient.oldApptId:null;
 
-  // Check for duplicate booking first
+  // Cancel old appointment first if rescheduling, then check for duplicates
+  var rescheduleCancel=oldApptId&&window.fbCancelAppointment?window.fbCancelAppointment(oldApptId):Promise.resolve();
+  rescheduleCancel.then(function(){
   var dupCheck=window.fbGetAppointments?window.fbGetAppointments(_slotDoctorId,null):Promise.resolve([]);
   dupCheck.then(function(existing){
     var isDup=existing.some(function(a){return a.day===_slotDay&&a.time===_slotTime&&a.status!=='cancelled';});
@@ -1700,6 +1711,7 @@ function confirmSlotBooking(){
     if(id){
       btn.textContent='✅ Appointment Booked!';
       window._pendingBookingPatient=null;
+      window._managingSlot=null;
       setTimeout(function(){closeSlotBooking();goPage('schedule');},1500);
     } else {
       btn.textContent='Confirm Appointment';btn.disabled=false;
@@ -1707,6 +1719,7 @@ function confirmSlotBooking(){
     }
   });
   } // end doConfirmBooking
+}); // end rescheduleCancel
 }
 
 function saveSchedule(){
@@ -2006,7 +2019,7 @@ function bookFromRegister(){
     return;
   }
   // Store patient data for booking
-  window._pendingBookingPatient={name:name,phone:phone,age:parseInt(age),address:address,gender:gender,doctor:doctor,visitType:'new'};
+  window._pendingBookingPatient={name:name,phone:phone,age:parseInt(age),address:address,gender:gender,doctor:doctor,visitType:'new',fromRegister:true};
   window._pendingBookingIsNew=true;
   // Go to schedule to pick a slot
   goPage('schedule');
@@ -2019,7 +2032,7 @@ function bookReturnPatient(){
     name:retPatient.name,phone:retPatient.phone,
     age:retPatient.age,address:retPatient.address||'',
     gender:retPatient.gender||'',doctor:retPatient.doctor||currentUser.doctorId,
-    visitType:'follow_up'
+    visitType:'follow_up',fromRegister:true
   };
   window._pendingBookingIsNew=false;
   goPage('schedule');
