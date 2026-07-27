@@ -613,8 +613,9 @@ function loadPage(page){
         if(!normalizedDays||!normalizedDays.length){
           grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
         } else if(!isDoc){
-          // Receptionist: simple direct render without complex previewSlots
-          renderRecepSchedule(normalizedDays, u.doctorId);
+          // Receptionist: show loading until appointments are fetched
+          var grid2=document.getElementById('slots-grid');
+          if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">Loading slots...</div>';
         } else {
           previewSlots(normalizedDays, {});
         }
@@ -1410,13 +1411,14 @@ function openBookedSlot(el){
   var docId=el.getAttribute('data-docid');
   var apptId=el.getAttribute('data-apptid');
 
-  // Get patient info from bookedMap
+  // Get patient info from bookedMap or data attributes
   var bMap=window._scheduleBookedMap||{};
   var apptInfo=(bMap[day]&&bMap[day][time])||{};
-  var patientName=apptInfo.name||'Patient';
-  var patientPhone=apptInfo.phone||'';
-  var visitType=apptInfo.visitType||'';
-  var realApptId=apptInfo.id||apptId;
+  var patientName=apptInfo.name||el.getAttribute('data-name')||'Patient';
+  var patientPhone=apptInfo.phone||el.getAttribute('data-phone')||'';
+  var visitType=apptInfo.visitType||el.getAttribute('data-visit')||'';
+  var realApptId=apptInfo.id||apptId||'';
+  console.log('openBookedSlot:',day,time,'apptId=',realApptId,'bMap=',JSON.stringify(apptInfo));
 
   // Show manage popup
   var popup=document.getElementById('manage-slot-popup');
@@ -1498,7 +1500,10 @@ function renderRecepSchedule(days, doctorId, bookedMap){
       if(isBooked){
         var bookedApptObj=bMap[day][t]||{};
         var bookedApptId=typeof bookedApptObj==='object'?(bookedApptObj.id||''):bookedApptObj;
-        html+='<span onclick="openBookedSlot(this)" data-day="'+day+'" data-time="'+t+'" data-apptid="'+bookedApptId+'" data-docid="'+doctorId+'" style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:pointer" title="Click to manage">'+t+' \u2713</span>';
+        var bName=typeof bookedApptObj==='object'?(bookedApptObj.name||''):'';
+        var bPhone=typeof bookedApptObj==='object'?(bookedApptObj.phone||''):'';
+        var bVisit=typeof bookedApptObj==='object'?(bookedApptObj.visitType||''):'';
+        html+='<span onclick="openBookedSlot(this)" data-day="'+day+'" data-time="'+t+'" data-apptid="'+bookedApptId+'" data-docid="'+doctorId+'" data-name="'+bName+'" data-phone="'+bPhone+'" data-visit="'+bVisit+'" style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:pointer" title="Click to manage">'+t+' \u2713</span>';
         html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
           'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
       }
