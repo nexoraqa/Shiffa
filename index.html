@@ -1694,58 +1694,62 @@ function confirmSlotBooking(){
     if(!name||!phone||!age||!address||!_slotGender){errEl.textContent='Please fill in all details and select gender.';errEl.style.display='block';return;}
     patientData={name:name,age:parseInt(age),phone:phone,address:address,gender:_slotGender};
   }
-  btn.textContent='Checking...';btn.disabled=true;
-  // Safety timeout - reset button after 10s if stuck
+  btn.textContent='Saving...';btn.disabled=true;
   var btnTimeout=setTimeout(function(){
     var b=document.getElementById('slot-confirm-btn');
     if(b&&b.disabled){b.textContent='Confirm Appointment';b.disabled=false;}
-  },10000);
+  },12000);
 
-  // If rescheduling, cancel old appointment first
   var isReschedule=window._pendingBookingPatient&&window._pendingBookingPatient.isReschedule;
   var oldApptId=isReschedule?window._pendingBookingPatient.oldApptId:null;
 
-  // Cancel old appointment first if rescheduling, then check for duplicates
-  var rescheduleCancel=oldApptId&&window.fbCancelAppointment?window.fbCancelAppointment(oldApptId):Promise.resolve();
-  rescheduleCancel.then(function(){
-  var dupCheck=window.fbGetAppointments?window.fbGetAppointments(_slotDoctorId,null):Promise.resolve([]);
-  dupCheck.then(function(existing){
-    var isDup=existing.some(function(a){
-      if(a.day!==_slotDay||a.time!==_slotTime) return false;
-      if(a.status==='cancelled') return false;
-      // Allow same patient to reschedule into new slot
-      if(isReschedule&&a.id===oldApptId) return false;
-      return true;
-    });
-    if(isDup){
-      btn.textContent='Confirm Appointment';btn.disabled=false;
-      errEl.textContent='This slot is already booked. Please choose another.';errEl.style.display='block';
-      return;
-    }
-    doConfirmBooking();
-  }).catch(function(){doConfirmBooking();});
+  // Step 1: Cancel old appointment if rescheduling
+  var step1=oldApptId&&window.fbCancelAppointment?window.fbCancelAppointment(oldApptId):Promise.resolve();
 
-  function doConfirmBooking(){
-  btn.textContent='Saving...';btn.disabled=true;
-  var apptData={doctorId:_slotDoctorId,day:_slotDay,time:_slotTime,date:null,visitType:_slotVisit,status:'scheduled',patientName:patientData.name,patientAge:patientData.age,patientPhone:patientData.phone,patientGender:patientData.gender,patientAddress:patientData.address||'',createdBy:currentUser.name,clinicId:'clinic_001'};
-  var saveP=(_slotVisit==='new'&&window.fbSave)?window.fbSave(Object.assign({},patientData,{visitType:'new',priority:'normal',doctor:_slotDoctorId,visitDate:new Date().toISOString().split('T')[0],status:'scheduled',clinicId:'clinic_001'})):Promise.resolve(null);
-  saveP.then(function(){
-    return window.fbSaveAppointment?window.fbSaveAppointment(apptData):Promise.resolve('demo');
-  }).then(function(id){
-    if(id){
+  step1.then(function(){
+    // Step 2: Save appointment
+    var apptData={doctorId:_slotDoctorId,day:_slotDay,time:_slotTime,date:null,
+      visitType:_slotVisit,status:'scheduled',
+      patientName:patientData.name,patientAge:patientData.age,
+      patientPhone:patientData.phone,patientGender:patientData.gender,
+      patientAddress:patientData.address||'',
+      createdBy:currentUser.name,clinicId:'clinic_001'};
+
+    var savePatient=(_slotVisit==='new'&&window.fbSave)
+      ?window.fbSave(Object.assign({},patientData,{visitType:'new',priority:'normal',
+          doctor:_slotDoctorId,visitDate:new Date().toISOString().split('T')[0],
+          status:'scheduled',clinicId:'clinic_001'}))
+      :Promise.resolve(null);
+
+    savePatient.then(function(){
+      if(!window.fbSaveAppointment){ clearTimeout(btnTimeout); btn.textContent='Confirm Appointment';btn.disabled=false; return; }
+      window.fbSaveAppointment(apptData).then(function(id){
+        clearTimeout(btnTimeout);
+        if(id){
+          btn.textContent='✅ Appointment Booked!';
+          window._pendingBookingPatient=null;
+          window._managingSlot=null;
+          setTimeout(function(){closeSlotBooking();goPage('schedule');},1500);
+        } else {
+          btn.textContent='Confirm Appointment';btn.disabled=false;
+          errEl.textContent='Could not save. Try again.';errEl.style.display='block';
+        }
+      }).catch(function(e){
+        clearTimeout(btnTimeout);
+        console.error('Save appointment error:',e);
+        btn.textContent='Confirm Appointment';btn.disabled=false;
+        errEl.textContent='Error saving. Please try again.';errEl.style.display='block';
+      });
+    }).catch(function(e){
       clearTimeout(btnTimeout);
-      btn.textContent='✅ Appointment Booked!';
-      window._pendingBookingPatient=null;
-      window._managingSlot=null;
-      setTimeout(function(){closeSlotBooking();goPage('schedule');},1500);
-    } else {
-      clearTimeout(btnTimeout);
+      console.error('Save patient error:',e);
       btn.textContent='Confirm Appointment';btn.disabled=false;
-      errEl.textContent='Could not save. Try again.';errEl.style.display='block';
-    }
+    });
+  }).catch(function(e){
+    clearTimeout(btnTimeout);
+    console.error('Cancel old appt error:',e);
+    btn.textContent='Confirm Appointment';btn.disabled=false;
   });
-  } // end doConfirmBooking
-}); // end rescheduleCancel
 }
 
 function saveSchedule(){
