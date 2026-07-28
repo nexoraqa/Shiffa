@@ -613,7 +613,7 @@ function loadPage(page){
         if(!normalizedDays||!normalizedDays.length){
           grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
         } else if(!isDoc){
-          // Receptionist: wait for appointments before rendering (prevents duplicates)
+          renderRecepSchedule(normalizedDays, u.doctorId, {});
         } else {
           previewSlots(normalizedDays, {});
         }
@@ -631,8 +631,8 @@ function loadPage(page){
             window._scheduleBookedMap=bookedMap;
             window._scheduleDays=normalizedDays;
             window._scheduleDocId=u.doctorId;
-            // Re-render with booked slots marked green
-            if(!isDoc){
+            // Only re-render if there are booked slots
+            if(!isDoc&&Object.keys(bookedMap).length>0){
               renderRecepSchedule(normalizedDays, u.doctorId, bookedMap);
             }
           }).catch(function(){ /* silent fail */ });
