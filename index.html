@@ -613,9 +613,7 @@ function loadPage(page){
         if(!normalizedDays||!normalizedDays.length){
           grid.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">No working days set.</div>';
         } else if(!isDoc){
-          // Receptionist: show loading until appointments are fetched
-          var grid2=document.getElementById('slots-grid');
-          if(grid2) grid2.innerHTML='<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">Loading slots...</div>';
+          // Receptionist: wait for appointments before rendering (prevents duplicates)
         } else {
           previewSlots(normalizedDays, {});
         }
