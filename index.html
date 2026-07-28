@@ -1502,8 +1502,8 @@ function renderRecepSchedule(days, doctorId, bookedMap){
         var bPhone=typeof bookedApptObj==='object'?(bookedApptObj.phone||''):'';
         var bVisit=typeof bookedApptObj==='object'?(bookedApptObj.visitType||''):'';
         html+='<span onclick="openBookedSlot(this)" data-day="'+day+'" data-time="'+t+'" data-apptid="'+bookedApptId+'" data-docid="'+doctorId+'" data-name="'+bName+'" data-phone="'+bPhone+'" data-visit="'+bVisit+'" style="display:inline-block;background:#DCFCE7;color:#15803D;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;border:1px solid #86EFAC;cursor:pointer" title="Click to manage">'+t+' \u2713</span>';
-        html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" '+
-          'style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
+      } else {
+        html+='<span onclick="openSlotBooking(this)" data-day="'+day+'" data-time="'+t+'" data-docid="'+doctorId+'" style="display:inline-block;background:'+bg+';color:'+color+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:pointer">'+t+'</span>';
       }
     }
     return html;
