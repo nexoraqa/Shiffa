@@ -1408,17 +1408,15 @@ function previewSlots(savedDays, bookedMap){
 function openBookedSlot(el){
   var day=el.getAttribute('data-day');
   var time=el.getAttribute('data-time');
-  var docId=el.getAttribute('data-docid');
-  var apptId=el.getAttribute('data-apptid');
+  var docId=el.getAttribute('data-docid')||currentUser.doctorId;
 
-  // Get patient info from bookedMap or data attributes
+  // Always get fresh data from _scheduleBookedMap
   var bMap=window._scheduleBookedMap||{};
   var apptInfo=(bMap[day]&&bMap[day][time])||{};
   var patientName=apptInfo.name||el.getAttribute('data-name')||'Patient';
   var patientPhone=apptInfo.phone||el.getAttribute('data-phone')||'';
   var visitType=apptInfo.visitType||el.getAttribute('data-visit')||'';
-  var realApptId=apptInfo.id||apptId||'';
-  console.log('openBookedSlot:',day,time,'apptId=',realApptId,'bMap=',JSON.stringify(apptInfo));
+  var realApptId=apptInfo.id||el.getAttribute('data-apptid')||'';
 
   // Show manage popup
   var popup=document.getElementById('manage-slot-popup');
@@ -1427,9 +1425,26 @@ function openBookedSlot(el){
   document.getElementById('mslot-patient').textContent=patientName;
   document.getElementById('mslot-phone').textContent=patientPhone?(patientPhone+' · '+(visitType==='follow_up'?'Follow-up':'New Patient')):'';
 
-  // Store for actions
-  window._managingSlot={day:day,time:time,docId:docId,apptId:realApptId,patientName:patientName,patientPhone:patientPhone,visitType:visitType};
-  console.log('Managing slot:',day,time,'apptId=',realApptId);
+  // If no apptId, try loading appointments now
+  if(!realApptId&&window.fbGetAppointments&&docId){
+    window.fbGetAppointments(docId,null).then(function(appts){
+      for(var i=0;i<appts.length;i++){
+        if(appts[i].day===day&&appts[i].time===time&&appts[i].status!=='cancelled'){
+          realApptId=appts[i].id;
+          patientName=appts[i].patientName||patientName;
+          patientPhone=appts[i].patientPhone||patientPhone;
+          visitType=appts[i].visitType||visitType;
+          break;
+        }
+      }
+      window._managingSlot={day:day,time:time,docId:docId,apptId:realApptId,patientName:patientName,patientPhone:patientPhone,visitType:visitType};
+      document.getElementById('mslot-title').textContent=day+' at '+time+(realApptId?' ✓':'');
+      document.getElementById('mslot-patient').textContent=patientName;
+      document.getElementById('mslot-phone').textContent=patientPhone?(patientPhone+' · '+(visitType==='follow_up'?'Follow-up':'New Patient')):'';
+    });
+  } else {
+    window._managingSlot={day:day,time:time,docId:docId,apptId:realApptId,patientName:patientName,patientPhone:patientPhone,visitType:visitType};
+  }
   popup.style.display='block';
 }
 
