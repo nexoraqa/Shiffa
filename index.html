@@ -491,9 +491,11 @@ function loadPage(page){
     if(window._queueTimer) clearInterval(window._queueTimer);
     window._queueTimer = setInterval(function(){
       if(!document.getElementById('queue-list')){ clearInterval(window._queueTimer); return; }
-      // Don't refresh if there's a patient in progress — avoid reverting local status
-      var hasInProgress=window._allQueuePatients&&window._allQueuePatients.some(function(p){return p.status==='inprogress';});
-      if(!hasInProgress) loadQueue(qDocFilter);
+      // Don't refresh from Firebase if local status was just changed
+      var hasActiveChange=window._allQueuePatients&&window._allQueuePatients.some(function(p){
+        return p.status==='inprogress'||p._justUpdated;
+      });
+      if(!hasActiveChange) loadQueue(qDocFilter);
       else renderQueue(window._allQueuePatients);
     }, 10000);
     return;
@@ -1693,6 +1695,11 @@ function confirmSlotBooking(){
     patientData={name:name,age:parseInt(age),phone:phone,address:address,gender:_slotGender};
   }
   btn.textContent='Checking...';btn.disabled=true;
+  // Safety timeout - reset button after 10s if stuck
+  var btnTimeout=setTimeout(function(){
+    var b=document.getElementById('slot-confirm-btn');
+    if(b&&b.disabled){b.textContent='Confirm Appointment';b.disabled=false;}
+  },10000);
 
   // If rescheduling, cancel old appointment first
   var isReschedule=window._pendingBookingPatient&&window._pendingBookingPatient.isReschedule;
@@ -1726,11 +1733,13 @@ function confirmSlotBooking(){
     return window.fbSaveAppointment?window.fbSaveAppointment(apptData):Promise.resolve('demo');
   }).then(function(id){
     if(id){
+      clearTimeout(btnTimeout);
       btn.textContent='✅ Appointment Booked!';
       window._pendingBookingPatient=null;
       window._managingSlot=null;
       setTimeout(function(){closeSlotBooking();goPage('schedule');},1500);
     } else {
+      clearTimeout(btnTimeout);
       btn.textContent='Confirm Appointment';btn.disabled=false;
       errEl.textContent='Could not save. Try again.';errEl.style.display='block';
     }
@@ -2122,7 +2131,18 @@ function cycleStatus(pid,btn){
   // Update cached list instantly so counter bar refreshes without Firebase round-trip
   if(window._allQueuePatients){
     for(var i=0;i<window._allQueuePatients.length;i++){
-      if(window._allQueuePatients[i].id===pid){ window._allQueuePatients[i].status=next; break; }
+      if(window._allQueuePatients[i].id===pid){
+        window._allQueuePatients[i].status=next;
+        window._allQueuePatients[i]._justUpdated=true;
+        (function(id){
+          setTimeout(function(){
+            if(window._allQueuePatients) for(var j=0;j<window._allQueuePatients.length;j++){
+              if(window._allQueuePatients[j].id===id) window._allQueuePatients[j]._justUpdated=false;
+            }
+          },15000);
+        })(pid);
+        break;
+      }
     }
     renderQueue(window._allQueuePatients);
   }
@@ -2157,7 +2177,7 @@ function loadQueue(doctorFilter){
       var pts=results[0]||[];
       var appts=results[1]||[];
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
-      var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status!=='cancelled'&&a.status!=='done';});
+      var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status!=='cancelled';});
       var existingPhones={};
       pts.forEach(function(p){if(p.phone)existingPhones[p.phone]=true;});
       var apptPts=todayAppts.filter(function(a){return!existingPhones[a.patientPhone];}).map(function(a){
