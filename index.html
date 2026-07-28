@@ -1427,6 +1427,7 @@ function openBookedSlot(el){
 
   // Store for actions
   window._managingSlot={day:day,time:time,docId:docId,apptId:realApptId,patientName:patientName,patientPhone:patientPhone,visitType:visitType};
+  console.log('Managing slot:',day,time,'apptId=',realApptId);
   popup.style.display='block';
 }
 
@@ -1438,12 +1439,18 @@ function closeManageSlot(){
 
 function cancelBookedSlot(){
   var s=window._managingSlot;
-  if(!s||!s.apptId) return;
-  if(!confirm('Cancel appointment for '+s.patientName+'?')) return;
+  if(!s) return;
+  if(!confirm('Cancel appointment for '+(s.patientName||'this patient')+'?')) return;
   var btn=document.getElementById('mslot-cancel-btn');
   if(btn){btn.textContent='Cancelling...';btn.disabled=true;}
-  if(window.fbCancelAppointment&&s.apptId){
-    window.fbCancelAppointment(s.apptId).then(function(){
+  // Try to find apptId from bookedMap if not set
+  var apptId=s.apptId;
+  if(!apptId&&window._scheduleBookedMap&&s.day&&s.time){
+    var bInfo=window._scheduleBookedMap[s.day]&&window._scheduleBookedMap[s.day][s.time];
+    if(bInfo) apptId=typeof bInfo==='object'?bInfo.id:bInfo;
+  }
+  if(window.fbCancelAppointment&&apptId){
+    window.fbCancelAppointment(apptId).then(function(){
       closeManageSlot();
       goPage('schedule');
     }).catch(function(e){
@@ -1452,6 +1459,7 @@ function cancelBookedSlot(){
       if(btn2){btn2.textContent='❌ Cancel Appointment';btn2.disabled=false;}
     });
   } else {
+    // No apptId found - just close and reload
     closeManageSlot();
     goPage('schedule');
   }
@@ -1695,7 +1703,13 @@ function confirmSlotBooking(){
   rescheduleCancel.then(function(){
   var dupCheck=window.fbGetAppointments?window.fbGetAppointments(_slotDoctorId,null):Promise.resolve([]);
   dupCheck.then(function(existing){
-    var isDup=existing.some(function(a){return a.day===_slotDay&&a.time===_slotTime&&a.status!=='cancelled';});
+    var isDup=existing.some(function(a){
+      if(a.day!==_slotDay||a.time!==_slotTime) return false;
+      if(a.status==='cancelled') return false;
+      // Allow same patient to reschedule into new slot
+      if(isReschedule&&a.id===oldApptId) return false;
+      return true;
+    });
     if(isDup){
       btn.textContent='Confirm Appointment';btn.disabled=false;
       errEl.textContent='This slot is already booked. Please choose another.';errEl.style.display='block';
