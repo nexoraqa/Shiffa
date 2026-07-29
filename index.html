@@ -1437,7 +1437,10 @@ function openBookedSlot(el){
           break;
         }
       }
-      window._managingSlot={day:day,time:time,docId:docId,apptId:realApptId,patientName:patientName,patientPhone:patientPhone,visitType:visitType};
+      window._managingSlot={day:day,time:time,docId:docId,apptId:realApptId,
+        patientName:patientName,patientPhone:patientPhone,visitType:visitType,
+        patientAge:appts[i].patientAge||0,patientGender:appts[i].patientGender||'',
+        patientAddress:appts[i].patientAddress||''};
       document.getElementById('mslot-title').textContent=day+' at '+time+(realApptId?' ✓':'');
       document.getElementById('mslot-patient').textContent=patientName;
       document.getElementById('mslot-phone').textContent=patientPhone?(patientPhone+' · '+(visitType==='follow_up'?'Follow-up':'New Patient')):'';
@@ -1452,6 +1455,9 @@ function closeManageSlot(){
   var popup=document.getElementById('manage-slot-popup');
   if(popup) popup.style.display='none';
   window._managingSlot=null;
+  // Always reset cancel button
+  var btn=document.getElementById('mslot-cancel-btn');
+  if(btn){btn.textContent='❌ Cancel Appointment';btn.disabled=false;}
 }
 
 function cancelBookedSlot(){
@@ -1492,17 +1498,19 @@ function cancelBookedSlot(){
 function rescheduleBookedSlot(){
   var s=window._managingSlot;
   if(!s) return;
-  // Store patient for rescheduling - set as pending booking
+  // Store patient for rescheduling
   window._pendingBookingPatient={
-    name:s.patientName,
-    phone:s.patientPhone,
+    name:s.patientName||'',
+    phone:s.patientPhone||'',
+    age:s.patientAge||0,
+    gender:s.patientGender||'',
+    address:s.patientAddress||'',
     visitType:s.visitType||'follow_up',
-    doctor:s.docId,
+    doctor:s.docId||currentUser.doctorId,
     isReschedule:true,
     oldApptId:s.apptId
   };
   closeManageSlot();
-  // Highlight available slots for picking
   goPage('schedule');
 }
 
@@ -1622,9 +1630,9 @@ function openSlotBooking(el){
   // If coming from Register or rescheduling with patient already loaded
   if(window._pendingBookingPatient&&(window._pendingBookingPatient.fromRegister||window._pendingBookingPatient.isReschedule)){
     var pb=window._pendingBookingPatient;
-    _slotVisit=pb.visitType||'new';
-    _slotPatient={name:pb.name,age:pb.age,phone:pb.phone,gender:pb.gender,address:pb.address};
-    if(pb.doctor) _slotDoctorId=pb.doctor;
+    _slotVisit=pb.visitType||'follow_up';
+    _slotPatient={name:pb.name||'',age:pb.age||0,phone:pb.phone||'',gender:pb.gender||'male',address:pb.address||''};
+    _slotDoctorId=pb.doctor||currentUser.doctorId;
     document.getElementById('slot-search-phone').value=pb.phone;
     document.getElementById('slot-search-result').innerHTML=
       '<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:6px">'+
