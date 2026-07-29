@@ -1713,7 +1713,11 @@ function confirmSlotBooking(){
   errEl.style.display='none';
   if(!_slotVisit){errEl.textContent='Please select New Patient or Follow-up.';errEl.style.display='block';return;}
   var patientData=null;
-  if(_slotVisit==='follow_up'){
+  if(_slotPatient&&(window._pendingBookingPatient)){
+    // Coming from Register - use pending patient data directly
+    patientData=_slotPatient;
+    if(!patientData.gender) patientData.gender=window._pendingBookingPatient.gender||'male';
+  } else if(_slotVisit==='follow_up'){
     if(!_slotPatient){errEl.textContent='Please search and select a patient.';errEl.style.display='block';return;}
     patientData=_slotPatient;
   } else {
