@@ -1505,7 +1505,7 @@ function cancelBookedSlot(){
       clearTimeout(cancelTimeout);
       // Send cancellation notification
       if(s.patientPhone){
-        var cancelMsg='Shifaa Clinic\n\nHello '+s.patientName+',\n\nYour appointment has been cancelled.\nPlease contact us to reschedule.';
+        var cancelMsg='🏥 Shifaa Clinic\n\n🇫🇷 Bonjour '+s.patientName+',\nVotre rendez-vous a été annulé.\nVeuillez nous contacter pour reprogrammer.\n\n🇩🇿 مرحباً '+s.patientName+'،\nتم إلغاء موعدك.\nيرجى التواصل معنا لتحديد موعد جديد.';
         sendWhatsApp(s.patientPhone, cancelMsg);
       }
       closeManageSlot();
@@ -2203,12 +2203,30 @@ function sendWhatsApp(phone, message){
 }
 
 function notifyAppointmentBooked(patientPhone, patientName, day, time, doctorName){
-  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\nYour appointment has been confirmed:\n📅 '+day+' at '+time+'\n🏥 '+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'\n\nPlease arrive 30 minutes early.';
+  var dr=(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName);
+  var msg = '🏥 Shifaa Clinic\n\n'+
+    '🇫🇷 Bonjour '+patientName+',\n'+
+    'Votre rendez-vous est confirmé:\n'+
+    '📅 '+day+' à '+time+'\n'+
+    dr+'\n'+
+    'Merci d\'arriver 30 minutes à l\'avance.\n\n'+
+    '🇩🇿 مرحباً '+patientName+'،\n'+
+    'تم تأكيد موعدك:\n'+
+    '📅 '+day+' الساعة '+time+'\n'+
+    dr+'\n'+
+    'يرجى الحضور قبل 30 دقيقة.';
   sendWhatsApp(patientPhone, msg);
 }
 
 function notifyPatientTurn(patientPhone, patientName, doctorName){
-  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\n🔔 The doctor is ready for you now!\n\nPlease proceed to '+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'\'s office.';
+  var dr2=(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName);
+  var msg = '🏥 Shifaa Clinic\n\n'+
+    '🇫🇷 Bonjour '+patientName+',\n'+
+    '🔔 Le médecin est prêt à vous recevoir!\n'+
+    'Veuillez vous rendre au cabinet de '+dr2+'.\n\n'+
+    '🇩🇿 مرحباً '+patientName+'،\n'+
+    '🔔 الطبيب جاهز لاستقبالك الآن!\n'+
+    'يرجى التوجه إلى عيادة '+dr2+'.';
   sendWhatsApp(patientPhone, msg);
 }
 
