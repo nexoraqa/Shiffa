@@ -107,9 +107,9 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
 .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn-outline{padding:11px 20px;background:var(--green-xl);color:var(--green);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
 .btn-filled{padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,168,0.2)}
-.queue-item{background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;transition:box-shadow 0.2s,transform 0.15s;animation:slideIn 0.25s ease-out;position:relative}
-.queue-item:hover{box-shadow:0 2px 12px rgba(0,0,0,0.06)}
-.queue-item:active{transform:scale(0.995)}
+.queue-item{background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;transition:all 0.15s;animation:slideIn 0.25s ease-out;position:relative;overflow:hidden}
+.queue-item:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08);transform:translateY(-1px)}
+.queue-item:active{transform:scale(0.998)}
 @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .prio-btn,.toggle-btn,.visit-btn{transition:all 0.15s ease}
 .status-btn-anim{transition:background 0.2s,color 0.2s}
@@ -218,9 +218,13 @@ body{background:var(--bg);min-height:100vh;color:var(--dark)}
     <aside class="sidebar">
       <div id="sidebar-nav"></div>
       <div class="sidebar-footer">
-        <div class="sidebar-footer-label">Logged in as</div>
-        <div id="sidebar-badge"></div>
-        <div class="sidebar-footer-desc" id="sidebar-desc"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="sidebar-avatar" style="width:36px;height:36px;border-radius:50%;background:#1B6B4A;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+          <div style="min-width:0">
+            <div id="sidebar-badge"></div>
+            <div class="sidebar-footer-desc" id="sidebar-desc" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          </div>
+        </div>
       </div>
     </aside>
     <main class="main-content" id="main-content"></main>
@@ -350,6 +354,8 @@ function showDashboard(user){
   document.getElementById('hdr-badge').innerHTML=makeBadge(user.role);
   document.getElementById('sidebar-badge').innerHTML=makeBadge(user.role);
   document.getElementById('sidebar-desc').textContent=ROLE_DESCS[user.role]||'';
+  var av=document.getElementById('sidebar-avatar');
+  if(av){var initials=(user.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();av.textContent=initials;}
   buildNav(user);
   goPage('dashboard');
 }
@@ -2311,7 +2317,7 @@ function loadQueue(doctorFilter){
       });
     });
   } else {
-    list.innerHTML='<div class="empty-state"><p>No patients.</p></div>';
+    list.innerHTML='<div class="empty-state" style="text-align:center;padding:60px 20px"><div style="font-size:52px;margin-bottom:16px">🏥</div><div style="font-size:16px;font-weight:700;color:#0D1117;margin-bottom:6px">Queue is clear</div><div style="font-size:13px;color:#9CA3AF">No patients registered yet today.</div></div>';
   }
 }
 
