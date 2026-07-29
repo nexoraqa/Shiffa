@@ -2197,8 +2197,9 @@ function cycleStatus(pid,btn){
   var next=null;
 
   // Doctor: Waiting ↔ In Progress only (can undo)
+  // Note: appointment patients may have status 'scheduled' which = 'waiting'
   if(role==='doctor'){
-    if(cur==='waiting') next='inprogress';
+    if(cur==='waiting'||cur==='scheduled') next='inprogress';
     else if(cur==='inprogress') next='waiting';
     else return; // doctor cannot touch Done
   }
@@ -2847,7 +2848,7 @@ function renderQueue(patients){
     var chipBg=p.status==='waiting'?'#FEF3C7':p.status==='inprogress'?'#EEF2FF':'#ECFDF5';
     var chipColor=p.status==='waiting'?'#D97706':p.status==='inprogress'?'#2563A8':'#059669';
     if(isEmergency&&p.status==='waiting'){chipBg='#FEE2E2';chipColor='#EF4444';}
-    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBg+'border-left:4px solid '+leftColor+';cursor:pointer;padding:0;" onclick="openPatientPopup(this)">';
+    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBg+'border-left:4px solid '+leftColor+';cursor:pointer;padding:0;" onclick="if(event.target.tagName===\'BUTTON\')return;openPatientPopup(this)">';
     html+='<div style="display:flex;align-items:stretch">';
     html+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;padding:14px 0;border-right:1px solid #F3F4F6">';
     html+='<span style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">No.</span>';
