@@ -428,9 +428,39 @@ function setLang(lang){
 }
 
 function applyLang(){
-  if(!currentUser) return;
-  // Rebuild nav with new language
-  buildNav(currentUser);
+  // Just update the text of existing nav buttons without rebuilding
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    var id=btn.id.replace('nb-','');
+    // Find the label for this nav item
+    var role=currentUser?currentUser.role:'';
+    var items=NAV[role]||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i][1]===id){
+        var emoji=items[i][0].split(' ')[0];
+        var label=items[i][0].split(' ').slice(1).join(' ');
+        var tLabel=t(label)||label;
+        btn.innerHTML='<span class="mi">'+emoji+'</span>'+tLabel;
+        break;
+      }
+    }
+  });
+  // Update mobile nav too
+  document.querySelectorAll('.mnav-btn').forEach(function(btn){
+    var id=btn.id.replace('mnav-','');
+    var role=currentUser?currentUser.role:'';
+    var items=NAV[role]||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i][1]===id){
+        var emoji=items[i][0].split(' ')[0];
+        var label=items[i][0].split(' ').slice(1).join(' ');
+        var tLabel=t(label)||label;
+        // Preserve badge if exists
+        var badge=btn.querySelector('.mnav-wrap')||btn.querySelector('.mnav-badge');
+        btn.innerHTML='<span class="mi">'+emoji+'</span><span>'+tLabel+'</span>';
+        break;
+      }
+    }
+  });
 }
 
 function doLogout(){
@@ -485,7 +515,7 @@ function buildNav(user){
   var items=NAV[user.role]||NAV.receptionist;
   var sh='',mh='';
   for(var i=0;i<items.length;i++){
-    var lbl=t(items[i][0])||items[i][0],id=items[i][1];
+    var lbl=items[i][0],id=items[i][1];
     var act=(id==='dashboard');
     sh+='<button class="nav-btn'+(act?' active':'')+'" id="snav-'+id+'" onclick="goPage(\''+id+'\')">'+lbl+'</button>';
     var isQueue=(id==='queue');
