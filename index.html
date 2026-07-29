@@ -428,23 +428,9 @@ function setLang(lang){
 }
 
 function applyLang(){
-  // Translate nav buttons
-  var navBtns=document.querySelectorAll('.nav-btn');
-  navBtns.forEach(function(btn){
-    var spans=btn.querySelectorAll('span');
-    spans.forEach(function(span){
-      if(!span.className||span.className===''){
-        var txt=span.textContent.trim();
-        if(txt) span.textContent=t(txt)||txt;
-      }
-    });
-  });
-  // Translate mobile nav buttons  
-  var mnavBtns=document.querySelectorAll('.mnav-btn span:last-child');
-  mnavBtns.forEach(function(span){
-    var txt=span.textContent.trim();
-    if(txt) span.textContent=t(txt)||txt;
-  });
+  if(!currentUser) return;
+  // Rebuild nav with new language
+  buildNav(currentUser);
 }
 
 function doLogout(){
@@ -499,7 +485,7 @@ function buildNav(user){
   var items=NAV[user.role]||NAV.receptionist;
   var sh='',mh='';
   for(var i=0;i<items.length;i++){
-    var lbl=items[i][0],id=items[i][1];
+    var lbl=t(items[i][0])||items[i][0],id=items[i][1];
     var act=(id==='dashboard');
     sh+='<button class="nav-btn'+(act?' active':'')+'" id="snav-'+id+'" onclick="goPage(\''+id+'\')">'+lbl+'</button>';
     var isQueue=(id==='queue');
