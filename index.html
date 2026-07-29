@@ -2189,12 +2189,12 @@ function sendWhatsApp(phone, message){
 }
 
 function notifyAppointmentBooked(patientPhone, patientName, day, time, doctorName){
-  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\nYour appointment has been confirmed:\n📅 '+day+' at '+time+'\n🏥 Dr. '+doctorName+'\n\nPlease arrive 5 minutes early.';
+  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\nYour appointment has been confirmed:\n📅 '+day+' at '+time+'\n🏥 '+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'\n\nPlease arrive 30 minutes early.';
   sendWhatsApp(patientPhone, msg);
 }
 
 function notifyPatientTurn(patientPhone, patientName, doctorName){
-  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\n🔔 The doctor is ready for you now!\n\nPlease proceed to Dr. '+doctorName+'\'s office.';
+  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\n🔔 The doctor is ready for you now!\n\nPlease proceed to '+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'\'s office.';
   sendWhatsApp(patientPhone, msg);
 }
 
