@@ -491,12 +491,21 @@ function loadPage(page){
     if(window._queueTimer) clearInterval(window._queueTimer);
     window._queueTimer = setInterval(function(){
       if(!document.getElementById('queue-list')){ clearInterval(window._queueTimer); return; }
-      // Don't refresh from Firebase if local status was just changed
-      var hasActiveChange=window._allQueuePatients&&window._allQueuePatients.some(function(p){
-        return p.status==='inprogress'||p._justUpdated;
-      });
-      if(!hasActiveChange) loadQueue(qDocFilter);
-      else renderQueue(window._allQueuePatients);
+      // Always re-render from cache, reload from Firebase in background
+      if(window._allQueuePatients&&window._allQueuePatients.length>0){
+        // Check if any patient was recently updated
+        var hasActiveChange=window._allQueuePatients.some(function(p){
+          return p._justUpdated;
+        });
+        if(hasActiveChange){
+          renderQueue(window._allQueuePatients);
+        } else {
+          // Reload from Firebase but merge with existing appointment patients
+          loadQueue(qDocFilter);
+        }
+      } else {
+        loadQueue(qDocFilter);
+      }
     }, 10000);
     return;
   }
@@ -1742,7 +1751,7 @@ function confirmSlotBooking(){
 
   step1.then(function(){
     // Step 2: Save appointment
-    var apptData={doctorId:_slotDoctorId,day:_slotDay,time:_slotTime,date:null,
+    var apptData={doctorId:_slotDoctorId,day:_slotDay,time:_slotTime,date:new Date().toISOString().split('T')[0],
       visitType:_slotVisit,status:'scheduled',
       patientName:patientData.name,patientAge:patientData.age,
       patientPhone:patientData.phone,patientGender:patientData.gender,
