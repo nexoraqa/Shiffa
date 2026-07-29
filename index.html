@@ -563,34 +563,115 @@ function addReceptionist(){
   });
 }
 
+var _allStaff=[];
+
 function loadStaffList(){
   var list=document.getElementById('staff-list');
   if(!list) return;
   if(!window.fbGetAccounts){list.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px">Firebase not connected.</div>';return;}
   window.fbGetAccounts().then(function(accounts){
-    if(!accounts.length){list.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px">No staff added yet.</div>';return;}
-    var html='<table style="width:100%;border-collapse:collapse">';
-    html+='<thead><tr style="border-bottom:2px solid var(--border)">';
-    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Name</th>';
-    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Role</th>';
-    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Username</th>';
-    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Clinic</th>';
-    html+='<th style="padding:8px 12px"></th>';
-    html+='</tr></thead><tbody>';
-    accounts.forEach(function(a){
-      var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
-      var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
-      html+='<tr style="border-bottom:1px solid var(--border)">';
-      html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
-      html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
-      html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>';
-      html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.clinicName||'-')+'</td>';
-      html+='<td style="padding:10px 12px;text-align:right"><button data-id="'+a.id+'" onclick="deleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button></td>';
-      html+='</tr>';
-    });
-    html+='</tbody></table>';
-    list.innerHTML=html;
+    _allStaff=accounts;
+    renderStaffTable(accounts);
   });
+}
+
+function renderStaffTable(accounts){
+  var list=document.getElementById('staff-list');
+  if(!list) return;
+  if(!accounts.length){list.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px">No staff added yet.</div>';return;}
+  var html='<table style="width:100%;border-collapse:collapse">';
+  html+='<thead><tr style="border-bottom:2px solid var(--border)">';
+  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Name</th>';
+  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Role</th>';
+  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Username</th>';
+  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Linked Doctor</th>';
+  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Clinic</th>';
+  html+='<th style="padding:8px 12px"></th>';
+  html+='</tr></thead><tbody>';
+  accounts.forEach(function(a){
+    var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
+    var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
+    html+='<tr style="border-bottom:1px solid var(--border)">';
+    html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
+    html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
+    html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>';
+    html+='<td style="padding:10px 12px;font-size:13px;color:'+(a.role==='receptionist'&&a.doctorId?'#059669':'#9CA3AF')+';font-weight:'+(a.role==='receptionist'&&a.doctorId?'600':'400')+'">'+(a.role==='receptionist'?(a.doctorId||'Not linked'):'-')+'</td>';
+    html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.clinicName||'-')+'</td>';
+    html+='<td style="padding:10px 12px;text-align:right;white-space:nowrap">';
+    html+='<button data-id="'+a.id+'" onclick="editStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">Edit</button>';
+    html+='<button data-id="'+a.id+'" onclick="deleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>';
+    html+='</td></tr>';
+  });
+  html+='</tbody></table>';
+  list.innerHTML=html;
+}
+
+function filterStaff(q){
+  var filtered=_allStaff.filter(function(a){
+    return !q||(a.name+' '+a.username+' '+(a.clinicName||'')+' '+(a.doctorId||'')).toLowerCase().includes(q.toLowerCase());
+  });
+  renderStaffTable(filtered);
+}
+
+function editStaff(id){
+  var a=_allStaff.find(function(x){return x.id===id;});
+  if(!a) return;
+  var isDoc=a.role==='doctor';
+  var overlay=document.createElement('div');
+  overlay.id='edit-staff-overlay';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+  overlay.innerHTML=
+    '<div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:100%;box-sizing:border-box">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
+      '<h3 style="font-size:16px;font-weight:700;color:#0D1117">Edit '+(isDoc?'Doctor':'Receptionist')+'</h3>'+
+      '<button onclick="document.getElementById(\'edit-staff-overlay\').remove()" style="background:#F4F6FA;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:#4B5563">Cancel</button>'+
+    '</div>'+
+    '<input type="text" id="edit-name" value="'+a.name+'" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+    '<input type="text" id="edit-clinic" value="'+(a.clinicName||'')+'" placeholder="Clinic name *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+    (isDoc?
+      '<input type="text" id="edit-specialty" value="'+(a.specialty||'')+'" placeholder="Specialty" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+      '<input type="text" id="edit-city" value="'+(a.city||'')+'" placeholder="City" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'
+    :
+      '<input type="text" id="edit-docid" value="'+(a.doctorId||'')+'" placeholder="Doctor username (e.g. dr.smith) *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'
+    )+
+    '<input type="password" id="edit-pass" placeholder="New password (leave blank to keep current)" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:14px;box-sizing:border-box"/>'+
+    '<div id="edit-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
+    '<button id="edit-save-btn" onclick="saveEditStaff(\''+id+'\',\''+a.role+'\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Save Changes</button>'+
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+function saveEditStaff(id,role){
+  var name=document.getElementById('edit-name').value.trim();
+  var clinic=document.getElementById('edit-clinic').value.trim();
+  var pass=document.getElementById('edit-pass').value;
+  var err=document.getElementById('edit-err');
+  var btn=document.getElementById('edit-save-btn');
+  if(!name||!clinic){err.textContent='Name and clinic are required.';err.style.display='block';return;}
+  var current=_allStaff.find(function(x){return x.id===id;})||{};
+  var data=Object.assign({},current,{name:name,clinicName:clinic,cabinetName:clinic});
+  if(role==='doctor'){
+    var sp=document.getElementById('edit-specialty');
+    var cy=document.getElementById('edit-city');
+    if(sp) data.specialty=sp.value.trim();
+    if(cy) data.city=cy.value.trim();
+  } else {
+    var did=document.getElementById('edit-docid');
+    if(did) data.doctorId=did.value.trim().toLowerCase();
+  }
+  if(pass) data.password=pass;
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+  if(window.fbDeleteAccount&&window.fbSaveAccount){
+    window.fbDeleteAccount(id).then(function(){
+      return window.fbSaveAccount(data);
+    }).then(function(){
+      document.getElementById('edit-staff-overlay').remove();
+      loadStaffList();
+    }).catch(function(e){
+      if(btn){btn.textContent='Save Changes';btn.disabled=false;}
+      if(err){err.textContent='Error saving. Try again.';err.style.display='block';}
+    });
+  }
 }
 
 function deleteStaff(id){
@@ -599,6 +680,7 @@ function deleteStaff(id){
     window.fbDeleteAccount(id).then(function(){loadStaffList();});
   }
 }
+
 
 function doLogout(){
   dismissNotif();
@@ -984,9 +1066,10 @@ function loadPage(page){
         '</div>'+
       '</div>'+
       '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
-          '<h3 style="font-size:14px;font-weight:700;color:#0D1117">Current Staff</h3>'+
-          '<button onclick="loadStaffList()" style="font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--mid)">Refresh</button>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px">'+
+          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;white-space:nowrap">Current Staff</h3>'+
+          '<input type="text" onkeyup="filterStaff(this.value)" placeholder="Search by name or username..." style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/>'+
+          '<button onclick="loadStaffList()" style="font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--mid);white-space:nowrap">Refresh</button>'+
         '</div>'+
         '<div id="staff-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
       '</div>';
