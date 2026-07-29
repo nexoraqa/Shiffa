@@ -428,35 +428,32 @@ function setLang(lang){
 }
 
 function applyLang(){
-  // Just update the text of existing nav buttons without rebuilding
+  if(!currentUser) return;
+  var role=currentUser.role;
+  var items=NAV[role]||[];
+  // Update sidebar nav buttons
   document.querySelectorAll('.nav-btn').forEach(function(btn){
-    var id=btn.id.replace('nb-','');
-    // Find the label for this nav item
-    var role=currentUser?currentUser.role:'';
-    var items=NAV[role]||[];
+    var id=btn.id.replace('snav-','');
     for(var i=0;i<items.length;i++){
       if(items[i][1]===id){
-        var emoji=items[i][0].split(' ')[0];
-        var label=items[i][0].split(' ').slice(1).join(' ');
-        var tLabel=t(label)||label;
-        btn.innerHTML='<span class="mi">'+emoji+'</span>'+tLabel;
+        var parts=items[i][0].split(' ');
+        var emoji=parts[0];
+        var label=parts.slice(1).join(' ');
+        btn.innerHTML='<span class="mi">'+emoji+'</span>'+( t(label)||label );
         break;
       }
     }
   });
-  // Update mobile nav too
+  // Update mobile nav buttons
   document.querySelectorAll('.mnav-btn').forEach(function(btn){
     var id=btn.id.replace('mnav-','');
-    var role=currentUser?currentUser.role:'';
-    var items=NAV[role]||[];
     for(var i=0;i<items.length;i++){
       if(items[i][1]===id){
-        var emoji=items[i][0].split(' ')[0];
-        var label=items[i][0].split(' ').slice(1).join(' ');
-        var tLabel=t(label)||label;
-        // Preserve badge if exists
-        var badge=btn.querySelector('.mnav-wrap')||btn.querySelector('.mnav-badge');
-        btn.innerHTML='<span class="mi">'+emoji+'</span><span>'+tLabel+'</span>';
+        var parts=items[i][0].split(' ');
+        var emoji=parts[0];
+        var label=parts.slice(1).join(' ');
+        var qbadge=btn.querySelector('.mnav-badge')?btn.querySelector('.mnav-badge').outerHTML:'';
+        btn.innerHTML='<span class="mnav-wrap"><span class="mi">'+emoji+'</span>'+qbadge+'</span><span>'+(t(label)||label)+'</span>';
         break;
       }
     }
