@@ -1756,6 +1756,10 @@ function confirmSlotBooking(){
       window.fbSaveAppointment(apptData).then(function(id){
         clearTimeout(btnTimeout);
         if(id){
+      // Send WhatsApp confirmation
+      if(ULTRAMSG_TOKEN&&apptData.patientPhone){
+        notifyAppointmentBooked(apptData.patientPhone,apptData.patientName,apptData.day,apptData.time,currentUser.name||'Doctor');
+      }
           btn.textContent='✅ Appointment Booked!';
           window._pendingBookingPatient=null;
           window._managingSlot=null;
@@ -2141,6 +2145,36 @@ function showSuccess(name){
 // ═══════════════
 var STATUS_DATA={waiting:['#F0A500','#FFF8E7','⏳ Waiting'],inprogress:['#1B6B4A','#E8F5EF','🩺 In Progress'],done:['#8FA89D','#F0F0F0','✅ Done']};
 
+// ── WhatsApp Notifications (UltraMsg) ──
+var ULTRAMSG_INSTANCE = 'instance186634';
+var ULTRAMSG_TOKEN    = 'ykvrf4ssobj5kgju';
+
+function sendWhatsApp(phone, message){
+  if(!ULTRAMSG_INSTANCE||!ULTRAMSG_TOKEN||!phone) return;
+  // Format phone: remove spaces, add 213 if starts with 0
+  var formatted=phone.replace(/[\s\-]/g,'');
+  if(formatted.startsWith('0')) formatted='213'+formatted.substring(1);
+  if(!formatted.startsWith('+')) formatted='+'+formatted;
+  var url='https://api.ultramsg.com/'+ULTRAMSG_INSTANCE+'/messages/chat';
+  fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'token='+ULTRAMSG_TOKEN+'&to='+encodeURIComponent(formatted)+'&body='+encodeURIComponent(message)
+  }).then(function(r){return r.json();})
+    .then(function(d){console.log('WhatsApp sent:',d);})
+    .catch(function(e){console.log('WhatsApp error:',e);});
+}
+
+function notifyAppointmentBooked(patientPhone, patientName, day, time, doctorName){
+  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\nYour appointment has been confirmed:\n\u{1F4C5} '+day+' at '+time+'\n\u{1F3E5} Dr. '+doctorName+'\n\nPlease arrive 5 minutes early.';
+  sendWhatsApp(patientPhone, msg);
+}
+
+function notifyPatientTurn(patientPhone, patientName, doctorName){
+  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\n\u{1F514} The doctor is ready for you now!\n\nPlease proceed to Dr. '+doctorName+'\'s office.';
+  sendWhatsApp(patientPhone, msg);
+}
+
 function cycleStatus(pid,btn){
   var cur=btn.getAttribute('data-status')||'waiting';
   var role=currentUser.role;
@@ -2180,6 +2214,18 @@ function cycleStatus(pid,btn){
     }
     renderQueue(window._allQueuePatients);
   }
+  // Send WhatsApp notification when doctor calls patient in
+  if(next==='inprogress'&&ULTRAMSG_TOKEN){
+    var qPts=window._allQueuePatients||[];
+    for(var qi=0;qi<qPts.length;qi++){
+      if(qPts[qi].id===pid){
+        var docName=currentUser.name||'the doctor';
+        notifyPatientTurn(qPts[qi].phone, qPts[qi].name, docName);
+        break;
+      }
+    }
+  }
+
   // Persist to Firebase in background
   if(pid.indexOf('appt_')===0){
     // Appointment patient — update appointments collection
