@@ -543,7 +543,7 @@ function loadPage(page){
     }
 
     mc.innerHTML=
-      '<h2 style="color:#0D1117;margin-bottom:4px">\u{1F4C5} Schedule</h2>'+
+      '<h2 style="color:#0D1117;margin-bottom:4px">📅 Schedule</h2>'+
       '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">'+(isDoc?'Set your working hours per day':'Doctor working hours — read only')+'</div>'+
       ((!isDoc&&window._pendingBookingPatient)?
         '<div style="background:#EEF2FF;border:1.5px solid #2563A8;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">'+
@@ -2172,12 +2172,12 @@ function sendWhatsApp(phone, message){
 }
 
 function notifyAppointmentBooked(patientPhone, patientName, day, time, doctorName){
-  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\nYour appointment has been confirmed:\n\u{1F4C5} '+day+' at '+time+'\n\u{1F3E5} Dr. '+doctorName+'\n\nPlease arrive 5 minutes early.';
+  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\nYour appointment has been confirmed:\n📅 '+day+' at '+time+'\n🏥 Dr. '+doctorName+'\n\nPlease arrive 5 minutes early.';
   sendWhatsApp(patientPhone, msg);
 }
 
 function notifyPatientTurn(patientPhone, patientName, doctorName){
-  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\n\u{1F514} The doctor is ready for you now!\n\nPlease proceed to Dr. '+doctorName+'\'s office.';
+  var msg = 'Shifaa Clinic\n\nHello '+patientName+',\n\n🔔 The doctor is ready for you now!\n\nPlease proceed to Dr. '+doctorName+'\'s office.';
   sendWhatsApp(patientPhone, msg);
 }
 
