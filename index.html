@@ -2191,6 +2191,7 @@ function notifyPatientTurn(patientPhone, patientName, doctorName){
 }
 
 function cycleStatus(pid,btn){
+  console.log('cycleStatus called:',pid,btn?btn.getAttribute('data-status'):'no btn');
   var cur=btn.getAttribute('data-status')||'waiting';
   var role=currentUser.role;
   var next=null;
@@ -2860,7 +2861,7 @@ function renderQueue(patients){
     html+='</div>';
     html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:8px;font-weight:500">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
     html+='<div style="display:flex;align-items:center;justify-content:space-between">';
-    html+='<button data-status="'+p.status+'" onclick="event.stopPropagation();cycleStatus(\''+p.id+'\',this)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.2px">'+s[2]+'</button>';
+    html+='<button data-status="'+p.status+'" data-pid="'+p.id+'" onclick="event.stopPropagation();var b=this;cycleStatus(b.getAttribute(\'data-pid\'),b)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.2px">'+s[2]+'</button>';
     // Show appointment time OR waiting time
     if(p.isAppointment&&p.appointmentTime){
       html+='<span style="font-size:11px;color:#7C3AED;font-weight:700">&#x1F4C5; '+p.appointmentTime+'</span>';
