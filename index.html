@@ -595,7 +595,10 @@ function renderStaffTable(accounts){
     html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
     html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
     html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>';
-    html+='<td style="padding:10px 12px;font-size:13px;color:'+(a.role==='receptionist'&&a.doctorId?'#059669':'#9CA3AF')+';font-weight:'+(a.role==='receptionist'&&a.doctorId?'600':'400')+'">'+(a.role==='receptionist'?(a.doctorId||'Not linked'):'-')+'</td>';
+    var docLinked=a.role==='receptionist'&&a.doctorId&&accounts.some(function(x){return x.role==='doctor'&&x.username===a.doctorId;});
+    var linkColor=a.role!=='receptionist'?'#9CA3AF':docLinked?'#059669':'#EF4444';
+    var linkText=a.role==='receptionist'?(a.doctorId?(docLinked?a.doctorId:a.doctorId+' (not found)'):'Not linked'):'-';
+    html+='<td style="padding:10px 12px;font-size:13px;color:'+linkColor+';font-weight:'+(docLinked?'600':'400')+'">'+linkText+'</td>';
     html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.clinicName||'-')+'</td>';
     html+='<td style="padding:10px 12px;text-align:right;white-space:nowrap">';
     html+='<button data-id="'+a.id+'" onclick="editStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">Edit</button>';
