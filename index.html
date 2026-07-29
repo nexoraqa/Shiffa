@@ -502,23 +502,28 @@ function addDoctor(){
     username:username,password:password,doctorId:username,
     avatar:'👨‍⚕️',clinicId:'clinic_001'
   };
-  if(window.fbSaveAccount){
-    window.fbSaveAccount(data).then(function(id){
-      if(id){
-        // Also save to doctors collection for profile
-        if(window.fbSaveProfile) window.fbSaveProfile(username,{name:name,specialty:specialty,city:city,doctorId:username});
-        document.getElementById('add-doc-name').value='';
-        document.getElementById('add-doc-specialty').value='';
-        document.getElementById('add-doc-city').value='';
-        document.getElementById('add-doc-clinic').value='';
-        document.getElementById('add-doc-user').value='';
-        document.getElementById('add-doc-pass').value='';
-        err.textContent='Doctor added successfully!';err.style.color='#059669';err.style.display='block';
-        setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
-        loadStaffList();
-      }
-    });
+  if(!window.fbSaveAccount){
+    err.textContent='Firebase not ready. Try again in a moment.';err.style.display='block';return;
   }
+  var addBtn=document.querySelector('[onclick="addDoctor()"]');
+  if(addBtn){addBtn.textContent='Saving...';addBtn.disabled=true;}
+  window.fbSaveAccount(data).then(function(id){
+    if(addBtn){addBtn.textContent='Add Doctor';addBtn.disabled=false;}
+    if(id){
+      if(window.fbSaveProfile) window.fbSaveProfile(username,{name:name,specialty:specialty,city:city,doctorId:username});
+      ['add-doc-name','add-doc-specialty','add-doc-city','add-doc-clinic','add-doc-user','add-doc-pass'].forEach(function(id){
+        var el=document.getElementById(id); if(el) el.value='';
+      });
+      err.textContent='Doctor added successfully!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
+      loadStaffList();
+    } else {
+      err.textContent='Could not save. Please try again.';err.style.display='block';
+    }
+  }).catch(function(e){
+    if(addBtn){addBtn.textContent='Add Doctor';addBtn.disabled=false;}
+    err.textContent='Error: '+e.message;err.style.display='block';
+  });
 }
 
 function addReceptionist(){
@@ -535,20 +540,27 @@ function addReceptionist(){
     username:username,password:password,doctorId:docId,
     avatar:'👩‍💼',clinicId:'clinic_001'
   };
-  if(window.fbSaveAccount){
-    window.fbSaveAccount(data).then(function(id){
-      if(id){
-        document.getElementById('add-rec-name').value='';
-        document.getElementById('add-rec-docid').value='';
-        document.getElementById('add-rec-clinic').value='';
-        document.getElementById('add-rec-user').value='';
-        document.getElementById('add-rec-pass').value='';
-        err.textContent='Receptionist added successfully!';err.style.color='#059669';err.style.display='block';
-        setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
-        loadStaffList();
-      }
-    });
+  if(!window.fbSaveAccount){
+    err.textContent='Firebase not ready. Try again in a moment.';err.style.display='block';return;
   }
+  var recBtn=document.querySelector('[onclick="addReceptionist()"]');
+  if(recBtn){recBtn.textContent='Saving...';recBtn.disabled=true;}
+  window.fbSaveAccount(data).then(function(id){
+    if(recBtn){recBtn.textContent='Add Receptionist';recBtn.disabled=false;}
+    if(id){
+      ['add-rec-name','add-rec-docid','add-rec-clinic','add-rec-user','add-rec-pass'].forEach(function(fid){
+        var el=document.getElementById(fid); if(el) el.value='';
+      });
+      err.textContent='Receptionist added successfully!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
+      loadStaffList();
+    } else {
+      err.textContent='Could not save. Please try again.';err.style.display='block';
+    }
+  }).catch(function(e){
+    if(recBtn){recBtn.textContent='Add Receptionist';recBtn.disabled=false;}
+    err.textContent='Error: '+e.message;err.style.display='block';
+  });
 }
 
 function loadStaffList(){
