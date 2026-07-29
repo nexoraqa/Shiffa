@@ -294,32 +294,57 @@ function doLogin(){
   if(!u||!p){showError('Please enter username and password.');return;}
   btn.textContent='Signing in...';
   btn.disabled=true;
-  setTimeout(function(){
-    var user=null;
-    for(var i=0;i<USERS.length;i++){
-      if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
-    }
-    if(user){
-      currentUser=user;
-      // Load saved doctor profile from Firebase before showing dashboard
-      if(user.role==='doctor' && user.doctorId && window.fbGetProfile){
-        window.fbGetProfile(user.doctorId).then(function(prof){
-          if(prof){
-            if(prof.name) currentUser.name=prof.name;
-            if(prof.specialty) currentUser.specialty=prof.specialty;
-            if(prof.city) currentUser.city=prof.city;
-            if(prof.phone) currentUser.phone=prof.phone;
-          }
-          showDashboard(currentUser);
 
-        });
+  function loginWithUser(user){
+    currentUser=user;
+    if(user.role==='doctor' && user.doctorId && window.fbGetProfile){
+      window.fbGetProfile(user.doctorId).then(function(prof){
+        if(prof){
+          if(prof.name) currentUser.name=prof.name;
+          if(prof.specialty) currentUser.specialty=prof.specialty;
+          if(prof.city) currentUser.city=prof.city;
+          if(prof.phone) currentUser.phone=prof.phone;
+        }
+        showDashboard(currentUser);
+      });
+    } else {
+      showDashboard(user);
+    }
+  }
+
+  // First check Firebase accounts (dynamic accounts added by admin)
+  if(window.fbLoginFromDB){
+    window.fbLoginFromDB(u,p).then(function(dbUser){
+      if(dbUser){
+        loginWithUser(dbUser);
       } else {
-        showDashboard(user);
-
+        // Fall back to hardcoded test accounts
+        var user=null;
+        for(var i=0;i<USERS.length;i++){
+          if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
+        }
+        if(user){ loginWithUser(user); }
+        else{ showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false; }
       }
-    }
-    else{showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;}
-  },600);
+    }).catch(function(){
+      // Firebase failed - use hardcoded accounts
+      var user=null;
+      for(var i=0;i<USERS.length;i++){
+        if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
+      }
+      if(user){ loginWithUser(user); }
+      else{ showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false; }
+    });
+  } else {
+    setTimeout(function(){
+      var user=null;
+      for(var i=0;i<USERS.length;i++){
+        if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
+      }
+      if(user){ loginWithUser(user); }
+      else{ showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false; }
+    },600);
+  }
 }
 // ── Language System ──
 window.LANG = 'fr';
@@ -460,6 +485,109 @@ function applyLang(){
   });
 }
 
+// ── Staff Management ──
+function addDoctor(){
+  var name=document.getElementById('add-doc-name').value.trim();
+  var specialty=document.getElementById('add-doc-specialty').value.trim();
+  var city=document.getElementById('add-doc-city').value.trim();
+  var clinic=document.getElementById('add-doc-clinic').value.trim();
+  var username=document.getElementById('add-doc-user').value.trim().toLowerCase();
+  var password=document.getElementById('add-doc-pass').value;
+  var err=document.getElementById('add-doc-err');
+  if(!name||!username||!password||!clinic){err.textContent='Please fill all required fields.';err.style.display='block';return;}
+  err.style.display='none';
+  var data={
+    role:'doctor',name:name,specialty:specialty||'Medecin Generaliste',
+    city:city||'',clinicName:clinic,cabinetName:clinic,
+    username:username,password:password,doctorId:username,
+    avatar:'👨‍⚕️',clinicId:'clinic_001'
+  };
+  if(window.fbSaveAccount){
+    window.fbSaveAccount(data).then(function(id){
+      if(id){
+        // Also save to doctors collection for profile
+        if(window.fbSaveProfile) window.fbSaveProfile(username,{name:name,specialty:specialty,city:city,doctorId:username});
+        document.getElementById('add-doc-name').value='';
+        document.getElementById('add-doc-specialty').value='';
+        document.getElementById('add-doc-city').value='';
+        document.getElementById('add-doc-clinic').value='';
+        document.getElementById('add-doc-user').value='';
+        document.getElementById('add-doc-pass').value='';
+        err.textContent='Doctor added successfully!';err.style.color='#059669';err.style.display='block';
+        setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
+        loadStaffList();
+      }
+    });
+  }
+}
+
+function addReceptionist(){
+  var name=document.getElementById('add-rec-name').value.trim();
+  var docId=document.getElementById('add-rec-docid').value.trim().toLowerCase();
+  var clinic=document.getElementById('add-rec-clinic').value.trim();
+  var username=document.getElementById('add-rec-user').value.trim().toLowerCase();
+  var password=document.getElementById('add-rec-pass').value;
+  var err=document.getElementById('add-rec-err');
+  if(!name||!username||!password||!docId||!clinic){err.textContent='Please fill all required fields.';err.style.display='block';return;}
+  err.style.display='none';
+  var data={
+    role:'receptionist',name:name,clinicName:clinic,cabinetName:clinic,
+    username:username,password:password,doctorId:docId,
+    avatar:'👩‍💼',clinicId:'clinic_001'
+  };
+  if(window.fbSaveAccount){
+    window.fbSaveAccount(data).then(function(id){
+      if(id){
+        document.getElementById('add-rec-name').value='';
+        document.getElementById('add-rec-docid').value='';
+        document.getElementById('add-rec-clinic').value='';
+        document.getElementById('add-rec-user').value='';
+        document.getElementById('add-rec-pass').value='';
+        err.textContent='Receptionist added successfully!';err.style.color='#059669';err.style.display='block';
+        setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
+        loadStaffList();
+      }
+    });
+  }
+}
+
+function loadStaffList(){
+  var list=document.getElementById('staff-list');
+  if(!list) return;
+  if(!window.fbGetAccounts){list.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px">Firebase not connected.</div>';return;}
+  window.fbGetAccounts().then(function(accounts){
+    if(!accounts.length){list.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px">No staff added yet.</div>';return;}
+    var html='<table style="width:100%;border-collapse:collapse">';
+    html+='<thead><tr style="border-bottom:2px solid var(--border)">';
+    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Name</th>';
+    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Role</th>';
+    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Username</th>';
+    html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Clinic</th>';
+    html+='<th style="padding:8px 12px"></th>';
+    html+='</tr></thead><tbody>';
+    accounts.forEach(function(a){
+      var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
+      var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
+      html+='<tr style="border-bottom:1px solid var(--border)">';
+      html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
+      html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
+      html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>';
+      html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.clinicName||'-')+'</td>';
+      html+='<td style="padding:10px 12px;text-align:right"><button data-id="'+a.id+'" onclick="deleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button></td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    list.innerHTML=html;
+  });
+}
+
+function deleteStaff(id){
+  if(!confirm('Remove this staff member?')) return;
+  if(window.fbDeleteAccount){
+    window.fbDeleteAccount(id).then(function(){loadStaffList();});
+  }
+}
+
 function doLogout(){
   dismissNotif();
   currentUser=null;
@@ -477,7 +605,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser
 // DASHBOARD
 // ═══════════════
 var NAV={
-  superadmin:  [['📊 Overview','dashboard'],['🏥 Clinics','clinics'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
+  superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports']],
   clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
   doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
   receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule']]
@@ -813,6 +941,44 @@ function loadPage(page){
       });
     }
     tryLoadSchedule(0);
+    return;
+  }
+
+  // ── MANAGE PAGE (Super Admin) ──
+  if(page==='manage' && u.role==='superadmin'){
+    mc.innerHTML='<h2 style="margin-bottom:6px">Manage Staff</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Add doctors and receptionists</p>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
+          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Doctor</h3>'+
+          '<input type="text" id="add-doc-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-doc-specialty" placeholder="Specialty (e.g. Medecin Generaliste)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-doc-city" placeholder="City" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-doc-clinic" placeholder="Clinic name" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-doc-user" placeholder="Username (e.g. dr.smith)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="add-doc-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="add-doc-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
+          '<button onclick="addDoctor()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Doctor</button>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
+          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Receptionist</h3>'+
+          '<input type="text" id="add-rec-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-rec-docid" placeholder="Doctor username (e.g. dr.smith)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-rec-clinic" placeholder="Clinic name" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-rec-user" placeholder="Username (e.g. sara.recep)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="add-rec-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="add-rec-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
+          '<button onclick="addReceptionist()" style="width:100%;padding:12px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Receptionist</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+          '<h3 style="font-size:14px;font-weight:700;color:#0D1117">Current Staff</h3>'+
+          '<button onclick="loadStaffList()" style="font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--mid)">Refresh</button>'+
+        '</div>'+
+        '<div id="staff-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
+      '</div>';
+    loadStaffList();
     return;
   }
 
@@ -3289,7 +3455,7 @@ function printSavedRx(rx){
 <script type="module">
 try{
   const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-  const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const {getFirestore,collection,addDoc,getDocs,query,where,serverTimestamp,doc,updateDoc,deleteDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
   const config={apiKey:"AIzaSyBZE7dYhMcwWb7vrXqFGv8uNc1z7Bg8cBs",authDomain:"shiffa-fcae0.firebaseapp.com",projectId:"shiffa-fcae0",storageBucket:"shiffa-fcae0.firebasestorage.app",messagingSenderId:"48392150056",appId:"1:48392150056:web:3c89b803c4c8220298e91d"};
   const app=initializeApp(config);
   const db=getFirestore(app);
@@ -3372,6 +3538,32 @@ try{
   };
   window.fbCancelAppointment=function(id){
     return updateDoc(doc(db,'appointments',id),{status:'cancelled'}).catch(function(e){console.error(e);});
+  };
+
+  // ── Accounts collection ──
+  window.fbGetAccounts=function(){
+    return getDocs(collection(db,'accounts'))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
+  window.fbSaveAccount=function(data){
+    // Check if username exists
+    return getDocs(query(collection(db,'accounts'),where('username','==',data.username)))
+      .then(function(snap){
+        if(!snap.empty){
+          return updateDoc(doc(db,'accounts',snap.docs[0].id),data).then(function(){return snap.docs[0].id;});
+        } else {
+          return addDoc(collection(db,'accounts'),Object.assign({},data,{createdAt:serverTimestamp()})).then(function(r){return r.id;});
+        }
+      }).catch(function(e){console.error(e);return null;});
+  };
+  window.fbDeleteAccount=function(id){
+    return deleteDoc(doc(db,'accounts',id)).catch(function(e){console.error(e);});
+  };
+  window.fbLoginFromDB=function(username,password){
+    return getDocs(query(collection(db,'accounts'),where('username','==',username),where('password','==',password)))
+      .then(function(snap){return snap.empty?null:snap.docs[0].data();})
+      .catch(function(e){console.error(e);return null;});
   };
 
   window.fbSaveSchedule=function(doctorId,data){
