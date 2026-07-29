@@ -1489,6 +1489,11 @@ function cancelBookedSlot(){
   if(window.fbCancelAppointment&&apptId){
     window.fbCancelAppointment(apptId).then(function(){
       clearTimeout(cancelTimeout);
+      // Send cancellation notification
+      if(s.patientPhone){
+        var cancelMsg='Shifaa Clinic\n\nHello '+s.patientName+',\n\nYour appointment has been cancelled.\nPlease contact us to reschedule.';
+        sendWhatsApp(s.patientPhone, cancelMsg);
+      }
       closeManageSlot();
       goPage('schedule');
     }).catch(function(e){
@@ -1771,7 +1776,10 @@ function confirmSlotBooking(){
         if(id){
       // Send WhatsApp confirmation
       if(ULTRAMSG_TOKEN&&apptData.patientPhone){
-        notifyAppointmentBooked(apptData.patientPhone,apptData.patientName,apptData.day,apptData.time,currentUser.name||'Doctor');
+        // Get doctor name from ALL_DOCTORS list
+        var dName=currentUser.name||'Doctor';
+        for(var di=0;di<ALL_DOCTORS.length;di++){if(ALL_DOCTORS[di].id===apptData.doctorId){dName=ALL_DOCTORS[di].name;break;}}
+        notifyAppointmentBooked(apptData.patientPhone,apptData.patientName,apptData.day,apptData.time,dName);
       }
           btn.textContent='✅ Appointment Booked!';
           window._pendingBookingPatient=null;
@@ -2191,7 +2199,6 @@ function notifyPatientTurn(patientPhone, patientName, doctorName){
 }
 
 function cycleStatus(pid,btn){
-  console.log('cycleStatus called:',pid,btn?btn.getAttribute('data-status'):'no btn');
   var cur=btn.getAttribute('data-status')||'waiting';
   var role=currentUser.role;
   var next=null;
