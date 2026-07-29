@@ -2275,8 +2275,9 @@ function loadQueue(doctorFilter){
       var appts=results[1]||[];
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
       var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status!=='cancelled';});
+      // Only block duplicate if walk-in patient is NOT done
       var existingPhones={};
-      pts.forEach(function(p){if(p.phone)existingPhones[p.phone]=true;});
+      pts.forEach(function(p){if(p.phone&&p.status!=='done')existingPhones[p.phone]=true;});
       var apptPts=todayAppts.filter(function(a){return!existingPhones[a.patientPhone];}).map(function(a){
         var apptStatus=a.status==='inprogress'?'inprogress':a.status==='done'?'done':'waiting';
         return {id:'appt_'+a.id,apptId:a.id,name:a.patientName,age:a.patientAge,phone:a.patientPhone,
