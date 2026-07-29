@@ -2075,15 +2075,17 @@ function bookFromRegister(){
   var phone=document.getElementById('r-phone').value.trim();
   var age=document.getElementById('r-age').value.trim();
   var address=document.getElementById('r-address').value.trim();
-  var gender=window._regGender||'';
+  var gender=selGender||window._regGender||'';
   var doctor=document.getElementById('r-doctor').value;
+  var visitType=selVisit||'new';
   var err=document.getElementById('form-err');
   if(!name||!phone||!age||!address||!gender||!doctor){
     if(err){err.textContent='Please fill all fields before booking an appointment.';err.style.display='block';}
     return;
   }
+  if(err) err.style.display='none';
   // Store patient data for booking
-  window._pendingBookingPatient={name:name,phone:phone,age:parseInt(age),address:address,gender:gender,doctor:doctor,visitType:'new',fromRegister:true};
+  window._pendingBookingPatient={name:name,phone:phone,age:parseInt(age),address:address,gender:gender,doctor:doctor,visitType:visitType,fromRegister:true};
   window._pendingBookingIsNew=true;
   // Go to schedule to pick a slot
   goPage('schedule');
