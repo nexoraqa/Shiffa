@@ -210,6 +210,10 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
       </div>
     </div>
     <div class="hdr-right">
+      <div style="display:flex;background:#F0F4F8;border-radius:8px;border:1px solid var(--border);overflow:hidden">
+        <button onclick="setLang('fr')" id="lang-fr" style="padding:5px 10px;border:none;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;font-size:11px;font-weight:700;cursor:pointer">FR</button>
+        <button onclick="setLang('en')" id="lang-en" style="padding:5px 10px;border:none;background:transparent;color:var(--mid);font-size:11px;font-weight:700;cursor:pointer">EN</button>
+      </div>
       <div>
         <div class="hdr-user" id="hdr-name"></div>
         <div id="hdr-badge"></div>
@@ -317,6 +321,132 @@ function doLogin(){
     else{showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;}
   },600);
 }
+// ── Language System ──
+window.LANG = 'fr';
+
+var TRANSLATIONS = {
+  fr: {
+    "Dashboard":"Tableau de bord",
+    "Overview":"Vue ensemble",
+    "My Queue":"Ma file",
+    "Queue":"File attente",
+    "Register":"Enregistrer",
+    "Patients":"Patients",
+    "Notes":"Notes",
+    "Schedule":"Planning",
+    "Profile":"Profil",
+    "Refresh":"Actualiser",
+    "Today":"Aujourd hui",
+    "Waiting":"En attente",
+    "With Doctor":"Chez le medecin",
+    "Done":"Termine",
+    "Register Patient":"Enregistrer un patient",
+    "Search":"Rechercher",
+    "Full Name":"Nom complet",
+    "Age":"Age",
+    "Phone":"Telephone",
+    "Address":"Adresse",
+    "Gender":"Sexe",
+    "Male":"Homme",
+    "Female":"Femme",
+    "Visit Type":"Type de visite",
+    "New Patient":"Nouveau patient",
+    "Follow-up":"Suivi",
+    "Priority":"Priorite",
+    "Normal":"Normal",
+    "Emergency":"Urgence",
+    "Assign Doctor":"Medecin assigne",
+    "Reason (optional)":"Motif (optionnel)",
+    "Cancel":"Annuler",
+    "Add to Queue":"Ajouter a la file",
+    "Book Appointment":"Prendre RDV",
+    "Emergency Walk-in":"Urgence directe",
+    "Sign Out":"Deconnexion",
+    "Save":"Enregistrer",
+    "Save Schedule":"Enregistrer le planning",
+    "Preview":"Apercu",
+    "Back":"Retour",
+    "Confirm":"Confirmer",
+    "In Progress":"En cours",
+    "Doctor working hours — read only":"Horaires du medecin — lecture seule",
+    "Off":"Repos",
+    "Morning":"Matin",
+    "Evening":"Soir",
+    "Both":"Les deux",
+    "Read only":"Lecture seule",
+    "Write Notes":"Ecrire des notes",
+    "Prescription":"Ordonnance",
+    "Close":"Fermer",
+    "Diagnosis":"Diagnostic",
+    "Save Notes":"Enregistrer les notes",
+    "Add Medicine":"Ajouter medicament",
+    "Saturday":"Samedi",
+    "Sunday":"Dimanche",
+    "Monday":"Lundi",
+    "Tuesday":"Mardi",
+    "Wednesday":"Mercredi",
+    "Thursday":"Jeudi",
+    "Friday":"Vendredi",
+    "Sat":"Sam",
+    "Sun":"Dim",
+    "Mon":"Lun",
+    "Tue":"Mar",
+    "Wed":"Mer",
+    "Thu":"Jeu",
+    "Fri":"Ven",
+    "Queue is clear":"File vide",
+    "No patients registered yet today.":"Aucun patient enregistre aujourd hui.",
+    "Reschedule":"Reporter",
+    "Booked Slot":"Creneau reserve",
+    "slots":"creneaux",
+    "slot":"creneau",
+    "Generate":"Generer",
+    "Time Slots Preview":"Apercu des creneaux",
+    "Doctor working hours":"Horaires du medecin"
+  }
+};
+
+function t(key){ 
+  if(window.LANG==='fr' && TRANSLATIONS.fr[key]) return TRANSLATIONS.fr[key];
+  return key;
+}
+
+function setLang(lang){
+  window.LANG=lang;
+  var fr=document.getElementById('lang-fr');
+  var en=document.getElementById('lang-en');
+  if(fr&&en){
+    if(lang==='fr'){
+      fr.style.background='linear-gradient(135deg,#1A3A5C,#2563A8)';fr.style.color='#fff';
+      en.style.background='transparent';en.style.color='var(--mid)';
+    } else {
+      en.style.background='linear-gradient(135deg,#1A3A5C,#2563A8)';en.style.color='#fff';
+      fr.style.background='transparent';fr.style.color='var(--mid)';
+    }
+  }
+  applyLang();
+}
+
+function applyLang(){
+  // Translate nav buttons
+  var navBtns=document.querySelectorAll('.nav-btn');
+  navBtns.forEach(function(btn){
+    var spans=btn.querySelectorAll('span');
+    spans.forEach(function(span){
+      if(!span.className||span.className===''){
+        var txt=span.textContent.trim();
+        if(txt) span.textContent=t(txt)||txt;
+      }
+    });
+  });
+  // Translate mobile nav buttons  
+  var mnavBtns=document.querySelectorAll('.mnav-btn span:last-child');
+  mnavBtns.forEach(function(span){
+    var txt=span.textContent.trim();
+    if(txt) span.textContent=t(txt)||txt;
+  });
+}
+
 function doLogout(){
   dismissNotif();
   currentUser=null;
@@ -357,6 +487,7 @@ function showDashboard(user){
   document.getElementById('hdr-clinic').textContent=user.clinicName||'';
   document.getElementById('hdr-badge').innerHTML=makeBadge(user.role);
   document.getElementById('sidebar-badge').innerHTML=makeBadge(user.role);
+  applyLang();
   document.getElementById('sidebar-desc').textContent=ROLE_DESCS[user.role]||'';
   var av=document.getElementById('sidebar-avatar');
   if(av){var initials=(user.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();av.textContent=initials;}
