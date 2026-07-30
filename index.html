@@ -678,7 +678,11 @@ function saveEditStaff(id,role){
 }
 
 function deleteStaff(id){
-  if(!confirm('Remove this staff member?')) return;
+  var a=_allStaff.find(function(x){return x.id===id;});
+  if(!a) return;
+  var msg='Remove '+a.name+'?';
+  if(a.role==='doctor') msg+='\n\nWarning: Any receptionists linked to this doctor will be disconnected.';
+  if(!confirm(msg)) return;
   if(window.fbDeleteAccount){
     window.fbDeleteAccount(id).then(function(){loadStaffList();});
   }
