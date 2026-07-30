@@ -148,59 +148,76 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 
 <!-- LOGIN -->
 <div id="login-page">
-  <div class="logo-circle">🌿</div>
-  <div class="logo-title">Shifaa</div>
-  <div class="logo-sub">Smart Clinic Management - شفاء</div>
-  <div class="login-card">
-    <h2>Welcome back 👋</h2>
-    <p>Sign in to your Shifaa account</p>
-    <div class="error-box" id="error-box"></div>
-    <div class="field">
-      <label>Username</label>
-      <input type="text" id="inp-user" placeholder="e.g. dr.belouadah" autocomplete="username"/>
+  <!-- Logo -->
+  <div style="text-align:center;margin-bottom:40px">
+    <div class="logo-circle">🌿</div>
+    <div class="logo-title">Shifaa</div>
+    <div class="logo-sub">Smart Clinic Management - شفاء</div>
+  </div>
+
+  <!-- Choice screen -->
+  <div id="login-choice" style="display:flex;gap:16px;width:100%;max-width:600px;flex-wrap:wrap;justify-content:center">
+    <!-- Doctor/Nurse box -->
+    <div onclick="showLoginForm()" style="background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:20px;padding:32px 28px;flex:1;min-width:220px;max-width:270px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.15)';this.style.borderColor='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.2)'">
+      <div style="font-size:52px;margin-bottom:14px">👨‍⚕️</div>
+      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px">Doctor / Nurse</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5">Staff login<br>& clinic management</div>
     </div>
-    <div class="field">
-      <label>Password</label>
-      <div class="pass-wrap">
-        <input type="password" id="inp-pass" placeholder="Password" autocomplete="current-password"/>
-        <button class="eye-btn" onclick="togglePass()">👁️</button>
-      </div>
+    <!-- Patient box -->
+    <div onclick="showSelfBooking()" style="background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:20px;padding:32px 28px;flex:1;min-width:220px;max-width:270px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.15)';this.style.borderColor='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.2)'">
+      <div style="font-size:52px;margin-bottom:14px">🧑‍💻</div>
+      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px">Patient</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5">Book an appointment<br>No account needed</div>
     </div>
-    <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="test-accounts">
-      <p>Test Accounts:</p>
-      <div class="test-row">
-        <div><span class="test-info">👑 Super Admin</span><span class="test-user">@admin</span></div>
-        <button class="btn-use" onclick="fillUser('admin','admin123')">Use</button>
+  </div>
+
+  <!-- Login form (hidden by default) -->
+  <div id="login-form" style="display:none;width:100%;max-width:420px">
+    <button onclick="showLoginChoice()" style="background:rgba(255,255,255,0.1);border:none;border-radius:10px;padding:8px 16px;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;margin-bottom:16px">← Back</button>
+    <div style="background:#fff;border-radius:20px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <div style="width:38px;height:38px;background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">👨‍⚕️</div>
+        <div>
+          <div style="font-size:17px;font-weight:800;color:#0D1117">Staff Login</div>
+          <div style="font-size:12px;color:#9CA3AF">Doctor / Nurse / Admin</div>
+        </div>
       </div>
-      <div class="test-row">
-        <div><span class="test-info">🏥 Clinic Admin</span><span class="test-user">@clinicadmin</span></div>
-        <button class="btn-use" onclick="fillUser('clinicadmin','clinic123')">Use</button>
+      <div class="error-box" id="error-box"></div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="inp-user" placeholder="e.g. dr.belouadah" autocomplete="username"/>
       </div>
-      <div class="test-row">
-        <div><span class="test-info">👨‍⚕️ Doctor</span><span class="test-user">@dr.belouadah</span></div>
-        <button class="btn-use" onclick="fillUser('dr.belouadah','doctor123')">Use</button>
+      <div class="field">
+        <label>Password</label>
+        <div class="pass-wrap">
+          <input type="password" id="inp-pass" placeholder="Password" autocomplete="current-password"/>
+          <button class="eye-btn" onclick="togglePass()">👁️</button>
+        </div>
       </div>
-      <div class="test-row">
-        <div><span class="test-info">🧑‍💼 Receptionist</span><span class="test-user">@sara.recep</span></div>
-        <button class="btn-use" onclick="fillUser('sara.recep','recep123')">Use</button>
-      </div>
-      <div class="test-row">
-        <div><span class="test-info">👨‍⚕️ Dr. Slimani</span><span class="test-user">@dr.slimani</span></div>
-        <button class="btn-use" onclick="fillUser('dr.slimani','slimani123')">Use</button>
-      </div>
-      <div class="test-row">
-        <div><span class="test-info">🧑‍💼 Amina (Recep)</span><span class="test-user">@amina.recep</span></div>
-        <button class="btn-use" onclick="fillUser('amina.recep','amina123')">Use</button>
+      <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="test-accounts" style="margin-top:16px">
+        <p>Test Accounts:</p>
+        <div class="test-row">
+          <div><span class="test-info">👑 Super Admin</span><span class="test-user">@admin</span></div>
+          <button class="btn-use" onclick="fillUser('admin','admin123')">Use</button>
+        </div>
+        <div class="test-row">
+          <div><span class="test-info">🏥 Clinic Admin</span><span class="test-user">@clinicadmin</span></div>
+          <button class="btn-use" onclick="fillUser('clinicadmin','clinic123')">Use</button>
+        </div>
+        <div class="test-row">
+          <div><span class="test-info">👨‍⚕️ Doctor</span><span class="test-user">@dr.belouadah</span></div>
+          <button class="btn-use" onclick="fillUser('dr.belouadah','doctor123')">Use</button>
+        </div>
+        <div class="test-row">
+          <div><span class="test-info">🧑‍💼 Receptionist</span><span class="test-user">@sara.recep</span></div>
+          <button class="btn-use" onclick="fillUser('sara.recep','recep123')">Use</button>
+        </div>
       </div>
     </div>
   </div>
-  <div style="margin-top:16px;text-align:center">
-    <button onclick="showSelfBooking()" style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 28px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:420px">
-      📅 Book an Appointment
-    </button>
-  </div>
-  <div class="footer-txt">Made for Algeria - Shifaa v1.0</div>
+
+  <div class="footer-txt" style="margin-top:24px">Made for Algeria - Shifaa v1.0</div>
 </div>
 
 <!-- SELF BOOKING PAGE -->
@@ -735,6 +752,7 @@ function showSelfBooking(){
 function hideSelfBooking(){
   document.getElementById('self-booking-page').style.display='none';
   document.getElementById('login-page').style.display='flex';
+  showLoginChoice();
 }
 
 function sbSetStep(n){
@@ -1078,6 +1096,18 @@ function sbConfirm(){
     btn.textContent='Confirm Appointment';btn.disabled=false;
     err.textContent='Error: '+e.message;err.style.display='block';
   });
+}
+
+function showLoginForm(){
+  document.getElementById('login-choice').style.display='none';
+  document.getElementById('login-form').style.display='block';
+  document.getElementById('inp-user').focus();
+}
+
+function showLoginChoice(){
+  document.getElementById('login-choice').style.display='flex';
+  document.getElementById('login-form').style.display='none';
+  document.getElementById('error-box').style.display='none';
 }
 
 function doLogout(){
