@@ -195,7 +195,37 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
       </div>
     </div>
   </div>
+  <div style="margin-top:16px;text-align:center">
+    <button onclick="showSelfBooking()" style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 28px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:420px">
+      📅 Book an Appointment
+    </button>
+  </div>
   <div class="footer-txt">Made for Algeria - Shifaa v1.0</div>
+</div>
+
+<!-- SELF BOOKING PAGE -->
+<div id="self-booking-page" style="display:none;min-height:100vh;background:linear-gradient(160deg,#0D2440 0%,#1A3A5C 50%,#2563A8 100%);padding:20px;display:none;align-items:flex-start;justify-content:center">
+  <div style="width:100%;max-width:480px;margin:0 auto">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;margin-top:10px">
+      <button onclick="hideSelfBooking()" style="background:rgba(255,255,255,0.15);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:13px;cursor:pointer">← Back</button>
+      <div>
+        <div style="color:#fff;font-size:18px;font-weight:800">Book Appointment</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:12px">Shifaa Clinic</div>
+      </div>
+    </div>
+
+    <!-- Step indicator -->
+    <div style="display:flex;gap:6px;margin-bottom:20px" id="sb-steps">
+      <div id="sb-step-1" style="flex:1;height:4px;border-radius:2px;background:#fff;opacity:1"></div>
+      <div id="sb-step-2" style="flex:1;height:4px;border-radius:2px;background:#fff;opacity:0.3"></div>
+      <div id="sb-step-3" style="flex:1;height:4px;border-radius:2px;background:#fff;opacity:0.3"></div>
+      <div id="sb-step-4" style="flex:1;height:4px;border-radius:2px;background:#fff;opacity:0.3"></div>
+    </div>
+
+    <!-- Content area -->
+    <div id="sb-content" style="background:#fff;border-radius:20px;padding:24px;min-height:300px"></div>
+  </div>
 </div>
 
 
@@ -688,6 +718,367 @@ function deleteStaff(id){
   }
 }
 
+
+// ── Self Booking ──
+var _sb={step:1,doctor:null,day:null,time:null,schedule:null,patient:null,visitType:null};
+
+function showSelfBooking(){
+  document.getElementById('login-page').style.display='none';
+  var pg=document.getElementById('self-booking-page');
+  pg.style.display='flex';
+  pg.style.flexDirection='column';
+  pg.style.alignItems='center';
+  _sb={step:1,doctor:null,day:null,time:null,schedule:null,patient:null,visitType:null};
+  sbStep1();
+}
+
+function hideSelfBooking(){
+  document.getElementById('self-booking-page').style.display='none';
+  document.getElementById('login-page').style.display='flex';
+}
+
+function sbSetStep(n){
+  for(var i=1;i<=4;i++){
+    var el=document.getElementById('sb-step-'+i);
+    if(el) el.style.opacity=i<=n?'1':'0.3';
+  }
+}
+
+function sbStep1(){
+  sbSetStep(1);
+  var content=document.getElementById('sb-content');
+  content.innerHTML=
+    '<h3 style="font-size:16px;font-weight:700;color:#0D1117;margin-bottom:4px">Find a Doctor</h3>'+
+    '<p style="font-size:13px;color:#9CA3AF;margin-bottom:16px">Search by specialty or city</p>'+
+    '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+      '<input type="text" id="sb-search" placeholder="e.g. Generaliste, Algiers..." oninput="sbSearchDoctors(this.value)" style="flex:1;padding:11px 14px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:14px;outline:none"/>'+
+    '</div>'+
+    '<div id="sb-doctor-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading doctors...</div></div>';
+  // Load all doctors
+  sbLoadDoctors('');
+}
+
+function sbLoadDoctors(query){
+  if(!window.fbGetAccounts) return;
+  window.fbGetAccounts().then(function(accounts){
+    var doctors=accounts.filter(function(a){
+      if(a.role!=='doctor') return false;
+      if(!query) return true;
+      var q=query.toLowerCase();
+      return (a.name||'').toLowerCase().includes(q)||(a.specialty||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q)||(a.clinicName||'').toLowerCase().includes(q);
+    });
+    sbRenderDoctors(doctors);
+  });
+}
+
+function sbSearchDoctors(q){
+  sbLoadDoctors(q);
+}
+
+function sbRenderDoctors(doctors){
+  var list=document.getElementById('sb-doctor-list');
+  if(!list) return;
+  if(!doctors.length){
+    list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No doctors found.</div>';
+    return;
+  }
+  var html='';
+  doctors.forEach(function(d){
+    html+=
+      '<div data-un="'+d.username+'" onclick="sbSelectDoctor(this.getAttribute(\'data-un\'))" style="border:1.5px solid #E5E9EF;border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer">'+
+        '<div style="font-size:15px;font-weight:700;color:#0D1117;margin-bottom:3px">'+d.name+'</div>'+
+        '<div style="font-size:12px;color:#4B5563;margin-bottom:3px">'+( d.specialty||'General Practice')+'</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+
+          (d.city?'<span style="background:#F0F4F8;color:#4B5563;border-radius:6px;padding:2px 8px;font-size:11px">📍 '+d.city+'</span>':'')+
+          (d.clinicName?'<span style="background:#F0F4F8;color:#4B5563;border-radius:6px;padding:2px 8px;font-size:11px">🏥 '+d.clinicName+'</span>':'')+
+        '</div>'+
+      '</div>';
+  });
+  list.innerHTML=html;
+}
+
+function sbSelectDoctor(username){
+  // Find doctor
+  window.fbGetAccounts().then(function(accounts){
+    var doc=accounts.find(function(a){return a.username===username;});
+    if(!doc) return;
+    _sb.doctor=doc;
+    // Load doctor schedule
+    if(window.fbGetSchedule){
+      window.fbGetSchedule(username).then(function(sched){
+        _sb.schedule=sched;
+        sbStep2();
+      });
+    } else {
+      sbStep2();
+    }
+  });
+}
+
+function sbStep2(){
+  sbSetStep(2);
+  var content=document.getElementById('sb-content');
+  var d=_sb.doctor;
+  var sched=_sb.schedule;
+
+  if(!sched||!sched.days||!sched.days.length){
+    content.innerHTML=
+      '<div style="text-align:center;padding:30px">'+
+        '<div style="font-size:40px;margin-bottom:12px">📅</div>'+
+        '<div style="font-size:15px;font-weight:700;color:#0D1117;margin-bottom:6px">No schedule available</div>'+
+        '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">Dr. '+d.name+' has not set up their schedule yet.</div>'+
+        '<button onclick="sbStep1()" style="padding:10px 20px;background:#F0F4F8;border:1px solid #E5E9EF;border-radius:10px;font-size:13px;cursor:pointer;color:#4B5563">← Choose another doctor</button>'+
+      '</div>';
+    return;
+  }
+
+  var DAY_FULL={Sat:'Saturday',Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'};
+  var workingDays=sched.days.filter(function(d){return d.shift&&d.shift!=='off';});
+
+  var html=
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E5E9EF">'+
+      '<button onclick="sbStep1()" style="background:#F0F4F8;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:#4B5563">←</button>'+
+      '<div>'+
+        '<div style="font-size:15px;font-weight:700;color:#0D1117">'+d.name+'</div>'+
+        '<div style="font-size:12px;color:#9CA3AF">'+(d.specialty||'General Practice')+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:12px">Select a Day</h3>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+
+  workingDays.forEach(function(day){
+    var shift=day.shift==='am'?'Morning':day.shift==='pm'?'Evening':'Morning & Evening';
+    html+=
+      '<div data-day="'+day.day+'" onclick="sbSelectDay(this.getAttribute(\'data-day\'))" style="border:1.5px solid #E5E9EF;border-radius:12px;padding:14px;cursor:pointer;text-align:center">'+
+        '<div style="font-size:15px;font-weight:700;color:#0D1117">'+(DAY_FULL[day.day]||day.day)+'</div>'+
+        '<div style="font-size:11px;color:#9CA3AF;margin-top:3px">'+shift+'</div>'+
+      '</div>';
+  });
+  html+='</div>';
+  content.innerHTML=html;
+}
+
+function sbSelectDay(day){
+  _sb.day=day;
+  sbStep3();
+}
+
+function sbStep3(){
+  sbSetStep(3);
+  var content=document.getElementById('sb-content');
+  var d=_sb.doctor;
+  var sched=_sb.schedule;
+  var dayData=sched.days.find(function(x){return x.day===_sb.day;});
+  if(!dayData){content.innerHTML='<div style="color:#EF4444;padding:20px">Day not found.</div>';return;}
+
+  // Normalize
+  if(dayData.shift==='morning') dayData.shift='am';
+  if(dayData.shift==='evening') dayData.shift='pm';
+
+  // Load booked slots
+  window.fbGetAppointments(d.username,null).then(function(appts){
+    var booked={};
+    appts.forEach(function(a){
+      if(a.day===_sb.day&&a.status!=='cancelled') booked[a.time]=true;
+    });
+
+    function makeSlots(start,end,slotMin,bg,color){
+      var sp=start.split(':'),ep=end.split(':');
+      var sMin=parseInt(sp[0])*60+parseInt(sp[1]);
+      var eMin=parseInt(ep[0])*60+parseInt(ep[1]);
+      var html='';
+      for(var m=sMin;m<eMin;m+=slotMin){
+        var h=Math.floor(m/60),mn=m%60;
+        var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
+        if(booked[t]){
+          html+='<span style="display:inline-block;background:#F0F0F0;color:#C0C0C0;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;margin:3px;cursor:not-allowed;text-decoration:line-through">'+t+'</span>';
+        } else {
+          html+='<span data-t="'+t+'" onclick="sbSelectSlot(this.getAttribute(\'data-t\'))" style="display:inline-block;background:'+bg+';color:'+color+';border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;margin:3px;cursor:pointer;border:1.5px solid #E5E9EF">'+t+'</span>';
+        }
+      }
+      return html;
+    }
+
+    var DAY_FULL={Sat:'Saturday',Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'};
+    var html=
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E5E9EF">'+
+        '<button onclick="sbStep2()" style="background:#F0F4F8;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:#4B5563">←</button>'+
+        '<div>'+
+          '<div style="font-size:15px;font-weight:700;color:#0D1117">'+(DAY_FULL[_sb.day]||_sb.day)+'</div>'+
+          '<div style="font-size:12px;color:#9CA3AF">'+d.name+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:12px">Select a Time Slot</h3>';
+
+    if(dayData.shift==='am'||dayData.shift==='both'){
+      html+='<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Morning</div>'+makeSlots(dayData.amStart||'08:00',dayData.amEnd||'12:00',dayData.amSlot||15,'#FEF3C7','#D97706')+'</div>';
+    }
+    if(dayData.shift==='pm'||dayData.shift==='both'){
+      html+='<div><div style="font-size:11px;font-weight:700;color:#2563A8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Evening</div>'+makeSlots(dayData.pmStart||'16:00',dayData.pmEnd||'20:00',dayData.pmSlot||15,'#EEF2FF','#2563A8')+'</div>';
+    }
+
+    content.innerHTML=html;
+  }).catch(function(){
+    content.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">Could not load slots. Please try again.</div>';
+  });
+}
+
+function sbSelectSlot(time){
+  _sb.time=time;
+  sbStep4();
+}
+
+function sbStep4(){
+  sbSetStep(4);
+  var content=document.getElementById('sb-content');
+  content.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E5E9EF">'+
+      '<button onclick="sbStep3()" style="background:#F0F4F8;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:#4B5563">←</button>'+
+      '<div>'+
+        '<div style="font-size:15px;font-weight:700;color:#0D1117">Your Details</div>'+
+        '<div style="font-size:12px;color:#9CA3AF">'+(_sb.day||'')+' at '+(_sb.time||'')+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="margin-bottom:14px">'+
+      '<div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Phone Number</div>'+
+      '<div style="display:flex;gap:8px">'+
+        '<input type="tel" id="sb-phone" placeholder="Your phone number..." style="flex:1;padding:11px 14px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:14px;outline:none"/>'+
+        '<button onclick="sbSearchPhone()" style="padding:11px 16px;background:#0D1117;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>'+
+      '</div>'+
+    '</div>'+
+    '<div id="sb-phone-result"></div>'+
+    '<div id="sb-new-form" style="display:none"></div>'+
+    '<div id="sb-confirm-area" style="display:none">'+
+      '<div id="sb-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>'+
+      '<button onclick="sbConfirm()" id="sb-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Confirm Appointment</button>'+
+    '</div>';
+}
+
+function sbSearchPhone(){
+  var phone=document.getElementById('sb-phone').value.trim();
+  var result=document.getElementById('sb-phone-result');
+  var newForm=document.getElementById('sb-new-form');
+  var confirmArea=document.getElementById('sb-confirm-area');
+  if(!phone){result.innerHTML='<div style="color:#EF4444;font-size:13px">Please enter your phone number.</div>';return;}
+  result.innerHTML='<div style="font-size:13px;color:#9CA3AF">Searching...</div>';
+  newForm.style.display='none';
+  confirmArea.style.display='none';
+
+  if(window.fbGetPatientHistory){
+    window.fbGetPatientHistory(phone).then(function(visits){
+      if(visits&&visits.length){
+        visits.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;});
+        var p=visits[0];
+        _sb.patient={name:p.name,age:p.age,phone:phone,gender:p.gender||'',address:p.address||''};
+        _sb.visitType='follow_up';
+        result.innerHTML=
+          '<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:12px;padding:14px;margin-bottom:12px">'+
+            '<div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:4px">Patient found ✓</div>'+
+            '<div style="font-size:15px;font-weight:800;color:#065F46">'+p.name+'</div>'+
+            '<div style="font-size:12px;color:#4B5563;margin-top:2px">Age '+p.age+' · '+phone+'</div>'+
+          '</div>';
+        confirmArea.style.display='block';
+      } else {
+        _sb.patient=null;
+        _sb.visitType='new';
+        result.innerHTML=
+          '<div style="background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;font-weight:600;color:#D97706">'+
+            'New patient — please fill in your details below.'+
+          '</div>';
+        newForm.style.display='block';
+        newForm.innerHTML=
+          '<input type="text" id="sb-name" placeholder="Full name *" style="width:100%;padding:11px 14px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<div style="display:flex;gap:8px;margin-bottom:8px">'+
+            '<input type="number" id="sb-age" placeholder="Age *" style="width:80px;padding:11px 10px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:14px;outline:none"/>'+
+            '<div style="display:flex;gap:6px;align-items:center">'+
+              '<button id="sb-male" onclick="sbPickGender(\'male\')" style="padding:10px 16px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#4B5563">Male</button>'+
+              '<button id="sb-female" onclick="sbPickGender(\'female\')" style="padding:10px 16px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#4B5563">Female</button>'+
+            '</div>'+
+          '</div>'+
+          '<input type="text" id="sb-address" placeholder="Address *" style="width:100%;padding:11px 14px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>';
+        confirmArea.style.display='block';
+      }
+    });
+  }
+}
+
+var _sbGender='';
+function sbPickGender(g){
+  _sbGender=g;
+  ['male','female'].forEach(function(s){
+    var el=document.getElementById('sb-'+s);
+    if(!el) return;
+    if(s===g){el.style.background='#0D1117';el.style.color='#fff';el.style.borderColor='#0D1117';}
+    else{el.style.background='#fff';el.style.color='#4B5563';el.style.borderColor='#E5E9EF';}
+  });
+}
+
+function sbConfirm(){
+  var btn=document.getElementById('sb-confirm-btn');
+  var err=document.getElementById('sb-err');
+  var phone=document.getElementById('sb-phone').value.trim();
+  err.style.display='none';
+
+  if(_sb.visitType==='new'){
+    var name=document.getElementById('sb-name')?document.getElementById('sb-name').value.trim():'';
+    var age=document.getElementById('sb-age')?document.getElementById('sb-age').value.trim():'';
+    var address=document.getElementById('sb-address')?document.getElementById('sb-address').value.trim():'';
+    if(!name||!age||!address||!_sbGender||!phone){
+      err.textContent='Please fill in all fields.';err.style.display='block';return;
+    }
+    _sb.patient={name:name,age:parseInt(age),phone:phone,gender:_sbGender,address:address};
+  }
+
+  if(!_sb.patient){err.textContent='Please search your phone number first.';err.style.display='block';return;}
+
+  btn.textContent='Booking...';btn.disabled=true;
+
+  var apptData={
+    doctorId:_sb.doctor.username,
+    day:_sb.day,time:_sb.time,
+    date:new Date().toISOString().split('T')[0],
+    visitType:_sb.visitType,status:'scheduled',
+    patientName:_sb.patient.name,patientAge:_sb.patient.age,
+    patientPhone:_sb.patient.phone,patientGender:_sb.patient.gender,
+    patientAddress:_sb.patient.address||'',
+    createdBy:'self-booking',clinicId:'clinic_001'
+  };
+
+  var saveP=(_sb.visitType==='new'&&window.fbSave)
+    ?window.fbSave(Object.assign({},_sb.patient,{
+        visitType:'new',priority:'normal',doctor:_sb.doctor.username,
+        visitDate:new Date().toISOString().split('T')[0],
+        status:'scheduled',clinicId:'clinic_001'
+      }))
+    :Promise.resolve(null);
+
+  saveP.then(function(){
+    return window.fbSaveAppointment?window.fbSaveAppointment(apptData):Promise.resolve('ok');
+  }).then(function(id){
+    if(id){
+      // Send WhatsApp
+      if(window.sendWhatsApp&&_sb.patient.phone){
+        var dr=_sb.doctor.name.startsWith('Dr.')?_sb.doctor.name:'Dr. '+_sb.doctor.name;
+        notifyAppointmentBooked(_sb.patient.phone,_sb.patient.name,_sb.day,_sb.time,dr);
+      }
+      // Show success
+      document.getElementById('sb-content').innerHTML=
+        '<div style="text-align:center;padding:30px 20px">'+
+          '<div style="font-size:52px;margin-bottom:16px">🎉</div>'+
+          '<div style="font-size:18px;font-weight:800;color:#0D1117;margin-bottom:6px">Appointment Confirmed!</div>'+
+          '<div style="font-size:13px;color:#4B5563;margin-bottom:16px">'+_sb.patient.name+' — '+_sb.day+' at '+_sb.time+'</div>'+
+          '<div style="background:#ECFDF5;border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:#059669;font-weight:600">A confirmation has been sent to your WhatsApp</div>'+
+          '<button onclick="hideSelfBooking()" style="padding:12px 28px;background:#0D1117;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Done</button>'+
+        '</div>';
+    } else {
+      btn.textContent='Confirm Appointment';btn.disabled=false;
+      err.textContent='Could not save. Please try again.';err.style.display='block';
+    }
+  }).catch(function(e){
+    btn.textContent='Confirm Appointment';btn.disabled=false;
+    err.textContent='Error: '+e.message;err.style.display='block';
+  });
+}
 
 function doLogout(){
   dismissNotif();
