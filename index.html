@@ -1552,16 +1552,49 @@ function loadPage(page){
   if(u.role==='superadmin'){
     mc.innerHTML=banner+
       '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">🏥</div><div><div class="stat-val">5</div><div class="stat-lbl">Total Clinics</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">👨‍⚕️</div><div><div class="stat-val">23</div><div class="stat-lbl">Total Doctors</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">1,204</div><div class="stat-lbl">Total Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📋</div><div><div class="stat-val">87</div><div class="stat-lbl">Today Visits</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="sa-doctors">—</div><div class="stat-lbl">Total Doctors</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="sa-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="sa-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="sa-appts">—</div><div class="stat-lbl">Total Appointments</div></div></div>'+
       '</div>'+
-      '<div class="table-card"><h3>🏥 All Clinics</h3>'+
-        '<div class="table-row"><div><div class="row-name">Clinique Bou Saada</div><div class="row-sub">M\'Sila</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">Active</span></div>'+
-        '<div class="table-row"><div><div class="row-name">Clinique El Amal</div><div class="row-sub">M\'Sila</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">Active</span></div>'+
-        '<div class="table-row"><div><div class="row-name">Clinique Sidi Aissa</div><div class="row-sub">M\'Sila</div></div><span class="status-pill" style="color:#1B6B4A;background:#E8F5EF">Active</span></div>'+
+      '<div class="table-card" style="margin-top:16px">'+
+        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Staff Overview</h3>'+
+        '<div id="sa-staff-overview"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
       '</div>';
+
+    if(window.fbGetAccounts){
+      window.fbGetAccounts().then(function(accounts){
+        var doctors=accounts.filter(function(a){return a.role==='doctor';});
+        var receps=accounts.filter(function(a){return a.role==='receptionist';});
+        var dEl=document.getElementById('sa-doctors');
+        var rEl=document.getElementById('sa-receps');
+        if(dEl) dEl.textContent=doctors.length;
+        if(rEl) rEl.textContent=receps.length;
+        var overview=document.getElementById('sa-staff-overview');
+        if(overview){
+          if(!doctors.length){
+            overview.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:16px">No doctors added yet. Go to Manage to add staff.</div>';
+          } else {
+            var html='';
+            doctors.forEach(function(doc){
+              var linked=receps.filter(function(r){return r.doctorId===doc.username;});
+              html+='<div class="table-row">'+
+                '<div><div class="row-name">'+doc.name+'</div>'+
+                '<div class="row-sub">'+(doc.specialty||'General Practice')+' · '+(doc.clinicName||'')+'</div></div>'+
+                '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+linked.length+' recep.</span>'+
+              '</div>';
+            });
+            overview.innerHTML=html;
+          }
+        }
+      });
+    }
+    if(window.fbGetPatients){
+      window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
+        var el=document.getElementById('sa-patients');
+        if(el) el.textContent=pts.length;
+      }).catch(function(){});
+    }
     return;
   }
   if(u.role==='clinicadmin'){
