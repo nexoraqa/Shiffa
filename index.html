@@ -1145,6 +1145,32 @@ function showLoginChoice(){
   document.getElementById('error-box').style.display='none';
 }
 
+function saRenderPts(pts){
+  var list=document.getElementById('sa-pt-list');
+  if(!list) return;
+  if(!pts.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No patients registered today.</div>';return;}
+  var html='<table style="width:100%;border-collapse:collapse">';
+  html+='<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Phone</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Type</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Doctor</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Status</th></tr></thead><tbody>';
+  pts.forEach(function(p){
+    html+='<tr style="border-bottom:1px solid var(--border)">'+
+      '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+p.name+'</td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.phone||'-')+'</td>'+
+      '<td style="padding:10px 12px"><span style="background:'+(p.visitType==='new'?'#ECFDF5':'#EEF2FF')+';color:'+(p.visitType==='new'?'#059669':'#2563A8')+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+(p.visitType==='new'?'New':'Follow-up')+'</span></td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.doctor||'-')+'</td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.status||'-')+'</td>'+
+    '</tr>';
+  });
+  html+='</tbody></table>';
+  list.innerHTML=html;
+}
+
+function saFilterPts(q){
+  var filtered=(window._saPts||[]).filter(function(p){
+    return !q||(p.name+' '+(p.phone||'')).toLowerCase().includes(q.toLowerCase());
+  });
+  saRenderPts(filtered);
+}
+
 function doLogout(){
   dismissNotif();
   currentUser=null;
@@ -1640,6 +1666,27 @@ function loadPage(page){
         if(el) el.textContent=pts.length;
       }).catch(function(){});
     }
+
+    // Count all appointments using Firebase directly
+    if(window.fbGetAppointments){
+      // Get all doctors then load their appointments
+      window.fbGetAccounts().then(function(accounts){
+        var doctors=accounts.filter(function(a){return a.role==='doctor';});
+        if(!doctors.length){
+          var el=document.getElementById('sa-appts');
+          if(el) el.textContent='0';
+          return;
+        }
+        var promises=doctors.map(function(d){
+          return window.fbGetAppointments(d.username,null).catch(function(){return [];});
+        });
+        Promise.all(promises).then(function(results){
+          var total=results.reduce(function(sum,arr){return sum+(arr?arr.length:0);},0);
+          var el=document.getElementById('sa-appts');
+          if(el) el.textContent=total;
+        });
+      }).catch(function(){});
+    }
     return;
   }
   if(u.role==='clinicadmin'){
@@ -1956,6 +2003,90 @@ function loadPage(page){
   }
 
   // PATIENTS PAGE
+  // ── SUPERADMIN PATIENTS PAGE ──
+  if(page==='patients' && u.role==='superadmin'){
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">All Patients</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Patients registered today across all clinics</p>'+
+      '<div class="table-card">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px">'+
+          '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap">Today</h3>'+
+          '<input type="text" id="sa-pt-search" onkeyup="saFilterPts(this.value)" placeholder="Search by name or phone..." style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/>'+
+        '</div>'+
+        '<div id="sa-pt-list"><div style="text-align:center;padding:20px;color:#9CA3AF">Loading...</div></div>'+
+      '</div>';
+    window._saPts=[];
+    if(window.fbGetPatients){
+      window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
+        window._saPts=pts;
+        saRenderPts(pts);
+      });
+    }
+    return;
+  }
+
+  // ── SUPERADMIN REPORTS PAGE ──
+  if(page==='reports' && u.role==='superadmin'){
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">Reports</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Overview of clinic activity</p>'+
+      '<div class="stats-grid" id="rep-stats">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="rep-today">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🆕</div><div><div class="stat-val" id="rep-new">—</div><div class="stat-lbl">New Patients</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">🔄</div><div><div class="stat-val" id="rep-followup">—</div><div class="stat-lbl">Follow-ups</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">✅</div><div><div class="stat-val" id="rep-done">—</div><div class="stat-lbl">Completed</div></div></div>'+
+      '</div>'+
+      '<div class="table-card" style="margin-top:16px">'+
+        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Appointments Today</h3>'+
+        '<div id="rep-appts"><div style="text-align:center;padding:20px;color:#9CA3AF">Loading...</div></div>'+
+      '</div>';
+
+    if(window.fbGetPatients){
+      window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
+        var newP=pts.filter(function(p){return p.visitType==='new';}).length;
+        var fu=pts.filter(function(p){return p.visitType==='follow_up';}).length;
+        var done=pts.filter(function(p){return p.status==='done';}).length;
+        var t1=document.getElementById('rep-today'); if(t1) t1.textContent=pts.length;
+        var t2=document.getElementById('rep-new'); if(t2) t2.textContent=newP;
+        var t3=document.getElementById('rep-followup'); if(t3) t3.textContent=fu;
+        var t4=document.getElementById('rep-done'); if(t4) t4.textContent=done;
+      });
+    }
+
+    // Load today's appointments
+    var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var todayName=dayNames[new Date().getDay()];
+    if(window.fbGetAccounts&&window.fbGetAppointments){
+      window.fbGetAccounts().then(function(accounts){
+        var doctors=accounts.filter(function(a){return a.role==='doctor';});
+        var promises=doctors.map(function(d){
+          return window.fbGetAppointments(d.username,null).then(function(appts){
+            return {doctor:d,appts:appts.filter(function(a){return a.day===todayName;})};
+          }).catch(function(){return {doctor:d,appts:[]};});
+        });
+        Promise.all(promises).then(function(results){
+          var repAppts=document.getElementById('rep-appts');
+          if(!repAppts) return;
+          var hasAny=results.some(function(r){return r.appts.length>0;});
+          if(!hasAny){repAppts.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No appointments today.</div>';return;}
+          var html='';
+          results.forEach(function(r){
+            if(!r.appts.length) return;
+            r.appts.forEach(function(a){
+              html+='<div class="table-row">'+
+                '<div><div class="row-name">'+a.patientName+'</div>'+
+                '<div class="row-sub">'+r.doctor.name+' · '+a.time+'</div></div>'+
+                '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+a.status+'</span>'+
+              '</div>';
+            });
+          });
+          repAppts.innerHTML=html;
+        });
+      });
+    }
+    return;
+  }
+
   if(page==='patients' && u.role==='doctor'){
     mc.innerHTML=
       '<h2 style="color:#0F1F17;margin-bottom:16px">👥 My Patients</h2>'+
