@@ -573,6 +573,41 @@ function addDoctor(){
   });
 }
 
+function addClinicAdmin(){
+  var name=document.getElementById('add-ca-name').value.trim();
+  var clinic=document.getElementById('add-ca-clinic').value.trim();
+  var city=document.getElementById('add-ca-city').value.trim();
+  var username=document.getElementById('add-ca-user').value.trim().toLowerCase();
+  var password=document.getElementById('add-ca-pass').value;
+  var err=document.getElementById('add-ca-err');
+  if(!name||!clinic||!username||!password){err.textContent='Please fill all required fields.';err.style.display='block';return;}
+  err.style.display='none';
+  var data={
+    role:'clinicadmin',name:name,clinicName:clinic,cabinetName:clinic,
+    city:city||'',username:username,password:password,
+    avatar:'🏥',clinicId:'clinic_001'
+  };
+  if(!window.fbSaveAccount){err.textContent='Firebase not ready. Try again.';err.style.display='block';return;}
+  var btn=document.querySelector('[onclick="addClinicAdmin()"]');
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+  window.fbSaveAccount(data).then(function(id){
+    if(btn){btn.textContent='Add Clinic Admin';btn.disabled=false;}
+    if(id){
+      ['add-ca-name','add-ca-clinic','add-ca-city','add-ca-user','add-ca-pass'].forEach(function(fid){
+        var el=document.getElementById(fid);if(el)el.value='';
+      });
+      err.textContent='Clinic Admin added successfully!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
+      loadStaffList();
+    } else {
+      err.textContent='Could not save. Please try again.';err.style.display='block';
+    }
+  }).catch(function(e){
+    if(btn){btn.textContent='Add Clinic Admin';btn.disabled=false;}
+    err.textContent='Error: '+e.message;err.style.display='block';
+  });
+}
+
 function addReceptionist(){
   var name=document.getElementById('add-rec-name').value.trim();
   var docId=document.getElementById('add-rec-docid').value.trim().toLowerCase();
@@ -636,8 +671,8 @@ function renderStaffTable(accounts){
   html+='<th style="padding:8px 12px"></th>';
   html+='</tr></thead><tbody>';
   accounts.forEach(function(a){
-    var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
-    var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
+    var roleColor=a.role==='doctor'?'#2563A8':a.role==='clinicadmin'?'#7C3AED':'#E65100';
+    var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='clinicadmin'?'#F5F3FF':'#FEF3C7';
     html+='<tr style="border-bottom:1px solid var(--border)">';
     html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
     html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
@@ -1469,8 +1504,8 @@ function loadPage(page){
   // ── MANAGE PAGE (Super Admin) ──
   if(page==='manage' && u.role==='superadmin'){
     mc.innerHTML='<h2 style="margin-bottom:6px">Manage Staff</h2>'+
-      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Add doctors and receptionists</p>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Add doctors, receptionists and clinic admins</p>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px">'+
         '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
           '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Doctor</h3>'+
           '<input type="text" id="add-doc-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
@@ -1491,6 +1526,16 @@ function loadPage(page){
           '<input type="password" id="add-rec-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="add-rec-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
           '<button onclick="addReceptionist()" style="width:100%;padding:12px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Receptionist</button>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
+          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Clinic Admin</h3>'+
+          '<input type="text" id="add-ca-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-ca-clinic" placeholder="Clinic name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-ca-city" placeholder="City" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-ca-user" placeholder="Username (e.g. admin.clinic1)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="add-ca-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="add-ca-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
+          '<button onclick="addClinicAdmin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#7C3AED,#9F6EFF);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Clinic Admin</button>'+
         '</div>'+
       '</div>'+
       '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
