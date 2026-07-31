@@ -1145,6 +1145,25 @@ function showLoginChoice(){
   document.getElementById('error-box').style.display='none';
 }
 
+function saSearchPts(){
+  var q=document.getElementById('sa-pt-search').value.trim();
+  var list=document.getElementById('sa-pt-list');
+  if(!q){list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Enter a name or phone number and click Search</div>';return;}
+  list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Searching...</div>';
+  // Search today and past dates by loading patients collection
+  if(window.fbGetPatients){
+    // Load today
+    var today=new Date().toISOString().split('T')[0];
+    window.fbGetPatients(today).then(function(pts){
+      var filtered=pts.filter(function(p){
+        return (p.name||'').toLowerCase().includes(q.toLowerCase())||(p.phone||'').includes(q);
+      });
+      window._saPts=filtered;
+      saRenderPts(filtered);
+    });
+  }
+}
+
 function saRenderPts(pts){
   var list=document.getElementById('sa-pt-list');
   if(!list) return;
@@ -2007,21 +2026,15 @@ function loadPage(page){
   if(page==='patients' && u.role==='superadmin'){
     mc.innerHTML=
       '<h2 style="margin-bottom:6px">All Patients</h2>'+
-      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Patients registered today across all clinics</p>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Search patients by name or phone number</p>'+
       '<div class="table-card">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px">'+
-          '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap">Today</h3>'+
-          '<input type="text" id="sa-pt-search" onkeyup="saFilterPts(this.value)" placeholder="Search by name or phone..." style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/>'+
+        '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+          '<input type="text" id="sa-pt-search" placeholder="Name or phone number..." style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none"/>'+
+          '<button onclick="saSearchPts()" style="padding:10px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Search</button>'+
         '</div>'+
-        '<div id="sa-pt-list"><div style="text-align:center;padding:20px;color:#9CA3AF">Loading...</div></div>'+
+        '<div id="sa-pt-list"><div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Enter a name or phone number and click Search</div></div>'+
       '</div>';
     window._saPts=[];
-    if(window.fbGetPatients){
-      window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
-        window._saPts=pts;
-        saRenderPts(pts);
-      });
-    }
     return;
   }
 
