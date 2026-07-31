@@ -1145,6 +1145,46 @@ function showLoginChoice(){
   document.getElementById('error-box').style.display='none';
 }
 
+function caSearchPts(){
+  var q=document.getElementById('ca-pt-search').value.trim();
+  var list=document.getElementById('ca-pt-list');
+  if(!q){list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Enter a name or phone number and click Search</div>';return;}
+  list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Searching...</div>';
+  var clinicName=currentUser.clinicName||currentUser.cabinetName||'';
+  if(!window.fbGetAllPatients||!window.fbGetAccounts){list.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">Firebase not ready.</div>';return;}
+  // Get clinic doctors first to filter patients
+  window.fbGetAccounts().then(function(accounts){
+    var docIds=accounts.filter(function(a){
+      return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);
+    }).map(function(d){return d.username;});
+    window.fbGetAllPatients().then(function(all){
+      var filtered=all.filter(function(p){
+        var matchQuery=(p.name||'').toLowerCase().includes(q.toLowerCase())||(p.phone||'').includes(q);
+        var matchClinic=!docIds.length||docIds.indexOf(p.doctor)>-1;
+        return matchQuery&&matchClinic;
+      });
+      // Render results
+      if(!filtered.length){
+        list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">No patients found.</div>';
+        return;
+      }
+      var html='<table style="width:100%;border-collapse:collapse">';
+      html+='<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Phone</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Type</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Doctor</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Date</th></tr></thead><tbody>';
+      filtered.forEach(function(p){
+        html+='<tr style="border-bottom:1px solid var(--border)">'+
+          '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+p.name+'</td>'+
+          '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.phone||'-')+'</td>'+
+          '<td style="padding:10px 12px"><span style="background:'+(p.visitType==='new'?'#ECFDF5':'#EEF2FF')+';color:'+(p.visitType==='new'?'#059669':'#2563A8')+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+(p.visitType==='new'?'New':'Follow-up')+'</span></td>'+
+          '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.doctor||'-')+'</td>'+
+          '<td style="padding:10px 12px;font-size:13px;color:#9CA3AF">'+(p.visitDate||'-')+'</td>'+
+        '</tr>';
+      });
+      html+='</tbody></table>';
+      list.innerHTML=html;
+    });
+  });
+}
+
 function saSearchPts(){
   var q=document.getElementById('sa-pt-search').value.trim();
   var list=document.getElementById('sa-pt-list');
@@ -1704,21 +1744,152 @@ function loadPage(page){
     }
     return;
   }
-  if(u.role==='clinicadmin'){
+  if(u.role==='clinicadmin'&&(page==='dashboard'||page==='overview')){
+    var clinicName=u.clinicName||u.cabinetName||'My Clinic';
     mc.innerHTML=banner+
       '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val">8</div><div class="stat-lbl">My Doctors</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val">34</div><div class="stat-lbl">Today Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1565C020">🆕</div><div><div class="stat-val">12</div><div class="stat-lbl">New Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">🔄</div><div><div class="stat-val">22</div><div class="stat-lbl">Follow-ups</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="ca-doctors">—</div><div class="stat-lbl">My Doctors</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="ca-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="ca-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="ca-appts">—</div><div class="stat-lbl">Appointments</div></div></div>'+
       '</div>'+
-      '<div class="table-card"><h3>👨‍⚕️ Doctors</h3>'+
-        '<div class="table-row"><div><div class="row-name">Dr. Abdelmadjid Belouadah</div><div class="row-sub">General Practice</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">12 today</span></div>'+
-        '<div class="table-row"><div><div class="row-name">Dr. Omar Slimani</div><div class="row-sub">Pediatrics</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">9 today</span></div>'+
-        '<div class="table-row"><div><div class="row-name">Dr. Hariti Amar</div><div class="row-sub">Ophthalmology</div></div><span class="status-pill" style="color:#F0A500;background:#FFF8E7">5 today</span></div>'+
+      '<div class="table-card" style="margin-top:16px">'+
+        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Doctors in '+clinicName+'</h3>'+
+        '<div id="ca-doctors-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
+      '</div>';
+
+    // Load real data filtered by clinic
+    if(window.fbGetAccounts){
+      window.fbGetAccounts().then(function(accounts){
+        var myDoctors=accounts.filter(function(a){return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);});
+        var myReceps=accounts.filter(function(a){return a.role==='receptionist'&&(a.clinicName===clinicName||a.cabinetName===clinicName);});
+        var dEl=document.getElementById('ca-doctors'); if(dEl) dEl.textContent=myDoctors.length;
+        var rEl=document.getElementById('ca-receps'); if(rEl) rEl.textContent=myReceps.length;
+
+        var list=document.getElementById('ca-doctors-list');
+        if(list){
+          if(!myDoctors.length){
+            list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No doctors in this clinic yet.</div>';
+          } else {
+            var html='';
+            myDoctors.forEach(function(doc){
+              var linked=myReceps.filter(function(r){return r.doctorId===doc.username;});
+              html+='<div class="table-row">'+
+                '<div><div class="row-name">'+doc.name+'</div>'+
+                '<div class="row-sub">'+(doc.specialty||'General Practice')+'</div></div>'+
+                '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+linked.length+' recep.</span>'+
+              '</div>';
+            });
+            list.innerHTML=html;
+          }
+        }
+
+        // Load today patients for this clinic's doctors
+        var docIds=myDoctors.map(function(d){return d.username;});
+        if(docIds.length&&window.fbGetPatients){
+          window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
+            var myPts=pts.filter(function(p){return docIds.indexOf(p.doctor)>-1;});
+            var pEl=document.getElementById('ca-patients'); if(pEl) pEl.textContent=myPts.length;
+          });
+        } else {
+          var pEl=document.getElementById('ca-patients'); if(pEl) pEl.textContent='0';
+        }
+
+        // Count appointments for this clinic
+        if(docIds.length&&window.fbGetAppointments){
+          var promises=docIds.map(function(id){return window.fbGetAppointments(id,null).catch(function(){return[];});});
+          Promise.all(promises).then(function(results){
+            var total=results.reduce(function(sum,arr){return sum+(arr?arr.length:0);},0);
+            var aEl=document.getElementById('ca-appts'); if(aEl) aEl.textContent=total;
+          });
+        } else {
+          var aEl=document.getElementById('ca-appts'); if(aEl) aEl.textContent='0';
+        }
+      });
+    }
+    return;
+  }
+
+  if(page==='doctors' && u.role==='clinicadmin'){
+    var clinicName=u.clinicName||u.cabinetName||'My Clinic';
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">My Doctors</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Doctors and receptionists in '+clinicName+'</p>'+
+      '<div class="table-card">'+
+        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Staff</h3>'+
+        '<div id="ca-staff-list"><div style="text-align:center;padding:20px;color:#9CA3AF">Loading...</div></div>'+
+      '</div>';
+    if(window.fbGetAccounts){
+      window.fbGetAccounts().then(function(accounts){
+        var myStaff=accounts.filter(function(a){
+          return (a.role==='doctor'||a.role==='receptionist')&&(a.clinicName===clinicName||a.cabinetName===clinicName);
+        });
+        var list=document.getElementById('ca-staff-list');
+        if(!list) return;
+        if(!myStaff.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No staff in this clinic yet.</div>';return;}
+        var html='<table style="width:100%;border-collapse:collapse">';
+        html+='<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Role</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Username</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Linked To</th></tr></thead><tbody>';
+        myStaff.forEach(function(a){
+          var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
+          var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
+          html+='<tr style="border-bottom:1px solid var(--border)">'+
+            '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>'+
+            '<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>'+
+            '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>'+
+            '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.role==='receptionist'?'Dr. '+(a.doctorId||'-'):'-')+'</td>'+
+          '</tr>';
+        });
+        html+='</tbody></table>';
+        list.innerHTML=html;
+      });
+    }
+    return;
+  }
+
+  if(page==='patients' && u.role==='clinicadmin'){
+    var clinicName=u.clinicName||u.cabinetName||'My Clinic';
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">Patients</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Search patients in '+clinicName+'</p>'+
+      '<div class="table-card">'+
+        '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+          '<input type="text" id="ca-pt-search" placeholder="Name or phone number..." style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none"/>'+
+          '<button onclick="caSearchPts()" style="padding:10px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Search</button>'+
+        '</div>'+
+        '<div id="ca-pt-list"><div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Enter a name or phone number and click Search</div></div>'+
       '</div>';
     return;
   }
+
+  if(page==='reports' && u.role==='clinicadmin'){
+    var clinicName=u.clinicName||u.cabinetName||'My Clinic';
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">Reports</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Activity in '+clinicName+' today</p>'+
+      '<div class="stats-grid" id="ca-rep-stats">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="ca-rep-total">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🆕</div><div><div class="stat-val" id="ca-rep-new">—</div><div class="stat-lbl">New Patients</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">🔄</div><div><div class="stat-val" id="ca-rep-fu">—</div><div class="stat-lbl">Follow-ups</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">✅</div><div><div class="stat-val" id="ca-rep-done">—</div><div class="stat-lbl">Completed</div></div></div>'+
+      '</div>';
+
+    // Load clinic doctors then filter patients
+    if(window.fbGetAccounts&&window.fbGetPatients){
+      window.fbGetAccounts().then(function(accounts){
+        var myDoctors=accounts.filter(function(a){return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);});
+        var docIds=myDoctors.map(function(d){return d.username;});
+        window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
+          var myPts=pts.filter(function(p){return docIds.indexOf(p.doctor)>-1;});
+          var t=document.getElementById('ca-rep-total'); if(t) t.textContent=myPts.length;
+          var n=document.getElementById('ca-rep-new'); if(n) n.textContent=myPts.filter(function(p){return p.visitType==='new';}).length;
+          var f=document.getElementById('ca-rep-fu'); if(f) f.textContent=myPts.filter(function(p){return p.visitType==='follow_up';}).length;
+          var d=document.getElementById('ca-rep-done'); if(d) d.textContent=myPts.filter(function(p){return p.status==='done';}).length;
+        });
+      });
+    }
+    return;
+  }
+
   if(u.role==='doctor' && page==='dashboard'){
     var now = new Date();
     var todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
