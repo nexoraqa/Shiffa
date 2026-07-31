@@ -1150,18 +1150,14 @@ function saSearchPts(){
   var list=document.getElementById('sa-pt-list');
   if(!q){list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Enter a name or phone number and click Search</div>';return;}
   list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Searching...</div>';
-  // Search today and past dates by loading patients collection
-  if(window.fbGetPatients){
-    // Load today
-    var today=new Date().toISOString().split('T')[0];
-    window.fbGetPatients(today).then(function(pts){
-      var filtered=pts.filter(function(p){
-        return (p.name||'').toLowerCase().includes(q.toLowerCase())||(p.phone||'').includes(q);
-      });
-      window._saPts=filtered;
-      saRenderPts(filtered);
+  if(!window.fbGetAllPatients){list.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">Firebase not ready.</div>';return;}
+  window.fbGetAllPatients().then(function(all){
+    var filtered=all.filter(function(p){
+      return (p.name||'').toLowerCase().includes(q.toLowerCase())||(p.phone||'').includes(q);
     });
-  }
+    window._saPts=filtered;
+    saRenderPts(filtered);
+  });
 }
 
 function saRenderPts(pts){
@@ -4206,6 +4202,11 @@ try{
   const db=getFirestore(app);
 
   window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
+  window.fbGetAllPatients=function(){
+    return getDocs(collection(db,'patients'))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(e){console.error(e);return[];});
+  };
   window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
 
