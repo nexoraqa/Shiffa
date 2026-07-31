@@ -1620,7 +1620,7 @@ function loadPage(page){
   }
 
   // OVERVIEW PAGES
-  if(u.role==='superadmin'){
+  if(u.role==='superadmin'&&(page==='dashboard'||page==='overview')){
     mc.innerHTML=banner+
       '<div class="stats-grid">'+
         '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="sa-doctors">—</div><div class="stat-lbl">Total Doctors</div></div></div>'+
