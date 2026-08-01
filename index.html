@@ -1242,8 +1242,13 @@ function closeInfoPopup(){
 
 function showDoctorsPopup(){
   if(!window.fbGetAccounts) return;
+  var myClinic=currentUser&&currentUser.role==='clinicadmin'?(currentUser.clinicName||currentUser.cabinetName||''):null;
   window.fbGetAccounts().then(function(accounts){
-    var doctors=accounts.filter(function(a){return a.role==='doctor';});
+    var doctors=accounts.filter(function(a){
+      if(a.role!=='doctor') return false;
+      if(myClinic) return a.clinicName===myClinic||a.cabinetName===myClinic;
+      return true;
+    });
     var receps=accounts.filter(function(a){return a.role==='receptionist';});
     if(!doctors.length){showInfoPopup('Doctors','<div style="text-align:center;padding:20px;color:#9CA3AF">No doctors added yet.</div>');return;}
     var html='';
@@ -1261,8 +1266,13 @@ function showDoctorsPopup(){
 
 function showRecepsPopup(){
   if(!window.fbGetAccounts) return;
+  var myClinic=currentUser&&currentUser.role==='clinicadmin'?(currentUser.clinicName||currentUser.cabinetName||''):null;
   window.fbGetAccounts().then(function(accounts){
-    var receps=accounts.filter(function(a){return a.role==='receptionist';});
+    var receps=accounts.filter(function(a){
+      if(a.role!=='receptionist') return false;
+      if(myClinic) return a.clinicName===myClinic||a.cabinetName===myClinic;
+      return true;
+    });
     if(!receps.length){showInfoPopup('Receptionists','<div style="text-align:center;padding:20px;color:#9CA3AF">No receptionists added yet.</div>');return;}
     var html='';
     receps.forEach(function(r){
@@ -1296,7 +1306,14 @@ function showPatientsPopup(doctorIds){
 
 function showApptsPopup(doctorIds){
   if(!window.fbGetAccounts||!window.fbGetAppointments) return;
-  var promise=doctorIds?Promise.resolve(doctorIds):window.fbGetAccounts().then(function(acc){return acc.filter(function(a){return a.role==='doctor';}).map(function(d){return d.username;});});
+  var myClinic=currentUser&&currentUser.role==='clinicadmin'?(currentUser.clinicName||currentUser.cabinetName||''):null;
+  var promise=doctorIds?Promise.resolve(doctorIds):window.fbGetAccounts().then(function(acc){
+    return acc.filter(function(a){
+      if(a.role!=='doctor') return false;
+      if(myClinic) return a.clinicName===myClinic||a.cabinetName===myClinic;
+      return true;
+    }).map(function(d){return d.username;});
+  });
   promise.then(function(ids){
     var promises=ids.map(function(id){return window.fbGetAppointments(id,null).catch(function(){return[];});});
     Promise.all(promises).then(function(results){
@@ -1837,6 +1854,7 @@ function loadPage(page){
       '<div class="stats-grid">'+
         '<div class="stat-card" onclick="showDoctorsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="sa-doctors">—</div><div class="stat-lbl">Total Doctors</div></div></div>'+
         '<div class="stat-card" onclick="showRecepsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="sa-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
+        '<div class="stat-card" onclick="showAdminsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#7C3AED20">🏥</div><div><div class="stat-val" id="sa-admins">—</div><div class="stat-lbl">Clinic Admins</div></div></div>'+
         '<div class="stat-card" onclick="showPatientsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="sa-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
         '<div class="stat-card" onclick="showApptsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="sa-appts">—</div><div class="stat-lbl">Total Appointments</div></div></div>'+
       '</div>'+
@@ -1849,10 +1867,13 @@ function loadPage(page){
       window.fbGetAccounts().then(function(accounts){
         var doctors=accounts.filter(function(a){return a.role==='doctor';});
         var receps=accounts.filter(function(a){return a.role==='receptionist';});
+        var admins=accounts.filter(function(a){return a.role==='clinicadmin';});
         var dEl=document.getElementById('sa-doctors');
         var rEl=document.getElementById('sa-receps');
+        var aEl2=document.getElementById('sa-admins');
         if(dEl) dEl.textContent=doctors.length;
         if(rEl) rEl.textContent=receps.length;
+        if(aEl2) aEl2.textContent=admins.length;
         var overview=document.getElementById('sa-staff-overview');
         if(overview){
           var html='';
