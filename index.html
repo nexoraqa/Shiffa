@@ -1226,6 +1226,136 @@ function saFilterPts(q){
   saRenderPts(filtered);
 }
 
+// ── Info Popup ──
+function showInfoPopup(title, html){
+  var popup=document.getElementById('info-popup');
+  if(!popup) return;
+  document.getElementById('info-popup-title').textContent=title;
+  document.getElementById('info-popup-body').innerHTML=html;
+  popup.style.display='flex';
+}
+
+function closeInfoPopup(){
+  var popup=document.getElementById('info-popup');
+  if(popup) popup.style.display='none';
+}
+
+function showDoctorsPopup(){
+  if(!window.fbGetAccounts) return;
+  window.fbGetAccounts().then(function(accounts){
+    var doctors=accounts.filter(function(a){return a.role==='doctor';});
+    var receps=accounts.filter(function(a){return a.role==='receptionist';});
+    if(!doctors.length){showInfoPopup('Doctors','<div style="text-align:center;padding:20px;color:#9CA3AF">No doctors added yet.</div>');return;}
+    var html='';
+    doctors.forEach(function(d){
+      var linked=receps.filter(function(r){return r.doctorId===d.username;});
+      html+='<div style="padding:12px 0;border-bottom:1px solid #E5E9EF;display:flex;align-items:center;justify-content:space-between">'+
+        '<div><div style="font-weight:700;font-size:14px;color:#0D1117">'+d.name+'</div>'+
+        '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+(d.specialty||'General Practice')+' · '+(d.clinicName||'')+'</div></div>'+
+        '<span style="background:#EEF2FF;color:#2563A8;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+linked.length+' recep.</span>'+
+      '</div>';
+    });
+    showInfoPopup('Doctors ('+doctors.length+')', html);
+  });
+}
+
+function showRecepsPopup(){
+  if(!window.fbGetAccounts) return;
+  window.fbGetAccounts().then(function(accounts){
+    var receps=accounts.filter(function(a){return a.role==='receptionist';});
+    if(!receps.length){showInfoPopup('Receptionists','<div style="text-align:center;padding:20px;color:#9CA3AF">No receptionists added yet.</div>');return;}
+    var html='';
+    receps.forEach(function(r){
+      html+='<div style="padding:12px 0;border-bottom:1px solid #E5E9EF;display:flex;align-items:center;justify-content:space-between">'+
+        '<div><div style="font-weight:700;font-size:14px;color:#0D1117">'+r.name+'</div>'+
+        '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+(r.clinicName||'')+'</div></div>'+
+        '<span style="background:#FEF3C7;color:#E65100;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">Dr. '+(r.doctorId||'Unlinked')+'</span>'+
+      '</div>';
+    });
+    showInfoPopup('Receptionists ('+receps.length+')', html);
+  });
+}
+
+function showPatientsPopup(doctorIds){
+  if(!window.fbGetPatients) return;
+  var today=new Date().toISOString().split('T')[0];
+  window.fbGetPatients(today).then(function(pts){
+    if(doctorIds&&doctorIds.length) pts=pts.filter(function(p){return doctorIds.indexOf(p.doctor)>-1;});
+    if(!pts.length){showInfoPopup('Patients Today','<div style="text-align:center;padding:20px;color:#9CA3AF">No patients today.</div>');return;}
+    var html='';
+    pts.forEach(function(p){
+      html+='<div style="padding:12px 0;border-bottom:1px solid #E5E9EF;display:flex;align-items:center;justify-content:space-between">'+
+        '<div><div style="font-weight:700;font-size:14px;color:#0D1117">'+p.name+'</div>'+
+        '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+(p.phone||'')+' · '+(p.doctor||'')+'</div></div>'+
+        '<span style="background:'+(p.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(p.status==='done'?'#059669':'#D97706')+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+p.status+'</span>'+
+      '</div>';
+    });
+    showInfoPopup('Patients Today ('+pts.length+')', html);
+  });
+}
+
+function showApptsPopup(doctorIds){
+  if(!window.fbGetAccounts||!window.fbGetAppointments) return;
+  var promise=doctorIds?Promise.resolve(doctorIds):window.fbGetAccounts().then(function(acc){return acc.filter(function(a){return a.role==='doctor';}).map(function(d){return d.username;});});
+  promise.then(function(ids){
+    var promises=ids.map(function(id){return window.fbGetAppointments(id,null).catch(function(){return[];});});
+    Promise.all(promises).then(function(results){
+      var all=[];results.forEach(function(r){all=all.concat(r||[]);});
+      all=all.filter(function(a){return a.status!=='cancelled';});
+      if(!all.length){showInfoPopup('Appointments','<div style="text-align:center;padding:20px;color:#9CA3AF">No appointments found.</div>');return;}
+      var html='';
+      all.forEach(function(a){
+        html+='<div style="padding:12px 0;border-bottom:1px solid #E5E9EF;display:flex;align-items:center;justify-content:space-between">'+
+          '<div><div style="font-weight:700;font-size:14px;color:#0D1117">'+a.patientName+'</div>'+
+          '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+a.day+' at '+a.time+' · '+a.doctorId+'</div></div>'+
+          '<span style="background:#EEF2FF;color:#2563A8;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.status+'</span>'+
+        '</div>';
+      });
+      showInfoPopup('Appointments ('+all.length+')', html);
+    });
+  });
+}
+
+function showAdminsPopup(){
+  if(!window.fbGetAccounts) return;
+  window.fbGetAccounts().then(function(accounts){
+    var admins=accounts.filter(function(a){return a.role==='clinicadmin';});
+    if(!admins.length){showInfoPopup('Clinic Admins','<div style="text-align:center;padding:20px;color:#9CA3AF">No clinic admins added yet.</div>');return;}
+    var html='';
+    admins.forEach(function(a){
+      html+='<div style="padding:12px 0;border-bottom:1px solid #E5E9EF;display:flex;align-items:center;justify-content:space-between">'+
+        '<div><div style="font-weight:700;font-size:14px;color:#0D1117">'+a.name+'</div>'+
+        '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+(a.clinicName||'')+' · '+a.username+'</div></div>'+
+        '<span style="background:#F5F3FF;color:#7C3AED;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">Clinic Admin</span>'+
+      '</div>';
+    });
+    showInfoPopup('Clinic Admins ('+admins.length+')', html);
+  });
+}
+
+function caChangePassword(){
+  var newPass=document.getElementById('ca-new-pass').value;
+  var confirm=document.getElementById('ca-confirm-pass').value;
+  var err=document.getElementById('ca-pass-err');
+  if(!newPass||!confirm){err.textContent='Please fill both fields.';err.style.display='block';return;}
+  if(newPass!==confirm){err.textContent='Passwords do not match.';err.style.display='block';return;}
+  if(newPass.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
+  err.style.display='none';
+  if(!window.fbSaveAccount){err.textContent='Firebase not ready.';err.style.display='block';return;}
+  var updated=Object.assign({},currentUser,{password:newPass});
+  window.fbSaveAccount(updated).then(function(id){
+    if(id){
+      currentUser.password=newPass;
+      err.textContent='Password updated successfully!';err.style.color='#059669';err.style.display='block';
+      document.getElementById('ca-new-pass').value='';
+      document.getElementById('ca-confirm-pass').value='';
+      setTimeout(function(){err.style.display='none';err.style.color='#EF4444';},3000);
+    } else {
+      err.textContent='Could not update. Try again.';err.style.display='block';
+    }
+  });
+}
+
 function doLogout(){
   dismissNotif();
   currentUser=null;
@@ -1244,7 +1374,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser
 // ═══════════════
 var NAV={
   superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports']],
-  clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports']],
+  clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
   doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
   receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule']]
 };
@@ -1631,6 +1761,33 @@ function loadPage(page){
     return;
   }
 
+  // ── CLINIC ADMIN PROFILE ──
+  if(page==='ca-profile' && u.role==='clinicadmin'){
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">My Profile</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Your account information</p>'+
+      '<div class="table-card" style="max-width:500px">'+
+        '<div style="display:flex;align-items:center;gap:16px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)">'+
+          '<div style="width:60px;height:60px;background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px">🏥</div>'+
+          '<div>'+
+            '<div style="font-size:18px;font-weight:800;color:#0D1117">'+u.name+'</div>'+
+            '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">Clinic Admin</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="table-row"><div class="row-sub">Clinic Name</div><div class="row-name">'+(u.clinicName||'-')+'</div></div>'+
+        '<div class="table-row"><div class="row-sub">Username</div><div class="row-name">'+u.username+'</div></div>'+
+        '<div class="table-row"><div class="row-sub">City</div><div class="row-name">'+(u.city||'-')+'</div></div>'+
+        '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">'+
+          '<div style="font-size:13px;font-weight:600;color:#0D1117;margin-bottom:12px">Change Password</div>'+
+          '<input type="password" id="ca-new-pass" placeholder="New password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="ca-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="ca-pass-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:8px"></div>'+
+          '<button onclick="caChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
+        '</div>'+
+      '</div>';
+    return;
+  }
+
   if(page==='profile' && u.role==='doctor'){
     mc.innerHTML=
       '<h2 style="color:#0F1F17;margin-bottom:20px">👤 Mon Profil</h2>'+
@@ -1678,10 +1835,10 @@ function loadPage(page){
   if(u.role==='superadmin'&&(page==='dashboard'||page==='overview')){
     mc.innerHTML=banner+
       '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="sa-doctors">—</div><div class="stat-lbl">Total Doctors</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="sa-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="sa-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="sa-appts">—</div><div class="stat-lbl">Total Appointments</div></div></div>'+
+        '<div class="stat-card" onclick="showDoctorsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="sa-doctors">—</div><div class="stat-lbl">Total Doctors</div></div></div>'+
+        '<div class="stat-card" onclick="showRecepsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="sa-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
+        '<div class="stat-card" onclick="showPatientsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="sa-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
+        '<div class="stat-card" onclick="showApptsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="sa-appts">—</div><div class="stat-lbl">Total Appointments</div></div></div>'+
       '</div>'+
       '<div class="table-card" style="margin-top:16px">'+
         '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Staff Overview</h3>'+
@@ -1698,20 +1855,26 @@ function loadPage(page){
         if(rEl) rEl.textContent=receps.length;
         var overview=document.getElementById('sa-staff-overview');
         if(overview){
-          if(!doctors.length){
-            overview.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:16px">No doctors added yet. Go to Manage to add staff.</div>';
-          } else {
-            var html='';
-            doctors.forEach(function(doc){
-              var linked=receps.filter(function(r){return r.doctorId===doc.username;});
-              html+='<div class="table-row">'+
-                '<div><div class="row-name">'+doc.name+'</div>'+
-                '<div class="row-sub">'+(doc.specialty||'General Practice')+' · '+(doc.clinicName||'')+'</div></div>'+
-                '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+linked.length+' recep.</span>'+
-              '</div>';
-            });
-            overview.innerHTML=html;
-          }
+          var html='';
+          // Show clinic admins first
+          var admins=accounts.filter(function(a){return a.role==='clinicadmin';});
+          admins.forEach(function(a){
+            html+='<div class="table-row">'+
+              '<div><div class="row-name">'+a.name+'</div>'+
+              '<div class="row-sub">'+(a.clinicName||'')+' · '+a.username+'</div></div>'+
+              '<span class="status-pill" style="color:#7C3AED;background:#F5F3FF">Clinic Admin</span>'+
+            '</div>';
+          });
+          // Then doctors
+          doctors.forEach(function(doc){
+            var linked=receps.filter(function(r){return r.doctorId===doc.username;});
+            html+='<div class="table-row">'+
+              '<div><div class="row-name">'+doc.name+'</div>'+
+              '<div class="row-sub">'+(doc.specialty||'General Practice')+' · '+(doc.clinicName||'')+'</div></div>'+
+              '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+linked.length+' recep.</span>'+
+            '</div>';
+          });
+          overview.innerHTML=html||'<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:16px">No staff added yet. Go to Manage to add staff.</div>';
         }
       });
     }
@@ -1748,10 +1911,10 @@ function loadPage(page){
     var clinicName=u.clinicName||u.cabinetName||'My Clinic';
     mc.innerHTML=banner+
       '<div class="stats-grid">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="ca-doctors">—</div><div class="stat-lbl">My Doctors</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="ca-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="ca-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="ca-appts">—</div><div class="stat-lbl">Appointments</div></div></div>'+
+        '<div class="stat-card" onclick="showDoctorsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="ca-doctors">—</div><div class="stat-lbl">My Doctors</div></div></div>'+
+        '<div class="stat-card" onclick="showRecepsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="ca-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
+        '<div class="stat-card" onclick="showPatientsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="ca-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
+        '<div class="stat-card" onclick="showApptsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="ca-appts">—</div><div class="stat-lbl">Appointments</div></div></div>'+
       '</div>'+
       '<div class="table-card" style="margin-top:16px">'+
         '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Doctors in '+clinicName+'</h3>'+
@@ -4583,6 +4746,16 @@ try{
         <button onclick="closeManageSlot()" style="width:100%;padding:11px;background:#fff;color:#9CA3AF;border:1.5px solid #E5E7EB;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer">Back</button>
       </div>
     </div>
+  </div>
+</div>
+<!-- INFO POPUP -->
+<div id="info-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:3000;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:20px;max-width:500px;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div id="info-popup-title" style="font-size:16px;font-weight:800;color:#fff"></div>
+      <button onclick="closeInfoPopup()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer">✕ Close</button>
+    </div>
+    <div id="info-popup-body" style="padding:20px;overflow-y:auto;flex:1"></div>
   </div>
 </div>
 </body>
