@@ -1160,7 +1160,7 @@ function caSearchPts(){
     window.fbGetAllPatients().then(function(all){
       var filtered=all.filter(function(p){
         var matchQuery=(p.name||'').toLowerCase().includes(q.toLowerCase())||(p.phone||'').includes(q);
-        var matchClinic=docIds.length>0&&docIds.indexOf(p.doctor)>-1;
+        var matchClinic=docIds.length===0||docIds.indexOf(p.doctor)>-1;
         return matchQuery&&matchClinic;
       });
       // Render results
@@ -4378,7 +4378,7 @@ try{
       .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
       .catch(function(e){console.error(e);return[];});
   };
-  window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error(e);return[];});};
+  window.fbGetPatients=function(date){var t=date||new Date().toISOString().split('T')[0];return getDocs(query(collection(db,'patients'),where('visitDate','==',t))).then(function(s){var l=[];s.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;}).catch(function(e){console.error('fbGetPatients error:',e);return[];});};
   window.fbUpdateStatus=function(pid,status){return updateDoc(doc(db,'patients',pid),{status:status}).catch(function(e){console.error(e);});};
 
   window.fbGetNotesByPatientId=function(patientId){
