@@ -1426,16 +1426,53 @@ function caChangePassword(){
 
 // ── Auto Logout after 20 minutes of inactivity ──
 var _inactivityTimer=null;
-var _INACTIVITY_LIMIT=10*1000; // 10 seconds FOR TESTING
+var _INACTIVITY_LIMIT=20*60*1000; // 20 minutes
+
+function inactivityLogout(){
+  var overlay=document.getElementById('inactivity-popup');
+  if(overlay){clearInterval(overlay._countInterval);overlay.remove();}
+  doLogout();
+}
+
+function inactivityStay(){
+  var overlay=document.getElementById('inactivity-popup');
+  if(overlay){clearInterval(overlay._countInterval);overlay.remove();}
+  resetInactivityTimer();
+}
 
 function resetInactivityTimer(){
   if(!currentUser) return;
   clearTimeout(_inactivityTimer);
   _inactivityTimer=setTimeout(function(){
-    if(currentUser){
-      alert('You have been logged out due to 20 minutes of inactivity.');
-      doLogout();
-    }
+    if(!currentUser) return;
+    // Show custom popup
+    var overlay=document.createElement('div');
+    overlay.id='inactivity-popup';
+    overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+    overlay.innerHTML=
+      '<div style="background:#fff;border-radius:20px;padding:28px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'+
+        '<div style="font-size:44px;margin-bottom:14px">⏱️</div>'+
+        '<div style="font-size:17px;font-weight:800;color:#0D1117;margin-bottom:8px">Session Timeout</div>'+
+        '<div style="font-size:13px;color:#9CA3AF;margin-bottom:6px">You have been inactive for 20 minutes.</div>'+
+        '<div style="font-size:13px;color:#9CA3AF;margin-bottom:20px">Logging out in <span id="inactivity-countdown">5</span> seconds...</div>'+
+        '<div style="display:flex;gap:10px;justify-content:center">'+
+          '<button onclick="inactivityStay()" style="padding:11px 24px;background:#F0F4F8;border:1px solid #E5E9EF;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#4B5563">Stay Logged In</button>'+
+          '<button onclick="inactivityLogout()" style="padding:11px 24px;background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Log Out</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(overlay);
+    // Countdown 5 seconds then auto logout
+    var count=5;
+    var cd=document.getElementById('inactivity-countdown');
+    var countInterval=setInterval(function(){
+      count--;
+      if(cd) cd.textContent=count;
+      if(count<=0){
+        clearInterval(countInterval);
+        inactivityLogout();
+      }
+    },1000);
+    overlay._countInterval=countInterval;
   },_INACTIVITY_LIMIT);
 }
 
