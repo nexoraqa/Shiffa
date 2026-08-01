@@ -1350,6 +1350,44 @@ function showAdminsPopup(){
   });
 }
 
+function docChangePassword(){
+  var newPass=document.getElementById('doc-new-pass').value;
+  var confirm=document.getElementById('doc-confirm-pass').value;
+  var err=document.getElementById('doc-pass-err');
+  if(!newPass||!confirm){err.textContent='Please fill both fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass!==confirm){err.textContent='Passwords do not match.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass.length<6){err.textContent='Password must be at least 6 characters.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(!window.fbSaveAccount){err.textContent='Not a Firebase account.';err.style.color='#EF4444';err.style.display='block';return;}
+  var updated=Object.assign({},currentUser,{password:newPass});
+  window.fbSaveAccount(updated).then(function(id){
+    if(id){
+      currentUser.password=newPass;
+      err.textContent='Password updated!';err.style.color='#059669';err.style.display='block';
+      document.getElementById('doc-new-pass').value='';document.getElementById('doc-confirm-pass').value='';
+      setTimeout(function(){err.style.display='none';},3000);
+    } else { err.textContent='Could not update. Try again.';err.style.color='#EF4444';err.style.display='block'; }
+  });
+}
+
+function recChangePassword(){
+  var newPass=document.getElementById('rec-new-pass').value;
+  var confirm=document.getElementById('rec-confirm-pass').value;
+  var err=document.getElementById('rec-pass-err');
+  if(!newPass||!confirm){err.textContent='Please fill both fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass!==confirm){err.textContent='Passwords do not match.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass.length<6){err.textContent='Password must be at least 6 characters.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(!window.fbSaveAccount){err.textContent='Not a Firebase account.';err.style.color='#EF4444';err.style.display='block';return;}
+  var updated=Object.assign({},currentUser,{password:newPass});
+  window.fbSaveAccount(updated).then(function(id){
+    if(id){
+      currentUser.password=newPass;
+      err.textContent='Password updated!';err.style.color='#059669';err.style.display='block';
+      document.getElementById('rec-new-pass').value='';document.getElementById('rec-confirm-pass').value='';
+      setTimeout(function(){err.style.display='none';},3000);
+    } else { err.textContent='Could not update. Try again.';err.style.color='#EF4444';err.style.display='block'; }
+  });
+}
+
 function caChangePassword(){
   var newPass=document.getElementById('ca-new-pass').value;
   var confirm=document.getElementById('ca-confirm-pass').value;
@@ -1393,7 +1431,7 @@ var NAV={
   superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports']],
   clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
   doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
-  receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule']]
+  receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule'],['👤 Profile','profile']]
 };
 var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100'};
 var ROLE_DESCS={superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management'};
@@ -1779,6 +1817,33 @@ function loadPage(page){
   }
 
   // ── CLINIC ADMIN PROFILE ──
+  // ── RECEPTIONIST PROFILE ──
+  if(page==='profile' && u.role==='receptionist'){
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">My Profile</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Your account information</p>'+
+      '<div class="table-card" style="max-width:500px">'+
+        '<div style="display:flex;align-items:center;gap:16px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)">'+
+          '<div style="width:60px;height:60px;background:linear-gradient(135deg,#E65100,#F59E0B);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px">🧑‍💼</div>'+
+          '<div>'+
+            '<div style="font-size:18px;font-weight:800;color:#0D1117">'+u.name+'</div>'+
+            '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">Receptionist · '+(u.clinicName||'')+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="table-row"><div class="row-sub">Username</div><div class="row-name">'+u.username+'</div></div>'+
+        '<div class="table-row"><div class="row-sub">Linked Doctor</div><div class="row-name">'+(u.doctorId||'-')+'</div></div>'+
+        '<div class="table-row"><div class="row-sub">Clinic</div><div class="row-name">'+(u.clinicName||'-')+'</div></div>'+
+        '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">'+
+          '<div style="font-size:13px;font-weight:600;color:#0D1117;margin-bottom:12px">🔒 Change Password</div>'+
+          '<input type="password" id="rec-new-pass" placeholder="New password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="rec-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="rec-pass-err" style="display:none;font-size:13px;margin-bottom:8px"></div>'+
+          '<button onclick="recChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
+        '</div>'+
+      '</div>';
+    return;
+  }
+
   if(page==='ca-profile' && u.role==='clinicadmin'){
     mc.innerHTML=
       '<h2 style="margin-bottom:6px">My Profile</h2>'+
@@ -1834,6 +1899,13 @@ function loadPage(page){
         '</div>'+
         '<div id="prof-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:12px"></div>'+
         '<button onclick="saveProfile()" class="btn-filled" style="width:100%;padding:14px;font-size:15px">💾 Save Profile</button>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:16px;border:1.5px solid #D6E8DE;padding:20px;margin-top:16px">'+
+        '<div style="font-size:14px;font-weight:700;color:#0F1F17;margin-bottom:14px">🔒 Change Password</div>'+
+        '<input type="password" id="doc-new-pass" placeholder="New password..." style="width:100%;padding:10px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+        '<input type="password" id="doc-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:10px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+        '<div id="doc-pass-err" style="display:none;font-size:13px;margin-bottom:8px"></div>'+
+        '<button onclick="docChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
       '</div>';
     if(window.fbGetProfile){
       window.fbGetProfile(u.doctorId).then(function(prof){
