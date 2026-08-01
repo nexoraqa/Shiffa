@@ -1350,6 +1350,17 @@ function showAdminsPopup(){
   });
 }
 
+function saChangePassword(){
+  var newPass=document.getElementById('sa-new-pass').value;
+  var confirm=document.getElementById('sa-confirm-pass').value;
+  var err=document.getElementById('sa-pass-err');
+  if(!newPass||!confirm){err.textContent='Please fill both fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass!==confirm){err.textContent='Passwords do not match.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass.length<6){err.textContent='Password must be at least 6 characters.';err.style.color='#EF4444';err.style.display='block';return;}
+  // Super admin is hardcoded — note this limitation
+  err.textContent='Super Admin password must be changed in the code directly.';err.style.color='#EF4444';err.style.display='block';
+}
+
 function docChangePassword(){
   var newPass=document.getElementById('doc-new-pass').value;
   var confirm=document.getElementById('doc-confirm-pass').value;
@@ -1428,7 +1439,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser
 // DASHBOARD
 // ═══════════════
 var NAV={
-  superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports']],
+  superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','sa-profile']],
   clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
   doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
   receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule'],['👤 Profile','profile']]
@@ -2446,6 +2457,31 @@ function loadPage(page){
 
   // PATIENTS PAGE
   // ── SUPERADMIN PATIENTS PAGE ──
+  // ── SUPER ADMIN PROFILE ──
+  if(page==='sa-profile' && u.role==='superadmin'){
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">My Profile</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Super Admin account</p>'+
+      '<div class="table-card" style="max-width:500px">'+
+        '<div style="display:flex;align-items:center;gap:16px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)">'+
+          '<div style="width:60px;height:60px;background:linear-gradient(135deg,#7C3AED,#9F6EF5);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px">👑</div>'+
+          '<div>'+
+            '<div style="font-size:18px;font-weight:800;color:#0D1117">'+u.name+'</div>'+
+            '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">Super Admin · Full Access</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="table-row"><div class="row-sub">Username</div><div class="row-name">'+u.username+'</div></div>'+
+        '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">'+
+          '<div style="font-size:13px;font-weight:600;color:#0D1117;margin-bottom:12px">🔒 Change Password</div>'+
+          '<input type="password" id="sa-new-pass" placeholder="New password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="sa-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="sa-pass-err" style="display:none;font-size:13px;margin-bottom:8px"></div>'+
+          '<button onclick="saChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#7C3AED,#9F6EF5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
+        '</div>'+
+      '</div>';
+    return;
+  }
+
   if(page==='patients' && u.role==='superadmin'){
     mc.innerHTML=
       '<h2 style="margin-bottom:6px">All Patients</h2>'+
