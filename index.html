@@ -353,9 +353,11 @@ function doLogin(){
           if(prof.phone) currentUser.phone=prof.phone;
         }
         showDashboard(currentUser);
+        startInactivityWatch();
       });
     } else {
       showDashboard(user);
+      startInactivityWatch();
     }
   }
 
@@ -1422,8 +1424,37 @@ function caChangePassword(){
   });
 }
 
+// ── Auto Logout after 20 minutes of inactivity ──
+var _inactivityTimer=null;
+var _INACTIVITY_LIMIT=10*1000; // 10 seconds FOR TESTING
+
+function resetInactivityTimer(){
+  if(!currentUser) return;
+  clearTimeout(_inactivityTimer);
+  _inactivityTimer=setTimeout(function(){
+    if(currentUser){
+      alert('You have been logged out due to 20 minutes of inactivity.');
+      doLogout();
+    }
+  },_INACTIVITY_LIMIT);
+}
+
+function startInactivityWatch(){
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(function(evt){
+    document.addEventListener(evt,resetInactivityTimer,true);
+  });
+  resetInactivityTimer();
+}
+
+function stopInactivityWatch(){
+  clearTimeout(_inactivityTimer);
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(function(evt){
+    document.removeEventListener(evt,resetInactivityTimer,true);
+  });
+}
+
 function doLogout(){
-  dismissNotif();
+  stopInactivityWatch();
   currentUser=null;
   document.getElementById('dashboard-page').style.display='none';
   document.getElementById('login-page').style.display='flex';
