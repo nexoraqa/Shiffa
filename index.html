@@ -195,25 +195,7 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
         </div>
       </div>
       <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
-      <div class="test-accounts" style="margin-top:16px">
-        <p>Test Accounts:</p>
-        <div class="test-row">
-          <div><span class="test-info">👑 Super Admin</span><span class="test-user">@admin</span></div>
-          <button class="btn-use" onclick="fillUser('admin','admin123')">Use</button>
-        </div>
-        <div class="test-row">
-          <div><span class="test-info">🏥 Clinic Admin</span><span class="test-user">@clinicadmin</span></div>
-          <button class="btn-use" onclick="fillUser('clinicadmin','clinic123')">Use</button>
-        </div>
-        <div class="test-row">
-          <div><span class="test-info">👨‍⚕️ Doctor</span><span class="test-user">@dr.belouadah</span></div>
-          <button class="btn-use" onclick="fillUser('dr.belouadah','doctor123')">Use</button>
-        </div>
-        <div class="test-row">
-          <div><span class="test-info">🧑‍💼 Receptionist</span><span class="test-user">@sara.recep</span></div>
-          <button class="btn-use" onclick="fillUser('sara.recep','recep123')">Use</button>
-        </div>
-      </div>
+
     </div>
   </div>
 
@@ -291,12 +273,7 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 
 <script>
 var USERS = [
-  {id:'u1',username:'admin',       password:'admin123', role:'superadmin',  name:'Super Admin',              avatar:'👑',clinicName:'Shifaa Platform',   cabinetName:'Shifaa Platform',   doctorId:null},
-  {id:'u2',username:'clinicadmin', password:'clinic123',role:'clinicadmin', name:'Clinique Bou Saada',       avatar:'🏥',clinicName:'Clinique Bou Saada',cabinetName:'Clinique Bou Saada',doctorId:null},
-  {id:'u3',username:'dr.belouadah',password:'doctor123',role:'doctor',      name:'Dr. Abdelmadjid Belouadah',avatar:'👨‍⚕️',clinicName:'Cabinet Dr. Belouadah',cabinetName:'Cabinet Dr. Belouadah',specialty:'Medecin Generaliste',city:'Bou Saada, M Sila',doctorId:'dr.belouadah'},
-  {id:'u4',username:'sara.recep',  password:'recep123', role:'receptionist',name:'Sara Bouzida',             avatar:'🧑‍💼',clinicName:'Cabinet Dr. Belouadah',cabinetName:'Cabinet Dr. Belouadah',doctorId:'dr.belouadah'},
-  {id:'u5',username:'dr.slimani',  password:'slimani123',role:'doctor',      name:'Dr. Omar Slimani',          avatar:'👨‍⚕️',clinicName:'Cabinet Dr. Slimani',cabinetName:'Cabinet Dr. Slimani',specialty:'Pediatrics',city:'Bou Saada - MSila',doctorId:'dr.slimani'},
-  {id:'u6',username:'amina.recep', password:'amina123',  role:'receptionist',name:'Amina Khelil',              avatar:'🧑‍💼',clinicName:'Cabinet Dr. Slimani',cabinetName:'Cabinet Dr. Slimani',doctorId:'dr.slimani'}
+  {id:'u1',username:'younes',password:'younes',role:'superadmin',name:'Super Admin',avatar:'👑',clinicName:'Shifaa Platform',cabinetName:'Shifaa Platform',doctorId:null}
 ];
 
 var currentUser = null;
@@ -361,38 +338,29 @@ function doLogin(){
     }
   }
 
-  // First check Firebase accounts (dynamic accounts added by admin)
+  // Check hardcoded accounts first (Super Admin)
+  var hardcodedUser=null;
+  for(var i=0;i<USERS.length;i++){
+    if(USERS[i].username===u&&USERS[i].password===p){hardcodedUser=USERS[i];break;}
+  }
+  if(hardcodedUser){
+    loginWithUser(hardcodedUser);
+    return;
+  }
+
+  // Then check Firebase accounts (dynamic accounts added by admin)
   if(window.fbLoginFromDB){
     window.fbLoginFromDB(u,p).then(function(dbUser){
       if(dbUser){
         loginWithUser(dbUser);
       } else {
-        // Fall back to hardcoded test accounts
-        var user=null;
-        for(var i=0;i<USERS.length;i++){
-          if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
-        }
-        if(user){ loginWithUser(user); }
-        else{ showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false; }
+        showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;
       }
     }).catch(function(){
-      // Firebase failed - use hardcoded accounts
-      var user=null;
-      for(var i=0;i<USERS.length;i++){
-        if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
-      }
-      if(user){ loginWithUser(user); }
-      else{ showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false; }
+      showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;
     });
   } else {
-    setTimeout(function(){
-      var user=null;
-      for(var i=0;i<USERS.length;i++){
-        if(USERS[i].username===u&&USERS[i].password===p){user=USERS[i];break;}
-      }
-      if(user){ loginWithUser(user); }
-      else{ showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false; }
-    },600);
+    showError('Wrong username or password.');btn.textContent='Sign In';btn.disabled=false;
   }
 }
 // ── Language System ──
