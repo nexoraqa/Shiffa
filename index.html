@@ -4774,9 +4774,20 @@ try{
   window.fbGetNotesByPhone=window.fbGetNotes;
 
   window.fbGetPatientHistory=function(phone){
-    return getDocs(query(collection(db,'patients'),where('phone','==',phone)))
+    var phoneClean=phone.replace(/ /g,'');
+    // Search both with and without spaces to handle both formats
+    var p1=getDocs(query(collection(db,'patients'),where('phone','==',phoneClean)))
       .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
-      .catch(function(e){console.error(e);return[];});
+      .catch(function(){return[];});
+    var p2=getDocs(query(collection(db,'patients'),where('phone','==',phone)))
+      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
+      .catch(function(){return[];});
+    return Promise.all([p1,p2]).then(function(results){
+      var combined=results[0].concat(results[1]);
+      // Deduplicate by id
+      var seen={};
+      return combined.filter(function(p){if(seen[p.id])return false;seen[p.id]=true;return true;});
+    });
   };
 
   window.fbSaveRx=function(patientId,rxData){
