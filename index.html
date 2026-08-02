@@ -3588,7 +3588,7 @@ function emergencyNewWalkIn(){
   var phone=document.getElementById('r-phone').value.trim();
   var age=document.getElementById('r-age').value.trim();
   var address=document.getElementById('r-address').value.trim();
-  var gender=window._regGender||'';
+  var gender=selGender||window._regGender||'';
   var doctor=document.getElementById('r-doctor').value;
   var err=document.getElementById('form-err');
   if(!name||!phone||!age||!address||!gender||!doctor){
