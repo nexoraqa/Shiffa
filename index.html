@@ -1513,11 +1513,11 @@ function showDashboard(user){
   document.getElementById('hdr-clinic').textContent=user.clinicName||'';
   document.getElementById('hdr-badge').innerHTML=makeBadge(user.role);
   document.getElementById('sidebar-badge').innerHTML=makeBadge(user.role);
-  applyLang();
   document.getElementById('sidebar-desc').textContent=ROLE_DESCS[user.role]||'';
   var av=document.getElementById('sidebar-avatar');
   if(av){var initials=(user.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();av.textContent=initials;}
   buildNav(user);
+  applyLang();
   goPage('dashboard');
 }
 
@@ -3896,6 +3896,9 @@ function cycleStatus(pid,btn){
 function loadQueue(doctorFilter){
   var list=document.getElementById('queue-list');
   if(!list) return;
+  // Only refresh if still on queue page
+  var queueEl=document.getElementById('queue-list');
+  if(!queueEl||!queueEl.offsetParent) return;
   if(window.fbGetPatients){
     var date=window.queueDate||new Date().toISOString().split('T')[0];
     var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
