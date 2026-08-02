@@ -3912,8 +3912,18 @@ function loadQueue(doctorFilter){
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
       var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status!=='cancelled';});
       // Only block duplicate if walk-in patient is NOT done
-      // No duplicate filtering - walk-ins and appointments both show in queue
-      var apptPts=todayAppts.map(function(a){
+      // Hide appointment if patient already walked in (waiting/inprogress)
+      var existingPhones={};
+      pts.forEach(function(p){
+        if(p.phone&&(p.status==='waiting'||p.status==='inprogress')){
+          existingPhones[(p.phone||'').replace(/ /g,'')]=true;
+        }
+      });
+      // Also hide scheduled patients from pts since appointment shows them
+      pts=pts.filter(function(p){return p.status!=='scheduled';});
+      var apptPts=todayAppts.filter(function(a){
+        return !existingPhones[(a.patientPhone||'').replace(/ /g,'')];
+      }).map(function(a){
         var apptStatus=a.status==='inprogress'?'inprogress':a.status==='done'?'done':'waiting';
         return {id:'appt_'+a.id,apptId:a.id,name:a.patientName,age:a.patientAge,phone:a.patientPhone,
           gender:a.patientGender,address:a.patientAddress||'',doctor:a.doctorId,
