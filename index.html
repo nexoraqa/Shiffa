@@ -3229,7 +3229,7 @@ function openSlotBooking(el){
     var pb=window._pendingBookingPatient;
     _slotVisit=pb.visitType||'follow_up';
     _slotPatient={name:pb.name||'',age:pb.age||0,phone:pb.phone||'',gender:pb.gender||'male',address:pb.address||''};
-    _slotDoctorId=pb.doctor||currentUser.doctorId;
+    _slotDoctorId=pb.fromRegister?currentUser.doctorId:(pb.doctor||currentUser.doctorId);
     document.getElementById('slot-search-phone').value=pb.phone;
     document.getElementById('slot-search-result').innerHTML=
       '<div style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:6px">'+
@@ -3729,7 +3729,7 @@ function bookReturnPatient(){
   window._pendingBookingPatient={
     name:retPatient.name,phone:retPatient.phone,
     age:retPatient.age,address:retPatient.address||'',
-    gender:retPatient.gender||'',doctor:retPatient.doctor||currentUser.doctorId,
+    gender:retPatient.gender||'',doctor:currentUser.doctorId,
     visitType:'follow_up',fromRegister:true
   };
   window._pendingBookingIsNew=false;
