@@ -4815,9 +4815,33 @@ try{
   };
 
   window.fbSearchPatientsByPhone=function(phoneQuery,doctorId){
-    return getDocs(query(collection(db,'patients'),where('doctor','==',doctorId)))
-      .then(function(snap){var list=[];snap.forEach(function(d){var data=Object.assign({id:d.id},d.data());if(!phoneQuery||(data.phone&&data.phone.includes(phoneQuery)))list.push(data);});return list;})
-      .catch(function(e){console.error(e);return[];});
+    // Load from BOTH patients and appointments collections
+    var p1=getDocs(collection(db,'patients'))
+      .then(function(snap){var list=[];snap.forEach(function(d){var data=Object.assign({id:d.id},d.data());if(data.doctor===doctorId)list.push({name:data.name,phone:(data.phone||'').replace(/ /g,''),age:data.age,gender:data.gender,visitDate:data.visitDate,visitType:data.visitType,status:data.status});});return list;})
+      .catch(function(){return[];});
+    var p2=getDocs(collection(db,'appointments'))
+      .then(function(snap){var list=[];snap.forEach(function(d){var data=Object.assign({id:d.id},d.data());if(data.doctorId===doctorId)list.push({name:data.patientName,phone:(data.patientPhone||'').replace(/ /g,''),age:data.patientAge,gender:data.patientGender,visitDate:data.date,visitType:data.visitType,status:data.status});});return list;})
+      .catch(function(){return[];});
+    return Promise.all([p1,p2]).then(function(results){
+      var all=results[0].concat(results[1]);
+      // Filter by search query
+      if(phoneQuery){
+        var q=phoneQuery.replace(/ /g,'').toLowerCase();
+        all=all.filter(function(p){
+          return (p.phone&&p.phone.includes(q))||(p.name&&p.name.toLowerCase().includes(q));
+        });
+      }
+      // Deduplicate by phone - keep most recent
+      var seen={};
+      all.forEach(function(p){
+        var key=p.phone||p.name;
+        if(!key||!seen[key]||p.visitDate>seen[key].visitDate) seen[key]=p;
+      });
+      var list=[];
+      Object.keys(seen).forEach(function(k){list.push(seen[k]);});
+      list.sort(function(a,b){return (b.visitDate||'')>(a.visitDate||'')?1:-1;});
+      return list;
+    });
   };
 
   // ── Appointments ──
