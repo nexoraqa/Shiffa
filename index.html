@@ -1498,6 +1498,13 @@ function makeBadge(role){
 }
 
 function showDashboard(user){
+  // Pre-load doctors from Firebase into ALL_DOCTORS
+  if(window.fbGetAccounts){
+    window.fbGetAccounts().then(function(accounts){
+      var docs=accounts.filter(function(a){return a.role==='doctor';});
+      if(docs.length) ALL_DOCTORS=docs.map(function(d){return {id:d.username,name:d.name,specialty:d.specialty||'General Practice'};});
+    });
+  }
   document.getElementById('login-page').style.display='none';
   document.getElementById('dashboard-page').style.display='flex';
   document.getElementById('dashboard-page').style.flexDirection='column';
@@ -3555,7 +3562,8 @@ function emergencyReturnWalkIn(){
   var p=retPatient;
   if(!p) return;
   var docId=currentUser.doctorId||'';
-  var docName='';
+  var docName=docId;
+  // Try to get doctor name from ALL_DOCTORS (already loaded from Firebase)
   for(var i=0;i<ALL_DOCTORS.length;i++){if(ALL_DOCTORS[i].id===docId){docName=ALL_DOCTORS[i].name;break;}}
   document.getElementById('search-result').innerHTML=
     '<div style="background:#FEF2F2;border-radius:12px;padding:16px;border:1.5px solid #FECACA;margin-top:4px">'+
@@ -3602,7 +3610,7 @@ function addReturnPatient(){
 
   // Get doctor info from logged-in user
   var docId   = currentUser.doctorId || '';
-  var docName = '';
+  var docName = docId;
   for(var i=0;i<ALL_DOCTORS.length;i++){
     if(ALL_DOCTORS[i].id===docId){ docName=ALL_DOCTORS[i].name; break; }
   }
