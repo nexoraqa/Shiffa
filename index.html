@@ -3472,16 +3472,36 @@ function saveProfile(){
 function populateDoctorSelect(selectId){
   var sel = document.getElementById(selectId);
   if(!sel) return;
-  var doctors = ALL_DOCTORS;
-  if(currentUser.doctorId){
-    doctors = ALL_DOCTORS.filter(function(d){ return d.id === currentUser.doctorId; });
+  sel.innerHTML = '<option value="">Loading doctors...</option>';
+
+  if(window.fbGetAccounts){
+    window.fbGetAccounts().then(function(accounts){
+      var doctors=accounts.filter(function(a){return a.role==='doctor';});
+      // If receptionist, only show their linked doctor
+      if(currentUser.doctorId){
+        doctors=doctors.filter(function(d){return d.username===currentUser.doctorId;});
+      }
+      // Update ALL_DOCTORS for other parts of the app
+      ALL_DOCTORS=doctors.map(function(d){return {id:d.username,name:d.name,specialty:d.specialty||'General Practice'};});
+      sel.innerHTML=doctors.length>1?'<option value="">Select a doctor...</option>':'';
+      doctors.forEach(function(d){
+        sel.innerHTML+='<option value="'+d.username+'">'+d.name+' ('+(d.specialty||'General Practice')+')</option>';
+      });
+      if(doctors.length===1) sel.value=doctors[0].username;
+      if(!doctors.length) sel.innerHTML='<option value="">No doctors found</option>';
+    });
+  } else {
+    // Fallback to hardcoded
+    var doctors=ALL_DOCTORS;
+    if(currentUser.doctorId){
+      doctors=ALL_DOCTORS.filter(function(d){return d.id===currentUser.doctorId;});
+    }
+    sel.innerHTML=doctors.length>1?'<option value="">Select a doctor...</option>':'';
+    for(var i=0;i<doctors.length;i++){
+      sel.innerHTML+='<option value="'+doctors[i].id+'">'+doctors[i].name+' ('+doctors[i].specialty+')</option>';
+    }
+    if(doctors.length===1) sel.value=doctors[0].id;
   }
-  // Only show placeholder if more than one doctor to choose from
-  sel.innerHTML = doctors.length > 1 ? '<option value="">Select a doctor...</option>' : '';
-  for(var i=0;i<doctors.length;i++){
-    sel.innerHTML += '<option value="'+doctors[i].id+'">'+doctors[i].name+' ('+doctors[i].specialty+')</option>';
-  }
-  if(doctors.length === 1) sel.value = doctors[0].id;
 }
 
 // ═══════════════
