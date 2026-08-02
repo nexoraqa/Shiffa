@@ -1047,7 +1047,7 @@ function sbPickGender(g){
 function sbConfirm(){
   var btn=document.getElementById('sb-confirm-btn');
   var err=document.getElementById('sb-err');
-  var phone=document.getElementById('sb-phone').value.trim();
+  var phone=document.getElementById('sb-phone').value.trim().replace(/ /g,'');
   err.style.display='none';
 
   if(_sb.visitType==='new'){
@@ -1057,7 +1057,7 @@ function sbConfirm(){
     if(!name||!age||!address||!_sbGender||!phone){
       err.textContent='Please fill in all fields.';err.style.display='block';return;
     }
-    _sb.patient={name:name,age:parseInt(age),phone:phone,gender:_sbGender,address:address};
+    _sb.patient={name:name,age:parseInt(age),phone:phone.replace(/ /g,''),gender:_sbGender,address:address};
   }
 
   if(!_sb.patient){err.textContent='Please search your phone number first.';err.style.display='block';return;}
