@@ -4775,19 +4775,16 @@ try{
 
   window.fbGetPatientHistory=function(phone){
     var phoneClean=phone.replace(/ /g,'');
-    // Search both with and without spaces to handle both formats
-    var p1=getDocs(query(collection(db,'patients'),where('phone','==',phoneClean)))
-      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
-      .catch(function(){return[];});
-    var p2=getDocs(query(collection(db,'patients'),where('phone','==',phone)))
-      .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
-      .catch(function(){return[];});
-    return Promise.all([p1,p2]).then(function(results){
-      var combined=results[0].concat(results[1]);
-      // Deduplicate by id
-      var seen={};
-      return combined.filter(function(p){if(seen[p.id])return false;seen[p.id]=true;return true;});
-    });
+    return getDocs(query(collection(db,'patients'),where('phone','==',phoneClean)))
+      .then(function(snap){
+        var list=[];
+        snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});
+        // Also check with spaces version if nothing found
+        if(list.length) return list;
+        return getDocs(query(collection(db,'patients'),where('phone','==',phone)))
+          .then(function(snap2){var l=[];snap2.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});return l;});
+      })
+      .catch(function(e){console.error(e);return[];});
   };
 
   window.fbSaveRx=function(patientId,rxData){
