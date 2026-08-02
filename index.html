@@ -1129,36 +1129,19 @@ function caSearchPts(){
   if(!q){list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Enter a name or phone number and click Search</div>';return;}
   list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Searching...</div>';
   var clinicName=currentUser.clinicName||currentUser.cabinetName||'';
-  if(!window.fbGetAllPatients||!window.fbGetAccounts){list.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">Firebase not ready.</div>';return;}
-  // Get clinic doctors first to filter patients
+  if(!window.fbGetAccounts||!window.fbGetPatientHistory){list.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">Firebase not ready.</div>';return;}
+  // Get clinic doctors first
   window.fbGetAccounts().then(function(accounts){
     var docIds=accounts.filter(function(a){
       return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);
     }).map(function(d){return d.username;});
-    window.fbGetAllPatients().then(function(all){
+    // Search by phone using fbGetPatientHistory
+    window.fbGetPatientHistory(q).then(function(all){
       var filtered=all.filter(function(p){
-        var matchQuery=(p.name||'').toLowerCase().includes(q.toLowerCase())||(p.phone||'').includes(q);
-        var matchClinic=docIds.length===0||docIds.indexOf(p.doctor)>-1;
-        return matchQuery&&matchClinic;
+        var matchClinic=!docIds.length||docIds.indexOf(p.doctor||p.doctorId)>-1;
+        return matchClinic;
       });
-      // Render results
-      if(!filtered.length){
-        list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">No patients found.</div>';
-        return;
-      }
-      var html='<table style="width:100%;border-collapse:collapse">';
-      html+='<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Phone</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Type</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Doctor</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Date</th></tr></thead><tbody>';
-      filtered.forEach(function(p){
-        html+='<tr style="border-bottom:1px solid var(--border)">'+
-          '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+p.name+'</td>'+
-          '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.phone||'-')+'</td>'+
-          '<td style="padding:10px 12px"><span style="background:'+(p.visitType==='new'?'#ECFDF5':'#EEF2FF')+';color:'+(p.visitType==='new'?'#059669':'#2563A8')+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+(p.visitType==='new'?'New':'Follow-up')+'</span></td>'+
-          '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.doctor||'-')+'</td>'+
-          '<td style="padding:10px 12px;font-size:13px;color:#9CA3AF">'+(p.visitDate||'-')+'</td>'+
-        '</tr>';
-      });
-      html+='</tbody></table>';
-      list.innerHTML=html;
+      renderPtSearchResults(list,filtered);
     });
   });
 }
@@ -1168,33 +1151,34 @@ function saSearchPts(){
   var list=document.getElementById('sa-pt-list');
   if(!q){list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Enter a name or phone number and click Search</div>';return;}
   list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Searching...</div>';
-  if(!window.fbGetAllPatients){list.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">Firebase not ready.</div>';return;}
-  window.fbGetAllPatients().then(function(all){
-    var filtered=all.filter(function(p){
-      return (p.name||'').toLowerCase().includes(q.toLowerCase())||(p.phone||'').includes(q);
-    });
-    window._saPts=filtered;
-    saRenderPts(filtered);
+  if(!window.fbGetPatientHistory){list.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">Firebase not ready.</div>';return;}
+  window.fbGetPatientHistory(q).then(function(all){
+    window._saPts=all;
+    saRenderPts(all);
   });
+}
+
+function renderPtSearchResults(list,pts){
+  if(!pts||!pts.length){list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">No patients found.</div>';return;}
+  var html='<table style="width:100%;border-collapse:collapse">';
+  html+='<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Phone</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Type</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Doctor</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Date</th></tr></thead><tbody>';
+  pts.forEach(function(p){
+    html+='<tr style="border-bottom:1px solid var(--border)">'+
+      '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+(p.name||p.patientName||'-')+'</td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.phone||p.patientPhone||'-')+'</td>'+
+      '<td style="padding:10px 12px"><span style="background:'+(p.visitType==='new'?'#ECFDF5':'#EEF2FF')+';color:'+(p.visitType==='new'?'#059669':'#2563A8')+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+(p.visitType==='new'?'New':'Follow-up')+'</span></td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.doctor||p.doctorId||'-')+'</td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#9CA3AF">'+(p.visitDate||p.date||'-')+'</td>'+
+    '</tr>';
+  });
+  html+='</tbody></table>';
+  list.innerHTML=html;
 }
 
 function saRenderPts(pts){
   var list=document.getElementById('sa-pt-list');
   if(!list) return;
-  if(!pts.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No patients registered today.</div>';return;}
-  var html='<table style="width:100%;border-collapse:collapse">';
-  html+='<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Phone</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Type</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Doctor</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Status</th></tr></thead><tbody>';
-  pts.forEach(function(p){
-    html+='<tr style="border-bottom:1px solid var(--border)">'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+p.name+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.phone||'-')+'</td>'+
-      '<td style="padding:10px 12px"><span style="background:'+(p.visitType==='new'?'#ECFDF5':'#EEF2FF')+';color:'+(p.visitType==='new'?'#059669':'#2563A8')+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+(p.visitType==='new'?'New':'Follow-up')+'</span></td>'+
-      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.doctor||'-')+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(p.status||'-')+'</td>'+
-    '</tr>';
-  });
-  html+='</tbody></table>';
-  list.innerHTML=html;
+  renderPtSearchResults(list,pts);
 }
 
 function saFilterPts(q){
