@@ -2829,10 +2829,11 @@ function loadPage(page){
                 var dPts=pts.filter(function(p){return p.doctor===doc.username;});
                 var dAppts=(apptResults[idx]||[]).filter(function(a){return a.day===todayDay&&a.status!=='cancelled';});
                 totalAppts+=dAppts.length;
-                var waiting=dPts.filter(function(p){return p.status==='waiting';}).length+dAppts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';}).length;
-                var inprog=dPts.filter(function(p){return p.status==='inprogress';}).length;
-                var done=dPts.filter(function(p){return p.status==='done';}).length;
-                var total=dPts.length+dAppts.length;
+                var dPtsActive=dPts.filter(function(p){return p.status!=='scheduled';});
+                var waiting=dPtsActive.filter(function(p){return p.status==='waiting';}).length+dAppts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';}).length;
+                var inprog=dPtsActive.filter(function(p){return p.status==='inprogress';}).length;
+                var done=dPtsActive.filter(function(p){return p.status==='done';}).length;
+                var total=dPtsActive.length+dAppts.length;
                 var linked=myReceps.filter(function(r){return r.doctorId===doc.username;});
 
                 html+=
@@ -4983,6 +4984,10 @@ function openPatientPopup(el){
   var rxForm    = document.getElementById('popup-rx-form');
   if(notesForm) notesForm.style.display='none';
   if(rxForm)    rxForm.style.display='none';
+  var labForm=document.getElementById('lab-form-section');
+  if(labForm) labForm.style.display='none';
+  var labBtn2=document.getElementById('lab-btn');
+  if(labBtn2){labBtn2.style.display='none';labBtn2.textContent='🧪 Lab Test';}
 
   var notesBtn = document.getElementById('write-notes-btn');
   var rxBtn    = document.getElementById('rx-btn');
@@ -4998,6 +5003,8 @@ function openPatientPopup(el){
     if(status==='inprogress'){
       if(notesBtn){ notesBtn.style.display=''; }
       if(rxBtn){ rxBtn.style.display=''; rxBtn.onclick=function(){toggleRxForm();}; }
+      var labBtn=document.getElementById('lab-btn');
+      if(labBtn) labBtn.style.display='';
     }
   } else if(isRecep){
     if(histSection) histSection.style.display='none';
@@ -5551,7 +5558,7 @@ function printSavedRx(rx){
       <button class="btn-outline" onclick="closePopup()">Close</button>
       <button class="btn-filled" id="write-notes-btn" onclick="toggleNotesForm()">Write Notes</button>
       <button class="btn-filled" id="rx-btn" onclick="toggleRxForm()" style="background:linear-gradient(135deg,#1565C0,#1976D2)">Prescription</button>
-      <button class="btn-filled" id="lab-btn" onclick="toggleLabForm()" style="background:linear-gradient(135deg,#059669,#10B981)">🧪 Lab Test</button>
+      <button class="btn-filled" id="lab-btn" onclick="toggleLabForm()" style="background:linear-gradient(135deg,#059669,#10B981);display:none">🧪 Lab Test</button>
     </div>
   </div>
 </div>
