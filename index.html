@@ -639,33 +639,42 @@ function renderStaffTable(accounts){
   var list=document.getElementById('staff-list');
   if(!list) return;
   if(!accounts.length){list.innerHTML='<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px">No staff added yet.</div>';return;}
-  var html='<table style="width:100%;border-collapse:collapse">';
-  html+='<thead><tr style="border-bottom:2px solid var(--border)">';
-  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Name</th>';
-  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Role</th>';
-  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Username</th>';
-  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Linked Doctor</th>';
-  html+='<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px">Clinic</th>';
-  html+='<th style="padding:8px 12px"></th>';
-  html+='</tr></thead><tbody>';
+
+  // Group by clinic
+  var clinics={};
   accounts.forEach(function(a){
-    var roleColor=a.role==='doctor'?'#2563A8':a.role==='clinicadmin'?'#7C3AED':'#E65100';
-    var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='clinicadmin'?'#F5F3FF':'#FEF3C7';
-    html+='<tr style="border-bottom:1px solid var(--border)">';
-    html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
-    html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
-    html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>';
-    var docLinked=a.role==='receptionist'&&a.doctorId&&accounts.some(function(x){return x.role==='doctor'&&x.username===a.doctorId;});
-    var linkColor=a.role!=='receptionist'?'#9CA3AF':docLinked?'#059669':'#EF4444';
-    var linkText=a.role==='receptionist'?(a.doctorId?(docLinked?a.doctorId:a.doctorId+' (not found)'):'Not linked'):'-';
-    html+='<td style="padding:10px 12px;font-size:13px;color:'+linkColor+';font-weight:'+(docLinked?'600':'400')+'">'+linkText+'</td>';
-    html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.clinicName||'-')+'</td>';
-    html+='<td style="padding:10px 12px;text-align:right;white-space:nowrap">';
-    html+='<button data-id="'+a.id+'" onclick="editStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">Edit</button>';
-    html+='<button data-id="'+a.id+'" onclick="deleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>';
-    html+='</td></tr>';
+    var cn=a.clinicName||a.cabinetName||'No Clinic';
+    if(!clinics[cn]) clinics[cn]=[];
+    clinics[cn].push(a);
   });
-  html+='</tbody></table>';
+
+  var html='';
+  Object.keys(clinics).forEach(function(cn){
+    var staff=clinics[cn];
+    html+='<div style="margin-bottom:20px">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:#F0F4F8;border-radius:8px;border-left:3px solid #7C3AED">'+
+        '<span style="font-size:13px;font-weight:700;color:#0D1117">🏥 '+cn+'</span>'+
+        '<span style="font-size:11px;color:#9CA3AF;margin-left:auto">'+staff.length+' staff</span>'+
+      '</div>'+
+      '<table style="width:100%;border-collapse:collapse">';
+    staff.forEach(function(a){
+      var roleColor=a.role==='doctor'?'#2563A8':a.role==='clinicadmin'?'#7C3AED':'#E65100';
+      var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='clinicadmin'?'#F5F3FF':'#FEF3C7';
+      var docLinked=a.role==='receptionist'&&a.doctorId&&accounts.some(function(x){return x.role==='doctor'&&x.username===a.doctorId;});
+      var linkColor=a.role!=='receptionist'?'#9CA3AF':docLinked?'#059669':'#EF4444';
+      var linkText=a.role==='receptionist'?(a.doctorId?(docLinked?a.doctorId:a.doctorId+' (not found)'):'Not linked'):'-';
+      html+='<tr style="border-bottom:1px solid var(--border)">';
+      html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
+      html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
+      html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>';
+      html+='<td style="padding:10px 12px;font-size:13px;color:'+linkColor+';font-weight:'+(docLinked?'600':'400')+'">'+linkText+'</td>';
+      html+='<td style="padding:10px 12px;text-align:right;white-space:nowrap">';
+      html+='<button data-id="'+a.id+'" onclick="editStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">Edit</button>';
+      html+='<button data-id="'+a.id+'" onclick="deleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>';
+      html+='</td></tr>';
+    });
+    html+='</table></div>';
+  });
   list.innerHTML=html;
 }
 
