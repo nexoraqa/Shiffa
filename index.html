@@ -2225,7 +2225,7 @@ function showDashboard(user){
   if(av){var initials=(user.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();av.textContent=initials;}
   buildNav(user);
   applyLang();
-  goPage('dashboard');
+  goPage(user.role==='labtech'?'lab-orders':'dashboard');
 }
 
 function buildNav(user){
