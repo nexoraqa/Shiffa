@@ -1354,7 +1354,10 @@ function caRenderStaff(staff){
       '<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>'+
       '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>'+
       '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.role==='receptionist'?(a.doctorId||'—'):a.specialty||'—')+'</td>'+
-      '<td style="padding:10px 12px;text-align:right"><button data-id="'+a.id+'" onclick="caDeleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button></td>'+
+      '<td style="padding:10px 12px;text-align:right;white-space:nowrap">'+
+      '<button data-id="'+a.id+'" onclick="caEditStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">Edit</button>'+
+      '<button data-id="'+a.id+'" onclick="caDeleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>'+
+      '</td>'+
     '</tr>';
   });
   html+='</tbody></table>';
@@ -1417,6 +1420,65 @@ function caAddReceptionist(){
       caLoadStaff();
     } else {err.textContent='Could not save.';err.style.color='#EF4444';err.style.display='block';}
   });
+}
+
+function caEditStaff(id){
+  var a=(window._caAllStaff||[]).find(function(x){return x.id===id;});
+  if(!a) return;
+  var isDoc=a.role==='doctor';
+  var overlay=document.createElement('div');
+  overlay.id='ca-edit-overlay';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+  overlay.innerHTML=
+    '<div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:100%;box-sizing:border-box">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
+      '<h3 style="font-size:16px;font-weight:700;color:#0D1117">Edit '+(isDoc?'Doctor':'Receptionist')+'</h3>'+
+      '<button onclick="document.getElementById(\'ca-edit-overlay\').remove()" style="background:#F0F4F8;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:#4B5563">Cancel</button>'+
+    '</div>'+
+    '<input type="text" id="ca-edit-name" value="'+a.name+'" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+    (isDoc?
+      '<input type="text" id="ca-edit-specialty" value="'+(a.specialty||'')+'" placeholder="Specialty" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+      '<input type="text" id="ca-edit-city" value="'+(a.city||'')+'" placeholder="City" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'
+    :
+      '<input type="text" id="ca-edit-docid" value="'+(a.doctorId||'')+'" placeholder="Doctor username *" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'
+    )+
+    '<input type="password" id="ca-edit-pass" placeholder="New password (leave blank to keep)" style="width:100%;padding:10px 12px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;margin-bottom:14px;box-sizing:border-box"/>'+
+    '<div id="ca-edit-err" style="display:none;font-size:12px;margin-bottom:8px"></div>'+
+    '<button id="ca-edit-btn" onclick="caSaveEdit(&quot;'+id+'&quot;,&quot;'+a.role+'&quot;)" style="width:100%;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Save Changes</button>'+
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+function caSaveEdit(id,role){
+  var name=document.getElementById('ca-edit-name').value.trim();
+  var pass=document.getElementById('ca-edit-pass').value;
+  var err=document.getElementById('ca-edit-err');
+  var btn=document.getElementById('ca-edit-btn');
+  if(!name){err.textContent='Name is required.';err.style.color='#EF4444';err.style.display='block';return;}
+  var current=(window._caAllStaff||[]).find(function(x){return x.id===id;})||{};
+  var data=Object.assign({},current,{name:name});
+  if(role==='doctor'){
+    var sp=document.getElementById('ca-edit-specialty');
+    var cy=document.getElementById('ca-edit-city');
+    if(sp) data.specialty=sp.value.trim();
+    if(cy) data.city=cy.value.trim();
+  } else {
+    var did=document.getElementById('ca-edit-docid');
+    if(did) data.doctorId=did.value.trim().toLowerCase();
+  }
+  if(pass) data.password=pass;
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+  if(window.fbDeleteAccount&&window.fbSaveAccount){
+    window.fbDeleteAccount(id).then(function(){
+      return window.fbSaveAccount(data);
+    }).then(function(){
+      document.getElementById('ca-edit-overlay').remove();
+      caLoadStaff();
+    }).catch(function(){
+      if(btn){btn.textContent='Save Changes';btn.disabled=false;}
+      if(err){err.textContent='Error saving.';err.style.color='#EF4444';err.style.display='block';}
+    });
+  }
 }
 
 function caDeleteStaff(id){
