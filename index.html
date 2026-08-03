@@ -1595,21 +1595,35 @@ function loadLabTestOptions(){
   });
 }
 
+function deleteLabOrder(id){
+  if(!window.fbDeleteLabTest) return; // reuse delete function concept
+  if(!confirm('Remove this lab order?')) return;
+  if(window.fbUpdateLabOrder){
+    // Mark as cancelled instead of deleting
+    window.fbUpdateLabOrder(id,{status:'cancelled'}).then(function(){
+      loadPatientLabOrders();
+    });
+  }
+}
+
 function loadPatientLabOrders(){
   var section=document.getElementById('lab-results-section');
   if(!section||!window.fbGetLabOrders) return;
   var patientPhone=document.getElementById('popup-raw-phone')?document.getElementById('popup-raw-phone').value:(document.getElementById('popup-phone')?document.getElementById('popup-phone').textContent:'');
   if(!patientPhone) return;
-  window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){
+  window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){window._labOrders=orders;
     var patOrders=orders.filter(function(o){return o.patientPhone===patientPhone;});
     if(!patOrders.length){section.innerHTML='';return;}
     var html='<div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:8px">Previous Orders:</div>';
     patOrders.forEach(function(o){
       html+=
         '<div style="background:#fff;border-radius:8px;padding:10px;margin-bottom:6px;border:1px solid #D1FAE5">'+
-          '<div style="display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'+
             '<span style="font-size:13px;font-weight:700;color:#0D1117">🧪 '+o.testType+'</span>'+
-            '<span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;background:'+(o.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(o.status==='done'?'#059669':'#D97706')+'">'+o.status+'</span>'+
+            '<div style="display:flex;align-items:center;gap:6px">'+
+              '<span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;background:'+(o.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(o.status==='done'?'#059669':'#D97706')+'">'+o.status+'</span>'+
+              '<button data-oid="'+o.id+'" onclick="deleteLabOrder(this.getAttribute(\'data-oid\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer">✕</button>'+
+            '</div>'+
           '</div>'+
           (o.result?'<div style="font-size:12px;color:#4B5563;margin-top:6px;padding:6px;background:#F0FDF4;border-radius:6px">Result: '+o.result+'</div>':'')+
           '<div style="font-size:11px;color:#9CA3AF;margin-top:4px">'+(o.date||'')+'</div>'+
@@ -1624,6 +1638,14 @@ function submitLabOrder(){
   var notes=document.getElementById('lab-notes');
   var err=document.getElementById('lab-order-err');
   if(!select||!select.value){err.textContent='Please select a test type.';err.style.color='#EF4444';err.style.display='block';return;}
+  // Check for duplicate pending order
+  var patientPhone2=document.getElementById('popup-raw-phone')?document.getElementById('popup-raw-phone').value:'';
+  if(window._labOrders){
+    var duplicate=window._labOrders.find(function(o){
+      return o.patientPhone===patientPhone2&&o.testType===select.value&&o.status==='pending';
+    });
+    if(duplicate){err.textContent='This test is already ordered and pending for this patient.';err.style.color='#EF4444';err.style.display='block';return;}
+  }
   // Get patient info from popup
   var patientName=document.getElementById('popup-name')?document.getElementById('popup-name').textContent:'';
   var patientPhone=document.getElementById('popup-raw-phone')?document.getElementById('popup-raw-phone').value:(document.getElementById('popup-phone')?document.getElementById('popup-phone').textContent:'');
