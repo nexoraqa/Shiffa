@@ -1320,6 +1320,112 @@ function showAdminsPopup(){
   });
 }
 
+// ── Clinic Admin Staff Management ──
+function caLoadStaff(){
+  var list=document.getElementById('ca-staff-list');
+  if(!list||!window.fbGetAccounts) return;
+  var clinicName=window._caClinicName||'';
+  window.fbGetAccounts().then(function(accounts){
+    window._caAllStaff=accounts.filter(function(a){
+      return (a.role==='doctor'||a.role==='receptionist')&&
+             (a.clinicName===clinicName||a.cabinetName===clinicName);
+    });
+    caRenderStaff(window._caAllStaff);
+  });
+}
+
+function caRenderStaff(staff){
+  var list=document.getElementById('ca-staff-list');
+  if(!list) return;
+  if(!staff.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No staff yet.</div>';return;}
+  var html='<table style="width:100%;border-collapse:collapse">';
+  html+='<thead><tr style="border-bottom:2px solid var(--border)">'+
+    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th>'+
+    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Role</th>'+
+    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Username</th>'+
+    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Linked</th>'+
+    '<th style="padding:8px 12px"></th>'+
+  '</tr></thead><tbody>';
+  staff.forEach(function(a){
+    var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
+    var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
+    html+='<tr style="border-bottom:1px solid var(--border)">'+
+      '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>'+
+      '<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>'+
+      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.role==='receptionist'?(a.doctorId||'—'):a.specialty||'—')+'</td>'+
+      '<td style="padding:10px 12px;text-align:right"><button data-id="'+a.id+'" onclick="caDeleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button></td>'+
+    '</tr>';
+  });
+  html+='</tbody></table>';
+  list.innerHTML=html;
+}
+
+function caFilterStaff(q){
+  var filtered=(window._caAllStaff||[]).filter(function(a){
+    return !q||(a.name+' '+a.username).toLowerCase().includes(q.toLowerCase());
+  });
+  caRenderStaff(filtered);
+}
+
+function caAddDoctor(){
+  var name=document.getElementById('ca-doc-name').value.trim();
+  var specialty=document.getElementById('ca-doc-specialty').value.trim();
+  var city=document.getElementById('ca-doc-city').value.trim();
+  var username=document.getElementById('ca-doc-user').value.trim().toLowerCase();
+  var password=document.getElementById('ca-doc-pass').value;
+  var err=document.getElementById('ca-doc-err');
+  var clinicName=window._caClinicName||'';
+  if(!name||!username||!password){err.textContent='Please fill all required fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  err.style.display='none';
+  var data={role:'doctor',name:name,specialty:specialty||'General Practice',city:city||'',
+    clinicName:clinicName,cabinetName:clinicName,username:username,password:password,doctorId:username,avatar:'👨‍⚕️'};
+  if(!window.fbSaveAccount){err.textContent='Firebase not ready.';err.style.color='#EF4444';err.style.display='block';return;}
+  var btn=document.querySelector('[onclick="caAddDoctor()"]');
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+  window.fbSaveAccount(data).then(function(id){
+    if(btn){btn.textContent='Add Doctor';btn.disabled=false;}
+    if(id){
+      ['ca-doc-name','ca-doc-specialty','ca-doc-city','ca-doc-user','ca-doc-pass'].forEach(function(fid){var el=document.getElementById(fid);if(el)el.value='';});
+      err.textContent='Doctor added!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';},3000);
+      caLoadStaff();
+    } else {err.textContent='Could not save.';err.style.color='#EF4444';err.style.display='block';}
+  });
+}
+
+function caAddReceptionist(){
+  var name=document.getElementById('ca-rec-name').value.trim();
+  var docId=document.getElementById('ca-rec-docid').value.trim().toLowerCase();
+  var username=document.getElementById('ca-rec-user').value.trim().toLowerCase();
+  var password=document.getElementById('ca-rec-pass').value;
+  var err=document.getElementById('ca-rec-err');
+  var clinicName=window._caClinicName||'';
+  if(!name||!username||!password||!docId){err.textContent='Please fill all required fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  err.style.display='none';
+  var data={role:'receptionist',name:name,clinicName:clinicName,cabinetName:clinicName,
+    username:username,password:password,doctorId:docId,avatar:'🧑‍💼'};
+  if(!window.fbSaveAccount){err.textContent='Firebase not ready.';err.style.color='#EF4444';err.style.display='block';return;}
+  var btn=document.querySelector('[onclick="caAddReceptionist()"]');
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+  window.fbSaveAccount(data).then(function(id){
+    if(btn){btn.textContent='Add Receptionist';btn.disabled=false;}
+    if(id){
+      ['ca-rec-name','ca-rec-docid','ca-rec-user','ca-rec-pass'].forEach(function(fid){var el=document.getElementById(fid);if(el)el.value='';});
+      err.textContent='Receptionist added!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';},3000);
+      caLoadStaff();
+    } else {err.textContent='Could not save.';err.style.color='#EF4444';err.style.display='block';}
+  });
+}
+
+function caDeleteStaff(id){
+  if(!confirm('Remove this staff member?')) return;
+  if(window.fbDeleteAccount){
+    window.fbDeleteAccount(id).then(function(){caLoadStaff();});
+  }
+}
+
 function saChangePassword(){
   var newPass=document.getElementById('sa-new-pass').value;
   var confirm=document.getElementById('sa-confirm-pass').value;
@@ -1592,7 +1698,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser
 // ═══════════════
 var NAV={
   superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','sa-profile']],
-  clinicadmin: [['📊 Overview','dashboard'],['👨‍⚕️ Doctors','doctors'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
+  clinicadmin: [['📊 Overview','dashboard'],['👥 Staff','ca-staff'],['👤 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
   doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
   receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule'],['👤 Profile','profile']]
 };
@@ -2011,6 +2117,56 @@ function loadPage(page){
           '<button onclick="recChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
         '</div>'+
       '</div>';
+    return;
+  }
+
+  // ── CLINIC ADMIN STAFF PAGE ──
+  if(page==='ca-staff' && u.role==='clinicadmin'){
+    var clinicName=u.clinicName||u.cabinetName||'';
+    mc.innerHTML=
+      '<h2 style="margin-bottom:4px">Staff Management</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Manage doctors and receptionists in '+clinicName+'</p>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">'+
+        // Add Doctor form
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'+
+            '<div style="width:32px;height:32px;background:#EEF2FF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">👨‍⚕️</div>'+
+            '<div style="font-size:14px;font-weight:700;color:#0D1117">Add Doctor</div>'+
+          '</div>'+
+          '<input type="text" id="ca-doc-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="ca-doc-specialty" placeholder="Specialty" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="ca-doc-city" placeholder="City" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="ca-doc-user" placeholder="Username (e.g. dr.smith)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="ca-doc-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="ca-doc-err" style="display:none;font-size:12px;margin-bottom:8px"></div>'+
+          '<button onclick="caAddDoctor()" style="width:100%;padding:11px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Doctor</button>'+
+        '</div>'+
+        // Add Receptionist form
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'+
+            '<div style="width:32px;height:32px;background:#FEF3C7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🧑‍💼</div>'+
+            '<div style="font-size:14px;font-weight:700;color:#0D1117">Add Receptionist</div>'+
+          '</div>'+
+          '<input type="text" id="ca-rec-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="ca-rec-docid" placeholder="Doctor username *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="ca-rec-user" placeholder="Username (e.g. sara.recep)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="ca-rec-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="ca-rec-err" style="display:none;font-size:12px;margin-bottom:8px"></div>'+
+          '<button onclick="caAddReceptionist()" style="width:100%;padding:11px;background:linear-gradient(135deg,#D97706,#F59E0B);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Receptionist</button>'+
+        '</div>'+
+      '</div>'+
+      // Staff list
+      '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px">'+
+          '<div style="font-size:14px;font-weight:700;color:#0D1117">Current Staff</div>'+
+          '<input type="text" onkeyup="caFilterStaff(this.value)" placeholder="Search..." style="flex:1;max-width:200px;padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/>'+
+          '<button onclick="caLoadStaff()" style="font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--mid)">Refresh</button>'+
+        '</div>'+
+        '<div id="ca-staff-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
+      '</div>';
+    window._caClinicName=clinicName;
+    window._caAllStaff=[];
+    caLoadStaff();
     return;
   }
 
