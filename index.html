@@ -1715,6 +1715,16 @@ function loadLabOrders(filter){
   var clinicName=window._ltClinicName||'';
   window.fbGetLabOrders(null).then(function(orders){
     // Filter by clinic and status
+    var today=new Date().toISOString().split('T')[0];
+    var allClinic=orders.filter(function(o){return o.clinicName===clinicName&&o.status!=='cancelled';});
+    var todayOrders=allClinic.filter(function(o){return o.date===today;});
+    // Update stats
+    var pendCount=document.getElementById('lt-count-pending');
+    var doneCount=document.getElementById('lt-count-done');
+    var totCount=document.getElementById('lt-count-total');
+    if(pendCount) pendCount.textContent=todayOrders.filter(function(o){return o.status==='pending';}).length;
+    if(doneCount) doneCount.textContent=todayOrders.filter(function(o){return o.status==='done';}).length;
+    if(totCount) totCount.textContent=todayOrders.length;
     var filtered=orders.filter(function(o){
       if(o.clinicName!==clinicName) return false;
       if(filter==='pending') return o.status==='pending';
@@ -3509,15 +3519,56 @@ function loadPage(page){
   // ── LAB TECH PAGES ──
   if(page==='lab-orders' && u.role==='labtech'){
     var clinicName=u.clinicName||u.cabinetName||'';
+    var now4=new Date();
+    var hour4=now4.getHours();
+    var greet4=hour4<12?'Good morning':'Good afternoon';
     mc.innerHTML=
-      '<h2 style="margin-bottom:4px">🧪 Lab Orders</h2>'+
-      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">'+clinicName+' — Pending orders</p>'+
-      '<div style="display:flex;gap:8px;margin-bottom:16px">'+
-        '<button id="lt-btn-pending" onclick="loadLabOrders(&quot;pending&quot;)" style="padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Pending</button>'+
-        '<button id="lt-btn-done" onclick="loadLabOrders(&quot;done&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">Completed</button>'+
-        '<button id="lt-btn-all" onclick="loadLabOrders(&quot;all&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">All</button>'+
+      // Header
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'+
+        '<div>'+
+          '<div style="font-size:12px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+greet4+'</div>'+
+          '<div style="font-size:20px;font-weight:900;color:#0D1117;letter-spacing:-0.5px">'+u.name+'</div>'+
+          '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">🧪 Lab Technician · '+clinicName+'</div>'+
+        '</div>'+
+        '<div style="background:linear-gradient(135deg,#0891B2,#06B6D4);border-radius:14px;padding:12px 16px;text-align:center">'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Today</div>'+
+          '<div id="lt-clock" style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>'+
+        '</div>'+
+      '</div>'+
+      // Stats row
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">'+
+        '<div style="background:#FEF3C7;border-radius:14px;padding:16px;border:1px solid #FDE68A">'+
+          '<div style="font-size:11px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Pending</div>'+
+          '<div id="lt-count-pending" style="font-size:32px;font-weight:900;color:#D97706;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div style="background:#ECFDF5;border-radius:14px;padding:16px;border:1px solid #6EE7B7">'+
+          '<div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">✅ Done Today</div>'+
+          '<div id="lt-count-done" style="font-size:32px;font-weight:900;color:#059669;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div style="background:#F0F9FF;border-radius:14px;padding:16px;border:1px solid #BAE6FD">'+
+          '<div style="font-size:11px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">📋 Total Today</div>'+
+          '<div id="lt-count-total" style="font-size:32px;font-weight:900;color:#0891B2;letter-spacing:-1px">—</div>'+
+        '</div>'+
+      '</div>'+
+      // Filter tabs
+      '<div style="display:flex;gap:6px;background:#F0F4F8;border-radius:10px;padding:4px;margin-bottom:16px">'+
+        '<button id="lt-btn-pending" onclick="loadLabOrders(&quot;pending&quot;)" style="flex:1;padding:8px;border-radius:8px;border:none;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;font-size:12px;font-weight:700;cursor:pointer">⏳ Pending</button>'+
+        '<button id="lt-btn-done" onclick="loadLabOrders(&quot;done&quot;)" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">✅ Completed</button>'+
+        '<button id="lt-btn-all" onclick="loadLabOrders(&quot;all&quot;)" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">📋 All</button>'+
       '</div>'+
       '<div id="lt-orders-list"><div style="text-align:center;padding:30px;color:#9CA3AF">Loading...</div></div>';
+
+    // Live clock
+    var ltClockInt=setInterval(function(){
+      var el=document.getElementById('lt-clock');
+      if(!el){clearInterval(ltClockInt);return;}
+      var n=new Date();
+      el.textContent=(n.getHours()<10?'0':'')+n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes();
+    },1000);
+    var n0=new Date();
+    var ltClockEl=document.getElementById('lt-clock');
+    if(ltClockEl) ltClockEl.textContent=(n0.getHours()<10?'0':'')+n0.getHours()+':'+(n0.getMinutes()<10?'0':'')+n0.getMinutes();
+
     window._ltClinicName=clinicName;
     loadLabOrders('pending');
     return;
