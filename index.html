@@ -1530,29 +1530,44 @@ function loadReports(period){
         if(!docDiv) return;
         if(!myDoctors.length){docDiv.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF">No doctors in this clinic.</div>';return;}
 
-        var html='<table style="width:100%;border-collapse:collapse">';
-        html+='<thead><tr style="border-bottom:2px solid var(--border)">'+
-          '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Doctor</th>'+
-          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Total</th>'+
-          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">New</th>'+
-          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Follow-up</th>'+
-          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Done</th>'+
-          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Appts</th>'+
-        '</tr></thead><tbody>';
+        // Update period label
+        var plabel=document.getElementById('rep-period-label');
+        if(plabel) plabel.textContent=period==='today'?'Today':period==='week'?'This Week':'This Month';
 
+        var html='';
         myDoctors.forEach(function(doc){
           var dPts=pts.filter(function(p){return p.doctor===doc.username;});
           var dAppts=filteredAppts.filter(function(a){return a.doctorId===doc.username;});
-          html+='<tr style="border-bottom:1px solid var(--border)">'+
-            '<td style="padding:12px;font-size:13px;font-weight:700;color:#0D1117">'+doc.name+'<div style="font-size:11px;color:#9CA3AF;font-weight:400">'+(doc.specialty||'')+'</div></td>'+
-            '<td style="padding:12px;text-align:center;font-size:15px;font-weight:800;color:#0D1117">'+dPts.length+'</td>'+
-            '<td style="padding:12px;text-align:center;font-size:13px;color:#059669;font-weight:600">'+dPts.filter(function(p){return p.visitType==='new';}).length+'</td>'+
-            '<td style="padding:12px;text-align:center;font-size:13px;color:#2563A8;font-weight:600">'+dPts.filter(function(p){return p.visitType==='follow_up';}).length+'</td>'+
-            '<td style="padding:12px;text-align:center;font-size:13px;color:#059669;font-weight:600">'+dPts.filter(function(p){return p.status==='done';}).length+'</td>'+
-            '<td style="padding:12px;text-align:center;font-size:13px;color:#7C3AED;font-weight:600">'+dAppts.length+'</td>'+
-          '</tr>';
+          var dNew=dPts.filter(function(p){return p.visitType==='new';}).length;
+          var dFu=dPts.filter(function(p){return p.visitType==='follow_up';}).length;
+          var dDone=dPts.filter(function(p){return p.status==='done';}).length;
+          var pct=dPts.length?Math.round(dDone/dPts.length*100):0;
+          html+=
+            '<div style="padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s" >'+
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+                '<div>'+
+                  '<div style="font-size:14px;font-weight:700;color:#0D1117">'+doc.name+'</div>'+
+                  '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+(doc.specialty||'General Practice')+'</div>'+
+                '</div>'+
+                '<div style="text-align:right">'+
+                  '<div style="font-size:22px;font-weight:800;color:#0D1117">'+dPts.length+'</div>'+
+                  '<div style="font-size:10px;color:#9CA3AF">patients</div>'+
+                '</div>'+
+              '</div>'+
+              // Progress bar
+              '<div style="background:#F0F4F8;border-radius:4px;height:6px;margin-bottom:10px">'+
+                '<div style="background:linear-gradient(90deg,#059669,#10B981);height:6px;border-radius:4px;width:'+pct+'%;transition:width 0.5s"></div>'+
+              '</div>'+
+              // Mini stats
+              '<div style="display:flex;gap:12px">'+
+                '<span style="font-size:11px;font-weight:600;color:#059669">🆕 '+dNew+' New</span>'+
+                '<span style="font-size:11px;font-weight:600;color:#2563A8">🔄 '+dFu+' Follow-up</span>'+
+                '<span style="font-size:11px;font-weight:600;color:#059669">✅ '+dDone+' Done</span>'+
+                '<span style="font-size:11px;font-weight:600;color:#7C3AED">📅 '+dAppts.length+' Appts</span>'+
+              '</div>'+
+            '</div>';
         });
-        html+='</tbody></table>';
+        if(!html) html='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">No data for this period.</div>';
         docDiv.innerHTML=html;
       });
     });
@@ -2274,32 +2289,58 @@ function loadPage(page){
 
   if(page==='reports' && u.role==='clinicadmin'){
     var clinicName=u.clinicName||u.cabinetName||'My Clinic';
-    var todayStr=new Date().toISOString().split('T')[0];
     mc.innerHTML=
-      '<h2 style="margin-bottom:4px">Reports</h2>'+
-      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:16px">'+clinicName+'</p>'+
-      // Date filter buttons
-      '<div style="display:flex;gap:8px;margin-bottom:20px">'+
-        '<button id="rep-btn-today" onclick="loadReports(&quot;today&quot;)" style="padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Today</button>'+
-        '<button id="rep-btn-week" onclick="loadReports(&quot;week&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#4B5563;font-size:12px;font-weight:700;cursor:pointer">This Week</button>'+
-        '<button id="rep-btn-month" onclick="loadReports(&quot;month&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#4B5563;font-size:12px;font-weight:700;cursor:pointer">This Month</button>'+
+      // Header
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'+
+        '<div>'+
+          '<h2 style="font-size:20px;font-weight:800;color:#0D1117;margin-bottom:2px">Reports</h2>'+
+          '<div style="font-size:13px;color:#9CA3AF">'+clinicName+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;background:#F0F4F8;border-radius:10px;padding:4px">'+
+          '<button id="rep-btn-today" onclick="loadReports(&quot;today&quot;)" style="padding:7px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Today</button>'+
+          '<button id="rep-btn-week" onclick="loadReports(&quot;week&quot;)" style="padding:7px 16px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">Week</button>'+
+          '<button id="rep-btn-month" onclick="loadReports(&quot;month&quot;)" style="padding:7px 16px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">Month</button>'+
+        '</div>'+
       '</div>'+
-      // Stats cards
-      '<div class="stats-grid" style="margin-bottom:20px">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="rep-total">—</div><div class="stat-lbl">Total Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🆕</div><div><div class="stat-val" id="rep-new">—</div><div class="stat-lbl">New</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">🔄</div><div><div class="stat-val" id="rep-fu">—</div><div class="stat-lbl">Follow-ups</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#05966920">✅</div><div><div class="stat-val" id="rep-done">—</div><div class="stat-lbl">Completed</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#EF444420">📅</div><div><div class="stat-val" id="rep-appts">—</div><div class="stat-lbl">Appointments</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">🚶</div><div><div class="stat-val" id="rep-walkins">—</div><div class="stat-lbl">Walk-ins</div></div></div>'+
+      // Big summary banner
+      '<div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;gap:0">'+
+        '<div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.1);padding:0 16px">'+
+          '<div id="rep-total" style="font-size:40px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">Total</div>'+
+        '</div>'+
+        '<div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.1);padding:0 16px">'+
+          '<div id="rep-done" style="font-size:40px;font-weight:900;color:#10B981;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">Done</div>'+
+        '</div>'+
+        '<div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.1);padding:0 16px">'+
+          '<div id="rep-appts" style="font-size:40px;font-weight:900;color:#F59E0B;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">Appts</div>'+
+        '</div>'+
+        '<div style="flex:1;text-align:center;padding:0 16px">'+
+          '<div id="rep-walkins" style="font-size:40px;font-weight:900;color:#60A5FA;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">Walk-ins</div>'+
+        '</div>'+
       '</div>'+
-      // Per doctor breakdown
-      '<div class="table-card">'+
-        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Per Doctor</h3>'+
-        '<div id="rep-doctors"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
+      // Small stat pills
+      '<div style="display:flex;gap:10px;margin-bottom:20px">'+
+        '<div style="flex:1;background:#ECFDF5;border-radius:12px;padding:14px 16px;border:1px solid #6EE7B730">'+
+          '<div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">New Patients</div>'+
+          '<div id="rep-new" style="font-size:24px;font-weight:800;color:#065F46">—</div>'+
+        '</div>'+
+        '<div style="flex:1;background:#EEF2FF;border-radius:12px;padding:14px 16px;border:1px solid #A5B4FC30">'+
+          '<div style="font-size:11px;font-weight:700;color:#2563A8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Follow-ups</div>'+
+          '<div id="rep-fu" style="font-size:24px;font-weight:800;color:#1E40AF">—</div>'+
+        '</div>'+
+      '</div>'+
+      // Per doctor
+      '<div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)">'+
+        '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
+          '<div style="font-size:14px;font-weight:700;color:#0D1117">Doctors</div>'+
+          '<div id="rep-period-label" style="font-size:12px;color:#9CA3AF">Today</div>'+
+        '</div>'+
+        '<div id="rep-doctors"><div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
       '</div>';
 
-    // Store clinic info for loadReports
     window._repClinicName=clinicName;
     window._repUser=u;
     loadReports('today');
