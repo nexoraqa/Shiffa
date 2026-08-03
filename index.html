@@ -3070,14 +3070,25 @@ function loadPage(page){
         '</div>'+
       '</div>';
 
-    // Load real data
+    // Load real data — combine patients and appointments
     if(window.fbGetPatients){
-      window.fbGetPatients(todayStr).then(function(pts){
-        pts = pts.filter(function(p){ return p.doctor===u.doctorId; });
-        var total=pts.length;
-        var waiting=pts.filter(function(p){return p.status==='waiting';}).length;
-        var inprog=pts.filter(function(p){return p.status==='inprogress';}).length;
-        var done=pts.filter(function(p){return p.status==='done';}).length;
+      var dayNames2=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var todayDay2=dayNames2[new Date().getDay()];
+      var apptP2=window.fbGetAppointments?window.fbGetAppointments(u.doctorId,null).catch(function(){return[];}):Promise.resolve([]);
+      Promise.all([window.fbGetPatients(todayStr),apptP2]).then(function(results){
+        var rawPts=results[0]||[];
+        var rawAppts=results[1]||[];
+        var pts=rawPts.filter(function(p){return p.doctor===u.doctorId&&p.status!=='scheduled';});
+        var todayAppts=rawAppts.filter(function(a){return a.day===todayDay2&&a.status!=='cancelled';});
+        // Merge for counting
+        var apptCounts=todayAppts.reduce(function(acc,a){
+          var s=a.status==='inprogress'?'inprogress':a.status==='done'?'done':'waiting';
+          acc[s]=(acc[s]||0)+1; return acc;
+        },{});
+        var total=pts.length+todayAppts.length;
+        var waiting=pts.filter(function(p){return p.status==='waiting';}).length+(apptCounts.waiting||0);
+        var inprog=pts.filter(function(p){return p.status==='inprogress';}).length+(apptCounts.inprogress||0);
+        var done=pts.filter(function(p){return p.status==='done';}).length+(apptCounts.done||0);
         var newP=pts.filter(function(p){return p.visitType==='new';}).length;
 
         // Update big numbers
@@ -3243,12 +3254,23 @@ function loadPage(page){
       '</div>';
 
     if(window.fbGetPatients){
-      window.fbGetPatients(rTodayStr).then(function(pts){
-        if(u.doctorId) pts=pts.filter(function(p){return p.doctor===u.doctorId;});
-        var total=pts.length;
-        var waiting=pts.filter(function(p){return p.status==='waiting';}).length;
-        var inprog=pts.filter(function(p){return p.status==='inprogress';}).length;
-        var done=pts.filter(function(p){return p.status==='done';}).length;
+      var dayNames3=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var todayDay3=dayNames3[new Date().getDay()];
+      var apptP3=window.fbGetAppointments&&u.doctorId?window.fbGetAppointments(u.doctorId,null).catch(function(){return[];}):Promise.resolve([]);
+      Promise.all([window.fbGetPatients(rTodayStr),apptP3]).then(function(results){
+        var rawPts2=results[0]||[];
+        var rawAppts3=results[1]||[];
+        if(u.doctorId) rawPts2=rawPts2.filter(function(p){return p.doctor===u.doctorId;});
+        var pts=rawPts2.filter(function(p){return p.status!=='scheduled';});
+        var todayAppts3=rawAppts3.filter(function(a){return a.day===todayDay3&&a.status!=='cancelled';});
+        var apptC3=todayAppts3.reduce(function(acc,a){
+          var s=a.status==='inprogress'?'inprogress':a.status==='done'?'done':'waiting';
+          acc[s]=(acc[s]||0)+1; return acc;
+        },{});
+        var total=pts.length+todayAppts3.length;
+        var waiting=pts.filter(function(p){return p.status==='waiting';}).length+(apptC3.waiting||0);
+        var inprog=pts.filter(function(p){return p.status==='inprogress';}).length+(apptC3.inprogress||0);
+        var done=pts.filter(function(p){return p.status==='done';}).length+(apptC3.done||0);
         var newP=pts.filter(function(p){return p.visitType==='new';}).length;
         var emerg=pts.filter(function(p){return p.priority==='emergency';}).length;
         var el=function(id){return document.getElementById(id);};
