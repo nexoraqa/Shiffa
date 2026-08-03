@@ -20,11 +20,11 @@
   --card-radius:14px;--shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04);
 }
 body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smoothing:antialiased}
-#login-page{min-height:100vh;background:linear-gradient(160deg,#0D2440 0%,#1A3A5C 50%,#2563A8 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.logo-circle{width:76px;height:76px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto 14px;border:2px solid rgba(255,255,255,0.3)}
-.logo-title{color:#fff;font-size:36px;font-weight:900;letter-spacing:-1px;text-align:center}
-.logo-sub{color:rgba(255,255,255,0.7);font-size:14px;margin-top:4px;margin-bottom:28px;text-align:center}
-.login-card{background:#fff;border-radius:20px;padding:32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+#login-page{min-height:100vh;background:linear-gradient(160deg,#060D1A 0%,#0D2440 40%,#1A3A5C 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+.logo-circle{width:88px;height:88px;background:linear-gradient(135deg,rgba(255,255,255,0.2),rgba(255,255,255,0.05));border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto 16px;border:1.5px solid rgba(255,255,255,0.25);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.logo-title{color:#fff;font-size:42px;font-weight:900;letter-spacing:-2px;text-align:center;text-shadow:0 2px 20px rgba(0,0,0,0.3)}
+.logo-sub{color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;margin-bottom:36px;text-align:center;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+.login-card{background:#fff;border-radius:24px;padding:36px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,0.4)}
 .login-card h2{font-size:21px;font-weight:800;color:var(--dark);margin-bottom:4px}
 .login-card p{font-size:13px;color:var(--light);margin-bottom:22px}
 .field{margin-bottom:16px}
@@ -65,10 +65,10 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 /* ── Layout ── */
 .dash-layout{display:flex;flex:1;min-height:calc(100vh - 58px)}
 /* ── Dark sidebar ── */
-.sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);padding:20px 14px;display:flex;flex-direction:column;gap:2px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.05)}
-.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;border-radius:10px;background:transparent;color:rgba(255,255,255,0.5);font-weight:500;font-size:13px;cursor:pointer;text-align:left;width:100%;transition:all 0.2s;letter-spacing:0.1px}
-.nav-btn:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.9)}
-.nav-btn.active{background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(27,107,74,0.4)}
+.sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);padding:20px 14px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.04)}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:11px 14px;border:none;border-radius:12px;background:transparent;color:rgba(255,255,255,0.45);font-weight:500;font-size:13px;cursor:pointer;text-align:left;width:100%;transition:all 0.2s;letter-spacing:0.1px}
+.nav-btn:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.9)}
+.nav-btn.active{background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(27,107,74,0.5)}
 .nav-btn .mi{font-size:17px}
 .sidebar-footer{margin-top:auto;padding:12px;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.08)}
 .sidebar-footer-label{font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px}
@@ -81,22 +81,22 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 .w-title{font-size:22px;font-weight:800;margin-bottom:3px;letter-spacing:-0.3px}
 .w-sub{font-size:13px;opacity:.75}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
-.stat-card{background:#fff;border-radius:var(--card-radius);padding:18px 20px;border:1px solid var(--border);display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);transition:transform 0.15s}
-.stat-card:hover{transform:translateY(-1px)}
+.stat-card{background:#fff;border-radius:16px;padding:18px 20px;border:1px solid #EEF0F3;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);transition:all 0.2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.1)}
 .stat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px}
 .stat-val{font-size:26px;font-weight:800;color:var(--dark);letter-spacing:-0.5px}
 .stat-lbl{font-size:12px;color:var(--light);font-weight:500;margin-top:1px}
-.table-card{background:#fff;border-radius:var(--card-radius);border:1px solid var(--border);padding:22px;box-shadow:var(--shadow)}
+.table-card{background:#fff;border-radius:16px;border:1px solid #EEF0F3;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
 .table-card h3{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px;color:var(--light)}
 .table-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
 .table-row:last-child{border-bottom:none}
 .row-name{font-weight:600;font-size:14px;color:var(--dark)}
 .row-sub{font-size:12px;color:var(--light);margin-top:2px}
-.status-pill{border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700}
+.status-pill{border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:0.3px}
 .form-field{margin-bottom:16px}
 .form-label{display:block;font-size:13px;font-weight:600;color:var(--mid);margin-bottom:6px}
-.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--dark);outline:none;box-sizing:border-box;transition:border-color 0.2s,box-shadow 0.2s}
-.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,168,0.1)}
+.form-input{width:100%;padding:12px 14px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:14px;color:var(--dark);outline:none;box-sizing:border-box;transition:border-color 0.2s,box-shadow 0.2s;background:#FAFBFC}
+.form-input:focus{border-color:#2563A8;box-shadow:0 0 0 3px rgba(37,99,168,0.08);background:#fff}
 .form-select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--dark);outline:none;box-sizing:border-box;background:#fff;cursor:pointer}
 .form-textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--dark);outline:none;box-sizing:border-box;height:80px;resize:vertical}
 .toggle-group{display:flex;gap:8px}
@@ -108,9 +108,9 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .form-error{display:none;background:var(--red-l);border:1px solid var(--red);border-radius:10px;padding:10px 14px;color:var(--red);font-size:13px;font-weight:500;margin-bottom:12px}
 .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn-outline{padding:11px 20px;background:var(--green-xl);color:var(--green);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
-.btn-filled{padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,168,0.25);transition:all 0.2s}
-.btn-filled:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,99,168,0.35)}
+.btn-outline{padding:11px 20px;background:#F0FDF4;color:#059669;border:1.5px solid #D1FAE5;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-filled{padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,168,0.3);transition:all 0.2s}
+.btn-filled:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,168,0.4)}
 .queue-item{background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;transition:all 0.15s;animation:slideIn 0.25s ease-out;position:relative;overflow:hidden}
 .queue-item:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08);transform:translateY(-1px)}
 .queue-item:active{transform:scale(0.998)}
@@ -158,16 +158,16 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
   <!-- Choice screen -->
   <div id="login-choice" style="display:flex;gap:16px;width:100%;max-width:600px;flex-wrap:wrap;justify-content:center">
     <!-- Doctor/Nurse box -->
-    <div onclick="showLoginForm()" style="background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:20px;padding:32px 28px;flex:1;min-width:220px;max-width:270px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.15)';this.style.borderColor='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.2)'">
-      <div style="font-size:52px;margin-bottom:14px">👨‍⚕️</div>
-      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px">Doctor / Nurse</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5">Staff login<br>& clinic management</div>
+    <div onclick="showLoginForm()" style="background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:24px;padding:36px 28px;flex:1;min-width:220px;max-width:270px;text-align:center;cursor:pointer;transition:all 0.25s;backdrop-filter:blur(10px)" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.borderColor='rgba(255,255,255,0.4)';this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.15)';this.style.transform='none'">
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,#2563A8,#1A3A5C);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(37,99,168,0.4)">👨‍⚕️</div>
+      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.3px">Staff Login</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;font-weight:500">Doctors · Nurses<br>Admins · Lab Tech</div>
     </div>
     <!-- Patient box -->
-    <div onclick="showSelfBooking()" style="background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:20px;padding:32px 28px;flex:1;min-width:220px;max-width:270px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.15)';this.style.borderColor='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.2)'">
-      <div style="font-size:52px;margin-bottom:14px">🧑‍💻</div>
-      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px">Patient</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5">Book an appointment<br>No account needed</div>
+    <div onclick="showSelfBooking()" style="background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:24px;padding:36px 28px;flex:1;min-width:220px;max-width:270px;text-align:center;cursor:pointer;transition:all 0.25s;backdrop-filter:blur(10px)" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.borderColor='rgba(255,255,255,0.4)';this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.15)';this.style.transform='none'">
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,#059669,#047857);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(5,150,105,0.4)">🏥</div>
+      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.3px">Patient</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;font-weight:500">Book an appointment<br>No account needed</div>
     </div>
   </div>
 
