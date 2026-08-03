@@ -658,8 +658,8 @@ function renderStaffTable(accounts){
       '</div>'+
       '<table style="width:100%;border-collapse:collapse">';
     staff.forEach(function(a){
-      var roleColor=a.role==='doctor'?'#2563A8':a.role==='clinicadmin'?'#7C3AED':'#E65100';
-      var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='clinicadmin'?'#F5F3FF':'#FEF3C7';
+      var roleColor=a.role==='doctor'?'#2563A8':a.role==='clinicadmin'?'#7C3AED':a.role==='labtech'?'#0891B2':'#E65100';
+      var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='clinicadmin'?'#F5F3FF':a.role==='labtech'?'#ECFEFF':'#FEF3C7';
       var docLinked=a.role==='receptionist'&&a.doctorId&&accounts.some(function(x){return x.role==='doctor'&&x.username===a.doctorId;});
       var linkColor=a.role!=='receptionist'?'#9CA3AF':docLinked?'#059669':'#EF4444';
       var linkText=a.role==='receptionist'?(a.doctorId?(docLinked?a.doctorId:a.doctorId+' (not found)'):'Not linked'):'-';
@@ -1676,6 +1676,116 @@ function submitLabOrder(){
   });
 }
 
+function loadLabOrders(filter){
+  // Update buttons
+  ['pending','done','all'].forEach(function(f){
+    var btn=document.getElementById('lt-btn-'+f);
+    if(!btn) return;
+    if(f===filter){btn.style.background='linear-gradient(135deg,#0891B2,#06B6D4)';btn.style.color='#fff';btn.style.border='none';}
+    else{btn.style.background='#fff';btn.style.color='#9CA3AF';btn.style.border='1px solid #E5E9EF';}
+  });
+  var list=document.getElementById('lt-orders-list');
+  if(!list||!window.fbGetLabOrders) return;
+  list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF">Loading...</div>';
+  var clinicName=window._ltClinicName||'';
+  window.fbGetLabOrders(null).then(function(orders){
+    // Filter by clinic and status
+    var filtered=orders.filter(function(o){
+      if(o.clinicName!==clinicName) return false;
+      if(filter==='pending') return o.status==='pending';
+      if(filter==='done') return o.status==='done';
+      return o.status!=='cancelled';
+    });
+    if(!filtered.length){
+      list.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">No '+(filter==='all'?'':''+filter+' ')+'orders.</div>';
+      return;
+    }
+    var html='';
+    filtered.forEach(function(o){
+      html+=
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
+            '<div>'+
+              '<div style="font-size:15px;font-weight:800;color:#0D1117">'+o.patientName+'</div>'+
+              '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+(o.patientPhone||'')+' · '+(o.date||'')+'</div>'+
+            '</div>'+
+            '<span style="font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;background:'+(o.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(o.status==='done'?'#059669':'#D97706')+'">'+o.status+'</span>'+
+          '</div>'+
+          '<div style="background:#F0F9FF;border-radius:10px;padding:12px;margin-bottom:12px">'+
+            '<div style="font-size:11px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Test Ordered</div>'+
+            '<div style="font-size:15px;font-weight:700;color:#0D1117">🧪 '+o.testType+'</div>'+
+            (o.notes?'<div style="font-size:12px;color:#4B5563;margin-top:4px">Note: '+o.notes+'</div>':'')+
+          '</div>'+
+          (o.status==='pending'?
+            '<div>'+
+              '<textarea id="lt-result-'+o.id+'" placeholder="Enter test results here..." style="width:100%;padding:10px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;height:80px;resize:none;margin-bottom:8px;box-sizing:border-box"></textarea>'+
+              '<button data-oid="'+o.id+'" onclick="submitLabResult(this.getAttribute(\'data-oid\'))" style="width:100%;padding:11px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Submit Results</button>'+
+            '</div>'
+          :
+            '<div style="background:#ECFDF5;border-radius:10px;padding:12px">'+
+              '<div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:4px">Results</div>'+
+              '<div style="font-size:13px;color:#0D1117">'+(o.result||'No result entered')+'</div>'+
+            '</div>'
+          )+
+        '</div>';
+    });
+    list.innerHTML=html;
+  });
+}
+
+function submitLabResult(id){
+  var textarea=document.getElementById('lt-result-'+id);
+  if(!textarea||!textarea.value.trim()){
+    alert('Please enter the test results before submitting.');
+    return;
+  }
+  if(!window.fbUpdateLabOrder) return;
+  window.fbUpdateLabOrder(id,{status:'done',result:textarea.value.trim(),completedAt:new Date().toISOString()}).then(function(){
+    loadLabOrders('pending');
+  });
+}
+
+function addLabTech(){
+  var name=document.getElementById('add-lt-name').value.trim();
+  var clinic=document.getElementById('add-lt-clinic').value.trim();
+  var username=document.getElementById('add-lt-user').value.trim().toLowerCase();
+  var password=document.getElementById('add-lt-pass').value;
+  var err=document.getElementById('add-lt-err');
+  if(!name||!clinic||!username||!password){err.textContent='Please fill all required fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  err.style.display='none';
+  var data={role:'labtech',name:name,clinicName:clinic,cabinetName:clinic,username:username,password:password,avatar:'🧪'};
+  if(!window.fbSaveAccount){err.textContent='Firebase not ready.';err.style.color='#EF4444';err.style.display='block';return;}
+  var btn=document.querySelector('[onclick="addLabTech()"]');
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+  window.fbSaveAccount(data).then(function(id){
+    if(btn){btn.textContent='Add Lab Tech';btn.disabled=false;}
+    if(id){
+      ['add-lt-name','add-lt-clinic','add-lt-user','add-lt-pass'].forEach(function(fid){var el=document.getElementById(fid);if(el)el.value='';});
+      err.textContent='Lab Tech added!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';},3000);
+      loadStaffList();
+    } else {err.textContent='Could not save.';err.style.color='#EF4444';err.style.display='block';}
+  });
+}
+
+function ltChangePassword(){
+  var newPass=document.getElementById('lt-new-pass').value;
+  var confirm=document.getElementById('lt-confirm-pass').value;
+  var err=document.getElementById('lt-pass-err');
+  if(!newPass||!confirm){err.textContent='Please fill both fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass!==confirm){err.textContent='Passwords do not match.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(newPass.length<6){err.textContent='Minimum 6 characters.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(!window.fbSaveAccount){err.textContent='Not a Firebase account.';err.style.color='#EF4444';err.style.display='block';return;}
+  window.fbSaveAccount(Object.assign({},currentUser,{password:newPass})).then(function(id){
+    if(id){
+      currentUser.password=newPass;
+      err.textContent='Password updated!';err.style.color='#059669';err.style.display='block';
+      document.getElementById('lt-new-pass').value='';document.getElementById('lt-confirm-pass').value='';
+      setTimeout(function(){err.style.display='none';},3000);
+    }
+  });
+}
+
 function saChangePassword(){
   var newPass=document.getElementById('sa-new-pass').value;
   var confirm=document.getElementById('sa-confirm-pass').value;
@@ -2047,13 +2157,14 @@ var NAV={
   superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','sa-profile']],
   clinicadmin: [['📊 Overview','dashboard'],['👥 Staff','ca-staff'],['🧪 Lab','ca-lab'],['👤 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
   doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
-  receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule'],['👤 Profile','profile']]
+  receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule'],['👤 Profile','profile']],
+  labtech:     [['🧪 Lab Orders','lab-orders'],['👤 Profile','lab-profile']]
 };
-var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100'};
-var ROLE_DESCS={superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management'};
+var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100',labtech:'#0891B2'};
+var ROLE_DESCS={superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management',labtech:'Lab results management'};
 
 function makeBadge(role){
-  var c={superadmin:{cls:'badge-superadmin',icon:'👑',label:'Super Admin'},clinicadmin:{cls:'badge-clinicadmin',icon:'🏥',label:'Clinic Admin'},doctor:{cls:'badge-doctor',icon:'👨‍⚕️',label:'Doctor'},receptionist:{cls:'badge-receptionist',icon:'🧑‍💼',label:'Receptionist'}};
+  var c={superadmin:{cls:'badge-superadmin',icon:'👑',label:'Super Admin'},clinicadmin:{cls:'badge-clinicadmin',icon:'🏥',label:'Clinic Admin'},doctor:{cls:'badge-doctor',icon:'👨‍⚕️',label:'Doctor'},receptionist:{cls:'badge-receptionist',icon:'🧑‍💼',label:'Receptionist'},labtech:{cls:'badge-doctor',icon:'🧪',label:'Lab Tech'}};
   var r=c[role]||c.receptionist;
   return '<span class="badge '+r.cls+'">'+r.icon+' '+r.label+'</span>';
 }
@@ -2425,6 +2536,15 @@ function loadPage(page){
           '<input type="password" id="add-ca-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="add-ca-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
           '<button onclick="addClinicAdmin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#7C3AED,#9F6EFF);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Clinic Admin</button>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
+          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Lab Tech</h3>'+
+          '<input type="text" id="add-lt-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-lt-clinic" placeholder="Clinic name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="add-lt-user" placeholder="Username (e.g. lab.tech1)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="add-lt-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="add-lt-err" style="display:none;font-size:12px;margin-bottom:8px"></div>'+
+          '<button onclick="addLabTech()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Lab Tech</button>'+
         '</div>'+
       '</div>'+
       '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
@@ -3356,6 +3476,48 @@ function loadPage(page){
           '<input type="password" id="sa-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="sa-pass-err" style="display:none;font-size:13px;margin-bottom:8px"></div>'+
           '<button onclick="saChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#7C3AED,#9F6EF5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
+        '</div>'+
+      '</div>';
+    return;
+  }
+
+  // ── LAB TECH PAGES ──
+  if(page==='lab-orders' && u.role==='labtech'){
+    var clinicName=u.clinicName||u.cabinetName||'';
+    mc.innerHTML=
+      '<h2 style="margin-bottom:4px">🧪 Lab Orders</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">'+clinicName+' — Pending orders</p>'+
+      '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+        '<button id="lt-btn-pending" onclick="loadLabOrders(&quot;pending&quot;)" style="padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Pending</button>'+
+        '<button id="lt-btn-done" onclick="loadLabOrders(&quot;done&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">Completed</button>'+
+        '<button id="lt-btn-all" onclick="loadLabOrders(&quot;all&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">All</button>'+
+      '</div>'+
+      '<div id="lt-orders-list"><div style="text-align:center;padding:30px;color:#9CA3AF">Loading...</div></div>';
+    window._ltClinicName=clinicName;
+    loadLabOrders('pending');
+    return;
+  }
+
+  if(page==='lab-profile' && u.role==='labtech'){
+    mc.innerHTML=
+      '<h2 style="margin-bottom:6px">My Profile</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Lab Technician account</p>'+
+      '<div class="table-card" style="max-width:500px">'+
+        '<div style="display:flex;align-items:center;gap:16px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)">'+
+          '<div style="width:60px;height:60px;background:linear-gradient(135deg,#0891B2,#06B6D4);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px">🧪</div>'+
+          '<div>'+
+            '<div style="font-size:18px;font-weight:800;color:#0D1117">'+u.name+'</div>'+
+            '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">Lab Technician · '+(u.clinicName||'')+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="table-row"><div class="row-sub">Username</div><div class="row-name">'+u.username+'</div></div>'+
+        '<div class="table-row"><div class="row-sub">Clinic</div><div class="row-name">'+(u.clinicName||'-')+'</div></div>'+
+        '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">'+
+          '<div style="font-size:13px;font-weight:600;color:#0D1117;margin-bottom:12px">🔒 Change Password</div>'+
+          '<input type="password" id="lt-new-pass" placeholder="New password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="lt-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="lt-pass-err" style="display:none;font-size:13px;margin-bottom:8px"></div>'+
+          '<button onclick="ltChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
         '</div>'+
       '</div>';
     return;
