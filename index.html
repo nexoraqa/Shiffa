@@ -1380,6 +1380,29 @@ function caFilterStaff(q){
   caRenderStaff(filtered);
 }
 
+function caAddLabTech(){
+  var name=document.getElementById('ca-lt-name').value.trim();
+  var username=document.getElementById('ca-lt-user').value.trim().toLowerCase();
+  var password=document.getElementById('ca-lt-pass').value;
+  var err=document.getElementById('ca-lt-err');
+  var clinicName=window._caClinicName||'';
+  if(!name||!username||!password){err.textContent='Please fill all fields.';err.style.color='#EF4444';err.style.display='block';return;}
+  err.style.display='none';
+  var data={role:'labtech',name:name,clinicName:clinicName,cabinetName:clinicName,username:username,password:password,avatar:'🧪'};
+  if(!window.fbSaveAccount){err.textContent='Firebase not ready.';err.style.color='#EF4444';err.style.display='block';return;}
+  var btn=document.querySelector('[onclick="caAddLabTech()"]');
+  if(btn){btn.textContent='Saving...';btn.disabled=true;}
+  window.fbSaveAccount(data).then(function(id){
+    if(btn){btn.textContent='Add Lab Tech';btn.disabled=false;}
+    if(id){
+      ['ca-lt-name','ca-lt-user','ca-lt-pass'].forEach(function(fid){var el=document.getElementById(fid);if(el)el.value='';});
+      err.textContent='Lab Tech added!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';},3000);
+      caLoadStaff();
+    } else {err.textContent='Could not save.';err.style.color='#EF4444';err.style.display='block';}
+  });
+}
+
 function caAddDoctor(){
   var name=document.getElementById('ca-doc-name').value.trim();
   var specialty=document.getElementById('ca-doc-specialty').value.trim();
@@ -1702,6 +1725,7 @@ function submitLabOrder(){
 }
 
 function loadLabOrders(filter){
+  window._ltCurrentFilter=filter;
   // Update buttons
   ['pending','done','all'].forEach(function(f){
     var btn=document.getElementById('lt-btn-'+f);
@@ -1775,8 +1799,9 @@ function submitLabResult(id){
     return;
   }
   if(!window.fbUpdateLabOrder) return;
-  window.fbUpdateLabOrder(id,{status:'done',result:textarea.value.trim(),completedAt:new Date().toISOString()}).then(function(){
-    loadLabOrders('pending');
+  var btn=document.querySelector('[data-oid="'+id+'"] ~ button, button[data-oid="'+id+'"]');
+  window.fbUpdateLabOrder(id,{status:'done',result:textarea.value.trim(),completedAt:new Date().toISOString(),notified:false}).then(function(){
+    loadLabOrders(window._ltCurrentFilter||'pending');
   });
 }
 
@@ -2655,6 +2680,17 @@ function loadPage(page){
           '<input type="password" id="ca-rec-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="ca-rec-err" style="display:none;font-size:12px;margin-bottom:8px"></div>'+
           '<button onclick="caAddReceptionist()" style="width:100%;padding:11px;background:linear-gradient(135deg,#D97706,#F59E0B);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Receptionist</button>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'+
+            '<div style="width:32px;height:32px;background:#ECFEFF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🧪</div>'+
+            '<div style="font-size:14px;font-weight:700;color:#0D1117">Add Lab Tech</div>'+
+          '</div>'+
+          '<input type="text" id="ca-lt-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="text" id="ca-lt-user" placeholder="Username (e.g. lab.tech1)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
+          '<input type="password" id="ca-lt-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+          '<div id="ca-lt-err" style="display:none;font-size:12px;margin-bottom:8px"></div>'+
+          '<button onclick="caAddLabTech()" style="width:100%;padding:11px;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Lab Tech</button>'+
         '</div>'+
       '</div>'+
       // Staff list
@@ -3571,6 +3607,13 @@ function loadPage(page){
 
     window._ltClinicName=clinicName;
     loadLabOrders('pending');
+    // Auto-refresh every 10 seconds
+    if(window._ltRefreshInterval) clearInterval(window._ltRefreshInterval);
+    window._ltRefreshInterval=setInterval(function(){
+      var el=document.getElementById('lt-orders-list');
+      if(!el||!el.offsetParent){clearInterval(window._ltRefreshInterval);return;}
+      loadLabOrders(window._ltCurrentFilter||'pending');
+    },10000);
     return;
   }
 
@@ -4947,6 +4990,27 @@ function loadQueue(doctorFilter){
   // Only refresh if still on queue page
   var queueEl=document.getElementById('queue-list');
   if(!queueEl||!queueEl.offsetParent) return;
+  // Check for new lab results
+  if(currentUser&&currentUser.role==='doctor'&&window.fbGetLabOrders){
+    window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){
+      var newResults=orders.filter(function(o){return o.status==='done'&&o.notified===false;});
+      var badge=document.getElementById('lab-result-badge');
+      if(newResults.length>0){
+        if(!badge){
+          var b=document.createElement('div');
+          b.id='lab-result-badge';
+          b.style.cssText='position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border-radius:14px;padding:12px 18px;font-size:13px;font-weight:700;box-shadow:0 4px 20px rgba(5,150,105,0.4);z-index:999;cursor:pointer;animation:slideIn 0.3s ease-out';
+          b.innerHTML='🧪 '+newResults.length+' lab result'+(newResults.length>1?'s':'')+' ready!';
+          b.onclick=function(){goPage('queue');};
+          document.body.appendChild(b);
+        } else {
+          badge.innerHTML='🧪 '+newResults.length+' lab result'+(newResults.length>1?'s':'')+' ready!';
+        }
+      } else if(badge){
+        badge.remove();
+      }
+    }).catch(function(){});
+  }
   if(window.fbGetPatients){
     var date=window.queueDate||new Date().toISOString().split('T')[0];
     var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
