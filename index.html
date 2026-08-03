@@ -340,11 +340,13 @@ function doLogin(){
         showDashboard(currentUser);
         startInactivityWatch();
       if(currentUser&&currentUser.role==='doctor'){if(window._labBadgeInterval)clearInterval(window._labBadgeInterval);window._labBadgeInterval=setInterval(checkLabResultBadge,10000);checkLabResultBadge();}
+      if(currentUser&&currentUser.role==='labtech'){if(window._ltNotifInterval)clearInterval(window._ltNotifInterval);window._ltNotifInterval=setInterval(checkNewLabOrders,10000);checkNewLabOrders();}
       });
     } else {
       showDashboard(user);
       startInactivityWatch();
       if(user&&user.role==='doctor'){if(window._labBadgeInterval)clearInterval(window._labBadgeInterval);window._labBadgeInterval=setInterval(checkLabResultBadge,10000);checkLabResultBadge();}
+      if(user&&user.role==='labtech'){if(window._ltNotifInterval)clearInterval(window._ltNotifInterval);window._ltNotifInterval=setInterval(checkNewLabOrders,10000);checkNewLabOrders();}
     }
   }
 
@@ -1683,6 +1685,38 @@ function loadPatientLabOrders(){
   });
 }
 
+function checkNewLabOrders(){
+  if(!currentUser||currentUser.role!=='labtech'||!window.fbGetLabOrders) return;
+  var clinicName=currentUser.clinicName||currentUser.cabinetName||'';
+  window.fbGetLabOrders(null).then(function(orders){
+    var newOrders=orders.filter(function(o){
+      return o.clinicName===clinicName&&o.status==='pending'&&o.ltNotified===false;
+    });
+    newOrders.forEach(function(o,idx){
+      setTimeout(function(){
+        if(window._shownLtToasts&&window._shownLtToasts[o.id]) return;
+        if(!window._shownLtToasts) window._shownLtToasts={};
+        window._shownLtToasts[o.id]=true;
+        var toast=document.createElement('div');
+        toast.style.cssText='position:fixed;bottom:24px;right:24px;background:#fff;border-radius:20px;padding:20px 24px;box-shadow:0 12px 50px rgba(0,0,0,0.2);z-index:9999;width:320px;border-left:6px solid #0891B2;animation:slideIn 0.3s ease-out;cursor:pointer';
+        toast.innerHTML=
+          '<div style="display:flex;align-items:center;gap:16px">'+
+            '<div style="width:56px;height:56px;background:#ECFEFF;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0">🔬</div>'+
+            '<div style="flex:1">'+
+              '<div style="font-size:11px;font-weight:800;color:#0891B2;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">New Lab Order</div>'+
+              '<div style="font-size:17px;font-weight:900;color:#0D1117;margin-bottom:3px">'+o.patientName+'</div>'+
+              '<div style="font-size:13px;color:#4B5563;margin-bottom:8px">'+o.testType+'</div>'+
+              '<div style="background:#ECFEFF;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#0891B2">Tap to open orders →</div>'+
+            '</div>'+
+          '</div>';
+        var timer=setTimeout(function(){if(toast.parentNode)toast.remove();},8000);
+        toast.onclick=function(){clearTimeout(timer);toast.remove();loadLabOrders('pending');};
+        document.body.appendChild(toast);
+      },idx*500);
+    });
+  }).catch(function(){});
+}
+
 function submitLabOrder(){
   var select=document.getElementById('lab-test-select');
   var notes=document.getElementById('lab-notes');
@@ -2202,6 +2236,7 @@ function loadReports(period){
 function doLogout(){
   stopInactivityWatch();
   if(window._labBadgeInterval){clearInterval(window._labBadgeInterval);window._labBadgeInterval=null;}
+  if(window._ltNotifInterval){clearInterval(window._ltNotifInterval);window._ltNotifInterval=null;}
   var badge=document.getElementById('lab-result-badge');if(badge)badge.remove();
   currentUser=null;
   document.getElementById('dashboard-page').style.display='none';
@@ -2233,6 +2268,41 @@ function makeBadge(role){
   return '<span class="badge '+r.cls+'">'+r.icon+' '+r.label+'</span>';
 }
 
+function showLabResultPopup(order){
+  var overlay=document.createElement('div');
+  overlay.id='lab-result-popup';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+  overlay.innerHTML=
+    '<div style="background:#fff;border-radius:20px;padding:28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'+
+        '<div style="display:flex;align-items:center;gap:12px">'+
+          '<div style="width:48px;height:48px;background:#ECFDF5;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px">🧪</div>'+
+          '<div>'+
+            '<div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px">Lab Result</div>'+
+            '<div style="font-size:16px;font-weight:900;color:#0D1117">'+order.patientName+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<button onclick="document.getElementById(\'lab-result-popup\').remove()" style="background:#F0F4F8;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;color:#4B5563">✕ Close</button>'+
+      '</div>'+
+      '<div style="background:#F0F4F8;border-radius:12px;padding:14px 16px;margin-bottom:16px">'+
+        '<div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Patient Info</div>'+
+        '<div style="font-size:14px;font-weight:600;color:#0D1117">'+order.patientName+'</div>'+
+        '<div style="font-size:13px;color:#4B5563;margin-top:2px">'+(order.patientPhone||'')+'</div>'+
+        '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">Ordered: '+(order.date||'')+'</div>'+
+      '</div>'+
+      '<div style="background:#F0F9FF;border-radius:12px;padding:14px 16px;margin-bottom:16px">'+
+        '<div style="font-size:11px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Test</div>'+
+        '<div style="font-size:15px;font-weight:700;color:#0D1117">'+order.testType+'</div>'+
+      '</div>'+
+      '<div style="background:#ECFDF5;border-radius:12px;padding:14px 16px;border:1.5px solid #6EE7B7">'+
+        '<div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Result</div>'+
+        '<div style="font-size:14px;color:#0D1117;line-height:1.6">'+(order.result||'No result entered')+'</div>'+
+      '</div>'+
+    '</div>';
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
 function checkLabResultBadge(){
   if(!currentUser||currentUser.role!=='doctor'||!window.fbGetLabOrders) return;
   window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){
@@ -2248,32 +2318,24 @@ function checkLabResultBadge(){
         // Create toast
         var toast=document.createElement('div');
         toast.style.cssText='position:fixed;bottom:20px;right:20px;background:#fff;border-radius:14px;padding:14px 18px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,0.15);z-index:9999;max-width:280px;border-left:4px solid #059669;animation:slideIn 0.3s ease-out;cursor:pointer';
+        toast.style.cssText='position:fixed;bottom:24px;right:24px;background:#fff;border-radius:20px;padding:20px 24px;box-shadow:0 12px 50px rgba(0,0,0,0.2);z-index:9999;width:320px;border-left:6px solid #059669;animation:slideIn 0.3s ease-out;cursor:pointer';
         toast.innerHTML=
-          '<div style="display:flex;align-items:center;gap:14px">'+
-            '<div style="width:48px;height:48px;background:#ECFDF5;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🧪</div>'+
+          '<div style="display:flex;align-items:center;gap:16px">'+
+            '<div style="width:56px;height:56px;background:#ECFDF5;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0">🧪</div>'+
             '<div style="flex:1">'+
-              '<div style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Lab Result Ready</div>'+
-              '<div style="font-size:15px;font-weight:800;color:#0D1117;margin-bottom:2px">'+o.patientName+'</div>'+
-              '<div style="font-size:12px;color:#4B5563;margin-bottom:6px">'+o.testType+'</div>'+
-              '<div style="font-size:12px;font-weight:700;color:#059669">Tap to view result →</div>'+
+              '<div style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Lab Result Ready</div>'+
+              '<div style="font-size:17px;font-weight:900;color:#0D1117;margin-bottom:3px">'+o.patientName+'</div>'+
+              '<div style="font-size:13px;color:#4B5563;margin-bottom:8px">'+o.testType+'</div>'+
+              '<div style="background:#ECFDF5;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#059669">Tap to view full result →</div>'+
             '</div>'+
           '</div>';
-        toast.style.cssText='position:fixed;bottom:24px;right:24px;background:#fff;border-radius:16px;padding:16px 20px;box-shadow:0 8px 40px rgba(0,0,0,0.18);z-index:9999;max-width:320px;border-left:5px solid #059669;animation:slideIn 0.3s ease-out;cursor:pointer';
         // Auto remove after 8 seconds
         var timer=setTimeout(function(){if(toast.parentNode)toast.remove();},8000);
         toast.onclick=function(){
           clearTimeout(timer);
           toast.remove();
-          // Open patient search on patients page
-          goPage('patients');
-          setTimeout(function(){
-            var searchInput=document.getElementById('pt-search-inp');
-            if(searchInput){
-              searchInput.value=o.patientPhone||o.patientName;
-              var searchBtn=document.querySelector('[onclick="searchPatients()"]');
-              if(searchBtn) searchBtn.click();
-            }
-          },500);
+          // Show result popup in center
+          showLabResultPopup(o);
         };
         document.body.appendChild(toast);
       },idx*500); // stagger multiple toasts
