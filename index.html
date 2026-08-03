@@ -1497,6 +1497,54 @@ function caDeleteStaff(id){
   }
 }
 
+// ── Lab Management ──
+function loadLabTests(){
+  var list=document.getElementById('lab-test-list');
+  if(!list||!window.fbGetLabTests) return;
+  var clinicName=window._labClinicName||'';
+  window.fbGetLabTests(clinicName).then(function(tests){
+    if(!tests.length){
+      list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No test types added yet.</div>';
+      return;
+    }
+    var html='';
+    tests.forEach(function(t){
+      html+=
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">'+
+          '<div style="display:flex;align-items:center;gap:10px">'+
+            '<span style="font-size:18px">🧪</span>'+
+            '<span style="font-size:14px;font-weight:600;color:#0D1117">'+t.testName+'</span>'+
+          '</div>'+
+          '<button data-id="'+t.id+'" onclick="deleteLabTest(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>'+
+        '</div>';
+    });
+    list.innerHTML=html;
+  });
+}
+
+function addLabTest(){
+  var name=document.getElementById('lab-test-name').value.trim();
+  var err=document.getElementById('lab-test-err');
+  var clinicName=window._labClinicName||'';
+  if(!name){err.textContent='Please enter a test name.';err.style.color='#EF4444';err.style.display='block';return;}
+  if(!window.fbSaveLabTest){err.textContent='Firebase not ready.';err.style.color='#EF4444';err.style.display='block';return;}
+  window.fbSaveLabTest({testName:name,clinicName:clinicName}).then(function(id){
+    if(id){
+      document.getElementById('lab-test-name').value='';
+      err.textContent='Test added!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';},2000);
+      loadLabTests();
+    }
+  });
+}
+
+function deleteLabTest(id){
+  if(!confirm('Remove this test type?')) return;
+  if(window.fbDeleteLabTest){
+    window.fbDeleteLabTest(id).then(function(){loadLabTests();});
+  }
+}
+
 function saChangePassword(){
   var newPass=document.getElementById('sa-new-pass').value;
   var confirm=document.getElementById('sa-confirm-pass').value;
@@ -1866,7 +1914,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!currentUser
 // ═══════════════
 var NAV={
   superadmin:  [['📊 Overview','dashboard'],['👨‍⚕️ Manage','manage'],['👥 Patients','patients'],['📈 Reports','reports'],['👤 Profile','sa-profile']],
-  clinicadmin: [['📊 Overview','dashboard'],['👥 Staff','ca-staff'],['👤 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
+  clinicadmin: [['📊 Overview','dashboard'],['👥 Staff','ca-staff'],['🧪 Lab','ca-lab'],['👤 Patients','patients'],['📈 Reports','reports'],['👤 Profile','ca-profile']],
   doctor:      [['📊 Dashboard','dashboard'],['🔢 My Queue','queue'],['👥 Patients','patients'],['📝 Notes','notes'],['📅 Schedule','schedule'],['👤 Profile','profile']],
   receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule'],['👤 Profile','profile']]
 };
@@ -2335,6 +2383,29 @@ function loadPage(page){
     window._caClinicName=clinicName;
     window._caAllStaff=[];
     caLoadStaff();
+    return;
+  }
+
+  // ── CLINIC ADMIN LAB SETTINGS ──
+  if(page==='ca-lab' && u.role==='clinicadmin'){
+    var clinicName=u.clinicName||u.cabinetName||'';
+    mc.innerHTML=
+      '<h2 style="margin-bottom:4px">Lab Settings</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Manage available lab tests for '+clinicName+'</p>'+
+      '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);margin-bottom:20px">'+
+        '<div style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Test Type</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<input type="text" id="lab-test-name" placeholder="e.g. Blood Test, X-Ray, ECG..." style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none"/>'+
+          '<button onclick="addLabTest()" style="padding:10px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Add</button>'+
+        '</div>'+
+        '<div id="lab-test-err" style="display:none;font-size:12px;margin-top:8px"></div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+        '<div style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Test Types</div>'+
+        '<div id="lab-test-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
+      '</div>';
+    window._labClinicName=clinicName;
+    loadLabTests();
     return;
   }
 
@@ -5353,6 +5424,44 @@ try{
   const db=getFirestore(app);
 
   window.fbSave=function(d){return addDoc(collection(db,'patients'),Object.assign({},d,{createdAt:serverTimestamp()})).then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});};
+  // ── Lab Tests ──
+  window.fbGetLabTests=function(clinicName){
+    return getDocs(collection(db,'lab_tests'))
+      .then(function(snap){
+        var list=[];
+        snap.forEach(function(d){
+          var data=Object.assign({id:d.id},d.data());
+          if(data.clinicName===clinicName) list.push(data);
+        });
+        return list;
+      }).catch(function(e){console.error(e);return[];});
+  };
+  window.fbSaveLabTest=function(data){
+    return addDoc(collection(db,'lab_tests'),Object.assign({},data,{createdAt:serverTimestamp()}))
+      .then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});
+  };
+  window.fbDeleteLabTest=function(id){
+    return deleteDoc(doc(db,'lab_tests',id)).catch(function(e){console.error(e);});
+  };
+  window.fbSaveLabOrder=function(data){
+    return addDoc(collection(db,'lab_orders'),Object.assign({},data,{createdAt:serverTimestamp()}))
+      .then(function(r){return r.id;}).catch(function(e){console.error(e);return null;});
+  };
+  window.fbGetLabOrders=function(doctorId){
+    return getDocs(collection(db,'lab_orders'))
+      .then(function(snap){
+        var list=[];
+        snap.forEach(function(d){
+          var data=Object.assign({id:d.id},d.data());
+          if(!doctorId||data.doctorId===doctorId) list.push(data);
+        });
+        return list;
+      }).catch(function(e){console.error(e);return[];});
+  };
+  window.fbUpdateLabOrder=function(id,data){
+    return updateDoc(doc(db,'lab_orders',id),data).catch(function(e){console.error(e);});
+  };
+
   window.fbGetAllPatients=function(){
     return getDocs(collection(db,'patients'))
       .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
