@@ -1545,6 +1545,115 @@ function deleteLabTest(id){
   }
 }
 
+// ── Lab Order Functions ──
+function toggleLabForm(){
+  var form=document.getElementById('lab-form-section');
+  var btn=document.getElementById('lab-btn');
+  var notesForm=document.getElementById('notes-form-section');
+  var rxForm=document.getElementById('rx-form-section');
+  if(!form) return;
+  var isOpen=form.style.display!=='none';
+  // Close other forms
+  if(notesForm) notesForm.style.display='none';
+  if(rxForm) rxForm.style.display='none';
+  if(document.getElementById('write-notes-btn')) document.getElementById('write-notes-btn').textContent='Write Notes';
+  if(document.getElementById('rx-btn')) document.getElementById('rx-btn').textContent='Prescription';
+  if(isOpen){
+    form.style.display='none';
+    if(btn) btn.textContent='🧪 Lab Test';
+  } else {
+    form.style.display='block';
+    if(btn) btn.textContent='✕ Close Lab';
+    // Load test types for this doctor's clinic
+    loadLabTestOptions();
+    // Load existing orders for this patient
+    loadPatientLabOrders();
+  }
+}
+
+function loadLabTestOptions(){
+  var select=document.getElementById('lab-test-select');
+  if(!select||!window.fbGetAccounts||!currentUser) return;
+  // Get clinic name from doctor's account
+  window.fbGetAccounts().then(function(accounts){
+    var doc=accounts.find(function(a){return a.username===currentUser.doctorId||a.username===currentUser.username;});
+    var clinicName=doc?(doc.clinicName||doc.cabinetName||''):(currentUser.clinicName||currentUser.cabinetName||'');
+    if(!clinicName||!window.fbGetLabTests){
+      select.innerHTML='<option value="">No tests configured</option>';
+      return;
+    }
+    window.fbGetLabTests(clinicName).then(function(tests){
+      if(!tests.length){
+        select.innerHTML='<option value="">No tests configured — ask Clinic Admin</option>';
+        return;
+      }
+      select.innerHTML='<option value="">Select test type...</option>';
+      tests.forEach(function(t){
+        select.innerHTML+='<option value="'+t.testName+'">'+t.testName+'</option>';
+      });
+    });
+  });
+}
+
+function loadPatientLabOrders(){
+  var section=document.getElementById('lab-results-section');
+  if(!section||!window.fbGetLabOrders) return;
+  var patientPhone=document.getElementById('popup-raw-phone')?document.getElementById('popup-raw-phone').value:(document.getElementById('popup-phone')?document.getElementById('popup-phone').textContent:'');
+  if(!patientPhone) return;
+  window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){
+    var patOrders=orders.filter(function(o){return o.patientPhone===patientPhone;});
+    if(!patOrders.length){section.innerHTML='';return;}
+    var html='<div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:8px">Previous Orders:</div>';
+    patOrders.forEach(function(o){
+      html+=
+        '<div style="background:#fff;border-radius:8px;padding:10px;margin-bottom:6px;border:1px solid #D1FAE5">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center">'+
+            '<span style="font-size:13px;font-weight:700;color:#0D1117">🧪 '+o.testType+'</span>'+
+            '<span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;background:'+(o.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(o.status==='done'?'#059669':'#D97706')+'">'+o.status+'</span>'+
+          '</div>'+
+          (o.result?'<div style="font-size:12px;color:#4B5563;margin-top:6px;padding:6px;background:#F0FDF4;border-radius:6px">Result: '+o.result+'</div>':'')+
+          '<div style="font-size:11px;color:#9CA3AF;margin-top:4px">'+(o.date||'')+'</div>'+
+        '</div>';
+    });
+    section.innerHTML=html;
+  });
+}
+
+function submitLabOrder(){
+  var select=document.getElementById('lab-test-select');
+  var notes=document.getElementById('lab-notes');
+  var err=document.getElementById('lab-order-err');
+  if(!select||!select.value){err.textContent='Please select a test type.';err.style.color='#EF4444';err.style.display='block';return;}
+  // Get patient info from popup
+  var patientName=document.getElementById('popup-name')?document.getElementById('popup-name').textContent:'';
+  var patientPhone=document.getElementById('popup-raw-phone')?document.getElementById('popup-raw-phone').value:(document.getElementById('popup-phone')?document.getElementById('popup-phone').textContent:'');
+  var patientId=document.getElementById('popup-pid')?document.getElementById('popup-pid').value:'';
+  if(!window.fbSaveLabOrder){err.textContent='Firebase not ready.';err.style.color='#EF4444';err.style.display='block';return;}
+  var data={
+    testType:select.value,
+    notes:notes?notes.value:'',
+    patientName:patientName,
+    patientPhone:patientPhone,
+    patientId:patientId,
+    doctorId:currentUser.doctorId||currentUser.username,
+    clinicName:currentUser.clinicName||currentUser.cabinetName||'',
+    status:'pending',
+    date:new Date().toISOString().split('T')[0],
+    result:''
+  };
+  window.fbSaveLabOrder(data).then(function(id){
+    if(id){
+      select.value='';
+      if(notes) notes.value='';
+      err.textContent='Lab order submitted!';err.style.color='#059669';err.style.display='block';
+      setTimeout(function(){err.style.display='none';},3000);
+      loadPatientLabOrders();
+    } else {
+      err.textContent='Could not submit order.';err.style.color='#EF4444';err.style.display='block';
+    }
+  });
+}
+
 function saChangePassword(){
   var newPass=document.getElementById('sa-new-pass').value;
   var confirm=document.getElementById('sa-confirm-pass').value;
@@ -4842,6 +4951,8 @@ function openPatientPopup(el){
   currentPatientAge     = age;
 
   document.getElementById('popup-name').textContent  = name;
+  if(document.getElementById('popup-pid')) document.getElementById('popup-pid').value=pid||'';
+  if(document.getElementById('popup-raw-phone')) document.getElementById('popup-raw-phone').value=phone||'';
   document.getElementById('popup-info').textContent  = 'Age '+age+' - '+gender;
   document.getElementById('popup-phone').textContent = (phone?'Phone: '+phone:'')+(address?' | '+address:'');
 
@@ -5374,6 +5485,8 @@ function printSavedRx(rx){
         <div style="font-size:18px;font-weight:800;color:var(--dark)" id="popup-name"></div>
         <div style="font-size:13px;color:var(--light)" id="popup-info"></div>
         <div style="font-size:12px;color:var(--light);margin-top:2px" id="popup-phone"></div>
+        <input type="hidden" id="popup-pid" value=""/>
+        <input type="hidden" id="popup-raw-phone" value=""/>
       </div>
       <button onclick="closePopup()" style="background:var(--bg);border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--mid)">Close</button>
     </div>
@@ -5401,10 +5514,22 @@ function printSavedRx(rx){
       <div class="form-field"><label class="form-label">Instructions / Notes</label><textarea class="form-textarea" id="rx-notes" placeholder="e.g. Rest for 3 days, avoid cold water..."></textarea></div>
       <button onclick="saveAndPrintRx()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Prescription</button>
     </div>
+    <!-- Lab Order Form -->
+    <div id="lab-form-section" style="display:none;margin-top:14px;background:#ECFDF5;border-radius:12px;padding:16px;border:1.5px solid #6EE7B7">
+      <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:10px">🧪 Order Lab Test</div>
+      <select id="lab-test-select" style="width:100%;padding:10px 12px;border:1.5px solid #6EE7B7;border-radius:10px;font-size:14px;outline:none;margin-bottom:10px;background:#fff">
+        <option value="">Select test type...</option>
+      </select>
+      <textarea id="lab-notes" placeholder="Additional notes (optional)..." style="width:100%;padding:10px 12px;border:1.5px solid #6EE7B7;border-radius:10px;font-size:13px;outline:none;height:60px;resize:none;margin-bottom:10px;box-sizing:border-box"></textarea>
+      <div id="lab-order-err" style="display:none;font-size:12px;margin-bottom:8px"></div>
+      <div id="lab-results-section" style="margin-bottom:10px"></div>
+      <button onclick="submitLabOrder()" style="width:100%;padding:10px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Order Test</button>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn-outline" onclick="closePopup()">Close</button>
       <button class="btn-filled" id="write-notes-btn" onclick="toggleNotesForm()">Write Notes</button>
       <button class="btn-filled" id="rx-btn" onclick="toggleRxForm()" style="background:linear-gradient(135deg,#1565C0,#1976D2)">Prescription</button>
+      <button class="btn-filled" id="lab-btn" onclick="toggleLabForm()" style="background:linear-gradient(135deg,#059669,#10B981)">🧪 Lab Test</button>
     </div>
   </div>
 </div>
