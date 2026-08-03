@@ -2407,17 +2407,49 @@ function loadPage(page){
 
   // OVERVIEW PAGES
   if(u.role==='superadmin'&&(page==='dashboard'||page==='overview')){
-    mc.innerHTML=banner+
-      '<div class="stats-grid">'+
-        '<div class="stat-card" onclick="showDoctorsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="sa-doctors">—</div><div class="stat-lbl">Total Doctors</div></div></div>'+
-        '<div class="stat-card" onclick="showRecepsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="sa-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
-        '<div class="stat-card" onclick="showAdminsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#7C3AED20">🏥</div><div><div class="stat-val" id="sa-admins">—</div><div class="stat-lbl">Clinic Admins</div></div></div>'+
-        '<div class="stat-card" onclick="showPatientsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="sa-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
-        '<div class="stat-card" onclick="showApptsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="sa-appts">—</div><div class="stat-lbl">Total Appointments</div></div></div>'+
+    var now3=new Date();
+    var hour3=now3.getHours();
+    var greet3=hour3<12?'Good morning':'Good afternoon';
+    mc.innerHTML=
+      // Header
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">'+
+        '<div>'+
+          '<div style="font-size:12px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+greet3+'</div>'+
+          '<div style="font-size:22px;font-weight:900;color:#0D1117;letter-spacing:-0.5px">'+u.name+'</div>'+
+          '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">Shifaa Platform — Super Admin</div>'+
+        '</div>'+
+        '<div style="background:linear-gradient(135deg,#7C3AED,#9F6EF5);border-radius:14px;padding:12px 16px;text-align:center">'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">System</div>'+
+          '<div style="font-size:14px;font-weight:800;color:#fff">Active</div>'+
+        '</div>'+
       '</div>'+
-      '<div class="table-card" style="margin-top:16px">'+
-        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Staff Overview</h3>'+
-        '<div id="sa-staff-overview"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
+      // Top stats
+      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px">'+
+        '<div onclick="showDoctorsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Doctors</div>'+
+          '<div id="sa-doctors" style="font-size:28px;font-weight:900;color:#1A3A5C;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div onclick="showRecepsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Recep.</div>'+
+          '<div id="sa-receps" style="font-size:28px;font-weight:900;color:#E65100;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div onclick="showAdminsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Admins</div>'+
+          '<div id="sa-admins" style="font-size:28px;font-weight:900;color:#7C3AED;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div onclick="showPatientsPopup(null)" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Today</div>'+
+          '<div id="sa-patients" style="font-size:28px;font-weight:900;color:#059669;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div onclick="showApptsPopup(null)" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Appts</div>'+
+          '<div id="sa-appts" style="font-size:28px;font-weight:900;color:#D97706;letter-spacing:-1px">—</div>'+
+        '</div>'+
+      '</div>'+
+      // Clinics breakdown
+      '<div style="font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Clinics Overview</div>'+
+      '<div id="sa-clinics-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">'+
+        '<div style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px;grid-column:1/-1">Loading...</div>'+
       '</div>';
 
     if(window.fbGetAccounts){
@@ -2425,61 +2457,73 @@ function loadPage(page){
         var doctors=accounts.filter(function(a){return a.role==='doctor';});
         var receps=accounts.filter(function(a){return a.role==='receptionist';});
         var admins=accounts.filter(function(a){return a.role==='clinicadmin';});
-        var dEl=document.getElementById('sa-doctors');
-        var rEl=document.getElementById('sa-receps');
-        var aEl2=document.getElementById('sa-admins');
-        if(dEl) dEl.textContent=doctors.length;
-        if(rEl) rEl.textContent=receps.length;
-        if(aEl2) aEl2.textContent=admins.length;
-        var overview=document.getElementById('sa-staff-overview');
-        if(overview){
-          var html='';
-          // Show clinic admins first
-          var admins=accounts.filter(function(a){return a.role==='clinicadmin';});
-          admins.forEach(function(a){
-            html+='<div class="table-row">'+
-              '<div><div class="row-name">'+a.name+'</div>'+
-              '<div class="row-sub">'+(a.clinicName||'')+' · '+a.username+'</div></div>'+
-              '<span class="status-pill" style="color:#7C3AED;background:#F5F3FF">Clinic Admin</span>'+
-            '</div>';
-          });
-          // Then doctors
-          doctors.forEach(function(doc){
-            var linked=receps.filter(function(r){return r.doctorId===doc.username;});
-            html+='<div class="table-row">'+
-              '<div><div class="row-name">'+doc.name+'</div>'+
-              '<div class="row-sub">'+(doc.specialty||'General Practice')+' · '+(doc.clinicName||'')+'</div></div>'+
-              '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+linked.length+' recep.</span>'+
-            '</div>';
-          });
-          overview.innerHTML=html||'<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:16px">No staff added yet. Go to Manage to add staff.</div>';
+        var dEl=document.getElementById('sa-doctors'); if(dEl) dEl.textContent=doctors.length;
+        var rEl=document.getElementById('sa-receps'); if(rEl) rEl.textContent=receps.length;
+        var aEl2=document.getElementById('sa-admins'); if(aEl2) aEl2.textContent=admins.length;
+
+        // Group by clinic
+        var clinics={};
+        accounts.forEach(function(a){
+          if(a.role==='superadmin') return;
+          var cn=a.clinicName||a.cabinetName||'Unknown';
+          if(!clinics[cn]) clinics[cn]={name:cn,doctors:[],receps:[],admins:[]};
+          if(a.role==='doctor') clinics[cn].doctors.push(a);
+          else if(a.role==='receptionist') clinics[cn].receps.push(a);
+          else if(a.role==='clinicadmin') clinics[cn].admins.push(a);
+        });
+
+        var grid=document.getElementById('sa-clinics-grid');
+        if(!grid) return;
+        var clinicNames=Object.keys(clinics);
+        if(!clinicNames.length){
+          grid.innerHTML='<div style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px;grid-column:1/-1">No clinics yet. Go to Manage to add staff.</div>';
+          return;
         }
+
+        var html='';
+        clinicNames.forEach(function(cn){
+          var c=clinics[cn];
+          html+=
+            '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">'+
+              '<div style="background:linear-gradient(135deg,#4C1D95,#7C3AED);padding:16px 18px">'+
+                '<div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:2px">'+cn+'</div>'+
+                '<div style="font-size:11px;color:rgba(255,255,255,0.6)">'+c.admins.length+' admin'+(c.admins.length!==1?'s':'')+'</div>'+
+              '</div>'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0">'+
+                '<div style="padding:14px;text-align:center;border-right:1px solid #F0F4F8">'+
+                  '<div style="font-size:26px;font-weight:800;color:#1A3A5C">'+c.doctors.length+'</div>'+
+                  '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Doctors</div>'+
+                '</div>'+
+                '<div style="padding:14px;text-align:center">'+
+                  '<div style="font-size:26px;font-weight:800;color:#E65100">'+c.receps.length+'</div>'+
+                  '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Receptionists</div>'+
+                '</div>'+
+              '</div>'+
+              '<div style="padding:12px 18px;background:#F8FAFF;border-top:1px solid #F0F4F8">'+
+                '<div style="font-size:11px;color:#4B5563;font-weight:600">'+
+                  c.doctors.map(function(d){return d.name;}).join(' · ')||'No doctors yet'+
+                '</div>'+
+              '</div>'+
+            '</div>';
+        });
+        grid.innerHTML=html;
       });
     }
+
     if(window.fbGetPatients){
       window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
-        var el=document.getElementById('sa-patients');
-        if(el) el.textContent=pts.length;
+        var el=document.getElementById('sa-patients'); if(el) el.textContent=pts.length;
       }).catch(function(){});
     }
 
-    // Count all appointments using Firebase directly
-    if(window.fbGetAppointments){
-      // Get all doctors then load their appointments
+    if(window.fbGetAccounts&&window.fbGetAppointments){
       window.fbGetAccounts().then(function(accounts){
         var doctors=accounts.filter(function(a){return a.role==='doctor';});
-        if(!doctors.length){
-          var el=document.getElementById('sa-appts');
-          if(el) el.textContent='0';
-          return;
-        }
-        var promises=doctors.map(function(d){
-          return window.fbGetAppointments(d.username,null).catch(function(){return [];});
-        });
+        if(!doctors.length){var el=document.getElementById('sa-appts');if(el)el.textContent='0';return;}
+        var promises=doctors.map(function(d){return window.fbGetAppointments(d.username,null).catch(function(){return[];});});
         Promise.all(promises).then(function(results){
           var total=results.reduce(function(sum,arr){return sum+(arr?arr.length:0);},0);
-          var el=document.getElementById('sa-appts');
-          if(el) el.textContent=total;
+          var el=document.getElementById('sa-appts'); if(el) el.textContent=total;
         });
       }).catch(function(){});
     }
