@@ -1458,6 +1458,107 @@ function stopInactivityWatch(){
   });
 }
 
+function loadReports(period){
+  var clinicName=window._repClinicName||'';
+  // Update button styles
+  ['today','week','month'].forEach(function(p){
+    var btn=document.getElementById('rep-btn-'+p);
+    if(!btn) return;
+    if(p===period){btn.style.background='linear-gradient(135deg,#1A3A5C,#2563A8)';btn.style.color='#fff';btn.style.border='none';}
+    else{btn.style.background='#fff';btn.style.color='#4B5563';btn.style.border='1px solid #E5E9EF';}
+  });
+
+  // Calculate date range
+  var now=new Date();
+  var toDate=now.toISOString().split('T')[0];
+  var fromDate=toDate;
+  if(period==='week'){
+    var w=new Date(now); w.setDate(now.getDate()-6);
+    fromDate=w.toISOString().split('T')[0];
+  } else if(period==='month'){
+    var m=new Date(now); m.setDate(1);
+    fromDate=m.toISOString().split('T')[0];
+  }
+
+  if(!window.fbGetAccounts||!window.fbGetAllPatients) return;
+
+  window.fbGetAccounts().then(function(accounts){
+    var myDoctors=accounts.filter(function(a){
+      return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);
+    });
+    var docIds=myDoctors.map(function(d){return d.username;});
+
+    window.fbGetAllPatients().then(function(allPts){
+      // Filter by clinic and date range
+      var pts=allPts.filter(function(p){
+        if(docIds.indexOf(p.doctor)<0) return false;
+        if(!p.visitDate) return false;
+        return p.visitDate>=fromDate&&p.visitDate<=toDate;
+      });
+
+      // Also get appointments
+      var apptPromises=myDoctors.map(function(d){
+        return window.fbGetAppointments?window.fbGetAppointments(d.username,null).catch(function(){return[];}):Promise.resolve([]);
+      });
+
+      Promise.all(apptPromises).then(function(results){
+        var allAppts=[];
+        results.forEach(function(r){allAppts=allAppts.concat(r||[]);});
+        var filteredAppts=allAppts.filter(function(a){
+          if(!a.date) return false;
+          return a.date>=fromDate&&a.date<=toDate&&a.status!=='cancelled';
+        });
+
+        // Update stats
+        var total=pts.length;
+        var newPts=pts.filter(function(p){return p.visitType==='new';}).length;
+        var fuPts=pts.filter(function(p){return p.visitType==='follow_up';}).length;
+        var donePts=pts.filter(function(p){return p.status==='done';}).length;
+        var apptCount=filteredAppts.length;
+        var walkinCount=pts.filter(function(p){return !p.isAppointment;}).length;
+
+        var setVal=function(id,val){var el=document.getElementById(id);if(el)el.textContent=val;};
+        setVal('rep-total',total);
+        setVal('rep-new',newPts);
+        setVal('rep-fu',fuPts);
+        setVal('rep-done',donePts);
+        setVal('rep-appts',apptCount);
+        setVal('rep-walkins',walkinCount);
+
+        // Per doctor breakdown
+        var docDiv=document.getElementById('rep-doctors');
+        if(!docDiv) return;
+        if(!myDoctors.length){docDiv.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF">No doctors in this clinic.</div>';return;}
+
+        var html='<table style="width:100%;border-collapse:collapse">';
+        html+='<thead><tr style="border-bottom:2px solid var(--border)">'+
+          '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Doctor</th>'+
+          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Total</th>'+
+          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">New</th>'+
+          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Follow-up</th>'+
+          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Done</th>'+
+          '<th style="text-align:center;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Appts</th>'+
+        '</tr></thead><tbody>';
+
+        myDoctors.forEach(function(doc){
+          var dPts=pts.filter(function(p){return p.doctor===doc.username;});
+          var dAppts=filteredAppts.filter(function(a){return a.doctorId===doc.username;});
+          html+='<tr style="border-bottom:1px solid var(--border)">'+
+            '<td style="padding:12px;font-size:13px;font-weight:700;color:#0D1117">'+doc.name+'<div style="font-size:11px;color:#9CA3AF;font-weight:400">'+(doc.specialty||'')+'</div></td>'+
+            '<td style="padding:12px;text-align:center;font-size:15px;font-weight:800;color:#0D1117">'+dPts.length+'</td>'+
+            '<td style="padding:12px;text-align:center;font-size:13px;color:#059669;font-weight:600">'+dPts.filter(function(p){return p.visitType==='new';}).length+'</td>'+
+            '<td style="padding:12px;text-align:center;font-size:13px;color:#2563A8;font-weight:600">'+dPts.filter(function(p){return p.visitType==='follow_up';}).length+'</td>'+
+            '<td style="padding:12px;text-align:center;font-size:13px;color:#059669;font-weight:600">'+dPts.filter(function(p){return p.status==='done';}).length+'</td>'+
+            '<td style="padding:12px;text-align:center;font-size:13px;color:#7C3AED;font-weight:600">'+dAppts.length+'</td>'+
+          '</tr>';
+        });
+        html+='</tbody></table>';
+        docDiv.innerHTML=html;
+      });
+    });
+  });
+}
+
 function doLogout(){
   stopInactivityWatch();
   currentUser=null;
@@ -2173,30 +2274,35 @@ function loadPage(page){
 
   if(page==='reports' && u.role==='clinicadmin'){
     var clinicName=u.clinicName||u.cabinetName||'My Clinic';
+    var todayStr=new Date().toISOString().split('T')[0];
     mc.innerHTML=
-      '<h2 style="margin-bottom:6px">Reports</h2>'+
-      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Activity in '+clinicName+' today</p>'+
-      '<div class="stats-grid" id="ca-rep-stats">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="ca-rep-total">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🆕</div><div><div class="stat-val" id="ca-rep-new">—</div><div class="stat-lbl">New Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">🔄</div><div><div class="stat-val" id="ca-rep-fu">—</div><div class="stat-lbl">Follow-ups</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">✅</div><div><div class="stat-val" id="ca-rep-done">—</div><div class="stat-lbl">Completed</div></div></div>'+
+      '<h2 style="margin-bottom:4px">Reports</h2>'+
+      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:16px">'+clinicName+'</p>'+
+      // Date filter buttons
+      '<div style="display:flex;gap:8px;margin-bottom:20px">'+
+        '<button id="rep-btn-today" onclick="loadReports(&quot;today&quot;)" style="padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Today</button>'+
+        '<button id="rep-btn-week" onclick="loadReports(&quot;week&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#4B5563;font-size:12px;font-weight:700;cursor:pointer">This Week</button>'+
+        '<button id="rep-btn-month" onclick="loadReports(&quot;month&quot;)" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#4B5563;font-size:12px;font-weight:700;cursor:pointer">This Month</button>'+
+      '</div>'+
+      // Stats cards
+      '<div class="stats-grid" style="margin-bottom:20px">'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="rep-total">—</div><div class="stat-lbl">Total Patients</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🆕</div><div><div class="stat-val" id="rep-new">—</div><div class="stat-lbl">New</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">🔄</div><div><div class="stat-val" id="rep-fu">—</div><div class="stat-lbl">Follow-ups</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#05966920">✅</div><div><div class="stat-val" id="rep-done">—</div><div class="stat-lbl">Completed</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#EF444420">📅</div><div><div class="stat-val" id="rep-appts">—</div><div class="stat-lbl">Appointments</div></div></div>'+
+        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">🚶</div><div><div class="stat-val" id="rep-walkins">—</div><div class="stat-lbl">Walk-ins</div></div></div>'+
+      '</div>'+
+      // Per doctor breakdown
+      '<div class="table-card">'+
+        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Per Doctor</h3>'+
+        '<div id="rep-doctors"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
       '</div>';
 
-    // Load clinic doctors then filter patients
-    if(window.fbGetAccounts&&window.fbGetPatients){
-      window.fbGetAccounts().then(function(accounts){
-        var myDoctors=accounts.filter(function(a){return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);});
-        var docIds=myDoctors.map(function(d){return d.username;});
-        window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
-          var myPts=pts.filter(function(p){return docIds.indexOf(p.doctor)>-1;});
-          var t=document.getElementById('ca-rep-total'); if(t) t.textContent=myPts.length;
-          var n=document.getElementById('ca-rep-new'); if(n) n.textContent=myPts.filter(function(p){return p.visitType==='new';}).length;
-          var f=document.getElementById('ca-rep-fu'); if(f) f.textContent=myPts.filter(function(p){return p.visitType==='follow_up';}).length;
-          var d=document.getElementById('ca-rep-done'); if(d) d.textContent=myPts.filter(function(p){return p.status==='done';}).length;
-        });
-      });
-    }
+    // Store clinic info for loadReports
+    window._repClinicName=clinicName;
+    window._repUser=u;
+    loadReports('today');
     return;
   }
 
