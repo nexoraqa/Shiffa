@@ -1609,26 +1609,51 @@ function deleteLabOrder(id){
 function loadPatientLabOrders(){
   var section=document.getElementById('lab-results-section');
   if(!section||!window.fbGetLabOrders) return;
-  var patientPhone=document.getElementById('popup-raw-phone')?document.getElementById('popup-raw-phone').value:(document.getElementById('popup-phone')?document.getElementById('popup-phone').textContent:'');
+  var patientPhone=document.getElementById('popup-raw-phone')?document.getElementById('popup-raw-phone').value:'';
   if(!patientPhone) return;
-  window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){window._labOrders=orders;
-    var patOrders=orders.filter(function(o){return o.patientPhone===patientPhone;});
+  var today=new Date().toISOString().split('T')[0];
+  window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){
+    window._labOrders=orders;
+    var patOrders=orders.filter(function(o){return o.patientPhone===patientPhone&&o.status!=='cancelled';});
     if(!patOrders.length){section.innerHTML='';return;}
-    var html='<div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:8px">Previous Orders:</div>';
-    patOrders.forEach(function(o){
-      html+=
-        '<div style="background:#fff;border-radius:8px;padding:10px;margin-bottom:6px;border:1px solid #D1FAE5">'+
-          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'+
-            '<span style="font-size:13px;font-weight:700;color:#0D1117">🧪 '+o.testType+'</span>'+
-            '<div style="display:flex;align-items:center;gap:6px">'+
-              '<span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;background:'+(o.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(o.status==='done'?'#059669':'#D97706')+'">'+o.status+'</span>'+
-              '<button data-oid="'+o.id+'" onclick="deleteLabOrder(this.getAttribute(\'data-oid\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer">✕</button>'+
+    var todayOrders=patOrders.filter(function(o){return o.date===today;});
+    var prevOrders=patOrders.filter(function(o){return o.date!==today;});
+    var html='';
+    if(todayOrders.length){
+      html+='<div style="font-size:11px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Today</div>';
+      todayOrders.forEach(function(o){
+        html+=
+          '<div style="background:#F0F9FF;border-radius:8px;padding:10px;margin-bottom:6px;border:1px solid #BAE6FD">'+
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'+
+              '<span style="font-size:13px;font-weight:700;color:#0D1117">🧪 '+o.testType+'</span>'+
+              '<div style="display:flex;align-items:center;gap:6px">'+
+                '<span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;background:'+(o.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(o.status==='done'?'#059669':'#D97706')+'">'+o.status+'</span>'+
+                '<button data-oid="'+o.id+'" onclick="deleteLabOrder(this.getAttribute(\'data-oid\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer">✕</button>'+
+              '</div>'+
             '</div>'+
-          '</div>'+
-          (o.result?'<div style="font-size:12px;color:#4B5563;margin-top:6px;padding:6px;background:#F0FDF4;border-radius:6px">Result: '+o.result+'</div>':'')+
-          '<div style="font-size:11px;color:#9CA3AF;margin-top:4px">'+(o.date||'')+'</div>'+
-        '</div>';
-    });
+            (o.result?'<div style="font-size:12px;color:#0369A1;margin-top:6px;padding:6px;background:#E0F2FE;border-radius:6px;font-weight:600">Result: '+o.result+'</div>':
+            '<div style="font-size:11px;color:#9CA3AF;margin-top:4px">Waiting for lab results...</div>')+
+          '</div>';
+      });
+    }
+    if(prevOrders.length){
+      var prevHtml='';
+      prevOrders.forEach(function(o){
+        prevHtml+=
+          '<div style="background:#F8FAFF;border-radius:8px;padding:8px 10px;margin-bottom:4px;border:1px solid #E5E9EF">'+
+            '<div style="display:flex;justify-content:space-between;align-items:center">'+
+              '<span style="font-size:12px;font-weight:600;color:#4B5563">🧪 '+o.testType+'</span>'+
+              '<span style="font-size:10px;color:#9CA3AF">'+o.date+'</span>'+
+            '</div>'+
+            (o.result?'<div style="font-size:11px;color:#059669;margin-top:4px;font-weight:600">'+o.result+'</div>':
+            '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">Pending</div>')+
+          '</div>';
+      });
+      html+='<div id="prev-lab-wrap" style="margin-top:8px">'+
+        '<button onclick="var w=document.getElementById(\'prev-lab-list\');var open=w.style.display===\'block\';w.style.display=open?\'none\':\'block\';this.textContent=open?\'▶ Previous Tests ('+prevOrders.length+')\':\'▼ Previous Tests ('+prevOrders.length+')\';" style="background:none;border:none;font-size:11px;font-weight:700;color:#9CA3AF;cursor:pointer;padding:0;margin-bottom:6px">▶ Previous Tests ('+prevOrders.length+')</button>'+
+        '<div id="prev-lab-list" style="display:none">'+prevHtml+'</div>'+
+      '</div>';
+    }
     section.innerHTML=html;
   });
 }
