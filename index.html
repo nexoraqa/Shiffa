@@ -3951,6 +3951,9 @@ function changeQueueDate(dir){
   window.queueDate = d.toISOString().split('T')[0];
   window.queueFilter = null;
   updateQueueDateLabel();
+  // Show loading immediately
+  var list=document.getElementById('queue-list');
+  if(list) list.innerHTML='<div style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px">Loading...</div>';
   loadQueue(currentUser.doctorId || null);
 }
 
@@ -4420,6 +4423,19 @@ function saveAndPrintRx(){
 function renderQueue(patients){
   var list=document.getElementById('queue-list');
   if(!list) return;
+  // Always update badges first
+  var cWaiting2=0,cProgress2=0,cDone2=0;
+  for(var ii=0;ii<(patients||[]).length;ii++){
+    if(patients[ii].status==='waiting') cWaiting2++;
+    else if(patients[ii].status==='inprogress') cProgress2++;
+    else if(patients[ii].status==='done') cDone2++;
+  }
+  var lsW2=document.getElementById('ls-waiting');
+  var lsP2=document.getElementById('ls-progress');
+  var lsD2=document.getElementById('ls-done');
+  if(lsW2) lsW2.textContent=cWaiting2;
+  if(lsP2) lsP2.textContent=cProgress2;
+  if(lsD2) lsD2.textContent=cDone2;
   if((!patients||patients.length===0)&&!window.queueFilter){
     list.innerHTML='<div class="empty-state"><div style="font-size:40px">🏥</div><p>No active patients right now.</p></div>';
     return;
