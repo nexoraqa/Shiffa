@@ -2829,11 +2829,18 @@ function loadPage(page){
                 var dPts=pts.filter(function(p){return p.doctor===doc.username;});
                 var dAppts=(apptResults[idx]||[]).filter(function(a){return a.day===todayDay&&a.status!=='cancelled';});
                 totalAppts+=dAppts.length;
+                // Combine walk-ins and appointments for accurate counts
                 var dPtsActive=dPts.filter(function(p){return p.status!=='scheduled';});
-                var waiting=dPtsActive.filter(function(p){return p.status==='waiting';}).length+dAppts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';}).length;
-                var inprog=dPtsActive.filter(function(p){return p.status==='inprogress';}).length;
-                var done=dPtsActive.filter(function(p){return p.status==='done';}).length;
-                var total=dPtsActive.length+dAppts.length;
+                var waitingWalkIn=dPtsActive.filter(function(p){return p.status==='waiting';}).length;
+                var waitingAppts=dAppts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';}).length;
+                var waiting=waitingWalkIn+waitingAppts;
+                var inprogWalkIn=dPtsActive.filter(function(p){return p.status==='inprogress';}).length;
+                var inprogAppts=dAppts.filter(function(a){return a.status==='inprogress';}).length;
+                var inprog=inprogWalkIn+inprogAppts;
+                var doneWalkIn=dPtsActive.filter(function(p){return p.status==='done';}).length;
+                var doneAppts=dAppts.filter(function(a){return a.status==='done';}).length;
+                var done=doneWalkIn+doneAppts;
+                var total=waiting+inprog+done;
                 var linked=myReceps.filter(function(r){return r.doctorId===doc.username;});
 
                 html+=
