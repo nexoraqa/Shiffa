@@ -2172,17 +2172,55 @@ function loadPage(page){
   }
   if(u.role==='clinicadmin'&&(page==='dashboard'||page==='overview')){
     var clinicName=u.clinicName||u.cabinetName||'My Clinic';
-    mc.innerHTML=banner+
-      '<div class="stats-grid">'+
-        '<div class="stat-card" onclick="showDoctorsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#1B6B4A20">👨‍⚕️</div><div><div class="stat-val" id="ca-doctors">—</div><div class="stat-lbl">My Doctors</div></div></div>'+
-        '<div class="stat-card" onclick="showRecepsPopup()" style="cursor:pointer"><div class="stat-icon" style="background:#2563A820">🧑‍💼</div><div><div class="stat-val" id="ca-receps">—</div><div class="stat-lbl">Receptionists</div></div></div>'+
-        '<div class="stat-card" onclick="showPatientsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#F0A50020">👥</div><div><div class="stat-val" id="ca-patients">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
-        '<div class="stat-card" onclick="showApptsPopup(null)" style="cursor:pointer"><div class="stat-icon" style="background:#7B5EA720">📅</div><div><div class="stat-val" id="ca-appts">—</div><div class="stat-lbl">Appointments</div></div></div>'+
+    var now2=new Date();
+    var hour2=now2.getHours();
+    var greet2=hour2<12?'Good morning':'Good afternoon';
+    mc.innerHTML=
+      // Header greeting
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">'+
+        '<div>'+
+          '<div style="font-size:12px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+greet2+'</div>'+
+          '<div style="font-size:22px;font-weight:900;color:#0D1117;letter-spacing:-0.5px">'+u.name+'</div>'+
+          '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">'+clinicName+'</div>'+
+        '</div>'+
+        '<div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);border-radius:14px;padding:12px 16px;text-align:center">'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Today</div>'+
+          '<div id="ca-time" style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>'+
+        '</div>'+
       '</div>'+
-      '<div class="table-card" style="margin-top:16px">'+
-        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Doctors in '+clinicName+'</h3>'+
-        '<div id="ca-doctors-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
+      // Summary strip
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">'+
+        '<div onclick="showDoctorsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;transition:all 0.15s;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Doctors</div>'+
+          '<div id="ca-doctors" style="font-size:28px;font-weight:900;color:#1A3A5C;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div onclick="showRecepsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;transition:all 0.15s;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Receptionists</div>'+
+          '<div id="ca-receps" style="font-size:28px;font-weight:900;color:#E65100;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div onclick="showPatientsPopup(null)" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;transition:all 0.15s;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Patients Today</div>'+
+          '<div id="ca-patients" style="font-size:28px;font-weight:900;color:#059669;letter-spacing:-1px">—</div>'+
+        '</div>'+
+        '<div onclick="showApptsPopup(null)" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;transition:all 0.15s;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
+          '<div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Appointments</div>'+
+          '<div id="ca-appts" style="font-size:28px;font-weight:900;color:#7C3AED;letter-spacing:-1px">—</div>'+
+        '</div>'+
+      '</div>'+
+      // Doctor cards grid
+      '<div style="font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Live Queue — All Doctors</div>'+
+      '<div id="ca-doctor-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">'+
+        '<div style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px;grid-column:1/-1">Loading...</div>'+
       '</div>';
+
+    // Live clock
+    var caClockInterval=setInterval(function(){
+      var el=document.getElementById('ca-time');
+      if(!el){clearInterval(caClockInterval);return;}
+      var n=new Date();
+      el.textContent=(n.getHours()<10?'0':'')+n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes();
+    },1000);
+    document.getElementById('ca-time').textContent=(function(){var n=new Date();return(n.getHours()<10?'0':'')+n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes();})();
 
     // Load real data filtered by clinic
     if(window.fbGetAccounts){
@@ -2192,30 +2230,81 @@ function loadPage(page){
         var dEl=document.getElementById('ca-doctors'); if(dEl) dEl.textContent=myDoctors.length;
         var rEl=document.getElementById('ca-receps'); if(rEl) rEl.textContent=myReceps.length;
 
-        var list=document.getElementById('ca-doctors-list');
-        if(list){
-          if(!myDoctors.length){
-            list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No doctors in this clinic yet.</div>';
-          } else {
-            var html='';
-            myDoctors.forEach(function(doc){
-              var linked=myReceps.filter(function(r){return r.doctorId===doc.username;});
-              html+='<div class="table-row">'+
-                '<div><div class="row-name">'+doc.name+'</div>'+
-                '<div class="row-sub">'+(doc.specialty||'General Practice')+'</div></div>'+
-                '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+linked.length+' recep.</span>'+
-              '</div>';
-            });
-            list.innerHTML=html;
-          }
-        }
-
         // Load today patients for this clinic's doctors
         var docIds=myDoctors.map(function(d){return d.username;});
         if(docIds.length&&window.fbGetPatients){
           window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
             var myPts=pts.filter(function(p){return docIds.indexOf(p.doctor)>-1;});
             var pEl=document.getElementById('ca-patients'); if(pEl) pEl.textContent=myPts.length;
+
+            // Build doctor cards with live queue data
+            var cardsEl=document.getElementById('ca-doctor-cards');
+            if(!cardsEl) return;
+            if(!myDoctors.length){
+              cardsEl.innerHTML='<div style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px;grid-column:1/-1">No doctors in this clinic yet.</div>';
+              return;
+            }
+
+            // Load appointments too
+            var apptPromises=myDoctors.map(function(d){
+              return window.fbGetAppointments?window.fbGetAppointments(d.username,null).catch(function(){return[];}):Promise.resolve([]);
+            });
+            var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            var todayDay=dayNames[new Date().getDay()];
+
+            Promise.all(apptPromises).then(function(apptResults){
+              var totalAppts=0;
+              var html='';
+              myDoctors.forEach(function(doc,idx){
+                var dPts=pts.filter(function(p){return p.doctor===doc.username;});
+                var dAppts=(apptResults[idx]||[]).filter(function(a){return a.day===todayDay&&a.status!=='cancelled';});
+                totalAppts+=dAppts.length;
+                var waiting=dPts.filter(function(p){return p.status==='waiting';}).length+dAppts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';}).length;
+                var inprog=dPts.filter(function(p){return p.status==='inprogress';}).length;
+                var done=dPts.filter(function(p){return p.status==='done';}).length;
+                var total=dPts.length+dAppts.length;
+                var linked=myReceps.filter(function(r){return r.doctorId===doc.username;});
+
+                html+=
+                  '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">'+
+                    // Card header
+                    '<div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);padding:16px 18px;display:flex;align-items:center;gap:12px">'+
+                      '<div style="width:40px;height:40px;background:rgba(255,255,255,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid rgba(255,255,255,0.2)">👨‍⚕️</div>'+
+                      '<div style="flex:1;min-width:0">'+
+                        '<div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+doc.name+'</div>'+
+                        '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px">'+(doc.specialty||'General Practice')+'</div>'+
+                      '</div>'+
+                      '<div style="text-align:right">'+
+                        '<div style="font-size:22px;font-weight:900;color:#fff;line-height:1">'+total+'</div>'+
+                        '<div style="font-size:10px;color:rgba(255,255,255,0.4)">total</div>'+
+                      '</div>'+
+                    '</div>'+
+                    // Stats row
+                    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0">'+
+                      '<div style="padding:14px;text-align:center;border-right:1px solid #F0F4F8">'+
+                        '<div style="font-size:22px;font-weight:800;color:#D97706">'+waiting+'</div>'+
+                        '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Waiting</div>'+
+                      '</div>'+
+                      '<div style="padding:14px;text-align:center;border-right:1px solid #F0F4F8">'+
+                        '<div style="font-size:22px;font-weight:800;color:#2563A8">'+inprog+'</div>'+
+                        '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">With Doctor</div>'+
+                      '</div>'+
+                      '<div style="padding:14px;text-align:center">'+
+                        '<div style="font-size:22px;font-weight:800;color:#059669">'+done+'</div>'+
+                        '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Done</div>'+
+                      '</div>'+
+                    '</div>'+
+                    // Footer
+                    '<div style="padding:10px 18px;background:#F8FAFF;border-top:1px solid #F0F4F8;display:flex;align-items:center;justify-content:space-between">'+
+                      '<div style="font-size:11px;color:#9CA3AF">'+linked.length+' receptionist'+(linked.length!==1?'s':'')+'</div>'+
+                      '<div style="font-size:11px;color:#7C3AED;font-weight:600">'+dAppts.length+' appointments today</div>'+
+                    '</div>'+
+                  '</div>';
+              });
+              if(cardsEl) cardsEl.innerHTML=html;
+
+              var aEl=document.getElementById('ca-appts'); if(aEl) aEl.textContent=totalAppts;
+            });
           });
         } else {
           var pEl=document.getElementById('ca-patients'); if(pEl) pEl.textContent='0';
