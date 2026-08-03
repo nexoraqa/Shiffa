@@ -864,7 +864,15 @@ function sbStep2(){
   }
 
   var DAY_FULL={Sat:'Saturday',Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'};
-  var workingDays=sched.days.filter(function(d){return d.shift&&d.shift!=='off';});
+  var DAY_IDX={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+  var todayIdx=new Date().getDay();
+  var workingDays=sched.days.filter(function(d){
+    if(!d.shift||d.shift==='off') return false;
+    // Only show today and future days
+    var dIdx=DAY_IDX[d.day];
+    if(dIdx===undefined) return true;
+    return dIdx>=todayIdx;
+  });
 
   var html=
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E5E9EF">'+
@@ -2711,10 +2719,10 @@ function loadNotesTab(tab){
       });
     }
   } else {
-    // All time — load all patients for this doctor
-    if(window.fbSearchPatientsByPhone){
-      window.fbSearchPatientsByPhone('', u.doctorId).then(function(pts){
-        // Sort by visitDate newest first
+    // All time — load all patients for this doctor from patients collection
+    if(window.fbGetAllPatients){
+      window.fbGetAllPatients().then(function(pts){
+        pts=pts.filter(function(p){return p.doctor===u.doctorId;});
         pts.sort(function(a,b){ return b.visitDate>a.visitDate?1:-1; });
         renderNotes(pts);
       });
@@ -3891,13 +3899,16 @@ function loadQueue(doctorFilter){
     // Run both Firebase calls in parallel for speed
     var docId=doctorFilter||currentUser.doctorId||'';
     var ptsP=window.fbGetPatients(date);
-    var apptP=(window.fbGetAppointments&&date===todayStr&&docId)
+    // Load appointments for any date, filter by day name
+    var dateObj=new Date(date+'T00:00:00');
+    var dateDayName=dayNames[dateObj.getDay()];
+    var apptP=(window.fbGetAppointments&&docId)
       ?window.fbGetAppointments(docId,null):Promise.resolve([]);
     Promise.all([ptsP,apptP]).then(function(results){
       var pts=results[0]||[];
       var appts=results[1]||[];
       if(doctorFilter){ pts=pts.filter(function(p){return p.doctor===doctorFilter;}); }
-      var todayAppts=appts.filter(function(a){return a.day===todayName&&a.status!=='cancelled';});
+      var todayAppts=appts.filter(function(a){return a.day===dateDayName&&a.status!=='cancelled';});
       // Only block duplicate if walk-in patient is NOT done
       // Hide appointment if patient already walked in (waiting/inprogress)
       var existingPhones={};
