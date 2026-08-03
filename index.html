@@ -1626,6 +1626,103 @@ function stopInactivityWatch(){
   });
 }
 
+function loadSAReports(period){
+  // Update buttons
+  ['today','week','month'].forEach(function(p){
+    var btn=document.getElementById('sa-rep-btn-'+p);
+    if(!btn) return;
+    if(p===period){btn.style.background='linear-gradient(135deg,#1A3A5C,#2563A8)';btn.style.color='#fff';}
+    else{btn.style.background='transparent';btn.style.color='#9CA3AF';}
+  });
+  var plEl=document.getElementById('sa-rep-period');
+  if(plEl) plEl.textContent=period==='today'?'Today':period==='week'?'This Week':'This Month';
+
+  var now=new Date();
+  var toDate=now.toISOString().split('T')[0];
+  var fromDate=toDate;
+  if(period==='week'){var w=new Date(now);w.setDate(now.getDate()-6);fromDate=w.toISOString().split('T')[0];}
+  else if(period==='month'){var m=new Date(now);m.setDate(1);fromDate=m.toISOString().split('T')[0];}
+
+  if(!window.fbGetAccounts||!window.fbGetAllPatients) return;
+
+  window.fbGetAccounts().then(function(accounts){
+    var doctors=accounts.filter(function(a){return a.role==='doctor';});
+
+    window.fbGetAllPatients().then(function(allPts){
+      var pts=allPts.filter(function(p){return p.visitDate>=fromDate&&p.visitDate<=toDate;});
+
+      var apptPromises=doctors.map(function(d){
+        return window.fbGetAppointments?window.fbGetAppointments(d.username,null).catch(function(){return[];}):Promise.resolve([]);
+      });
+
+      Promise.all(apptPromises).then(function(apptResults){
+        var allAppts=[];
+        apptResults.forEach(function(r){allAppts=allAppts.concat(r||[]);});
+        var filteredAppts=allAppts.filter(function(a){return a.date>=fromDate&&a.date<=toDate&&a.status!=='cancelled';});
+
+        // Update top stats
+        var setV=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+        setV('sa-rep-total',pts.length);
+        setV('sa-rep-done',pts.filter(function(p){return p.status==='done';}).length);
+        setV('sa-rep-new',pts.filter(function(p){return p.visitType==='new';}).length);
+        setV('sa-rep-appts',filteredAppts.length);
+
+        // Group by clinic
+        var clinics={};
+        doctors.forEach(function(d){
+          var cn=d.clinicName||d.cabinetName||'Unknown';
+          if(!clinics[cn]) clinics[cn]={name:cn,doctors:[],patients:0,done:0,newPts:0,appts:0};
+          clinics[cn].doctors.push(d);
+        });
+
+        doctors.forEach(function(d,idx){
+          var cn=d.clinicName||d.cabinetName||'Unknown';
+          if(!clinics[cn]) return;
+          var dPts=pts.filter(function(p){return p.doctor===d.username;});
+          var dAppts=filteredAppts.filter(function(a){return a.doctorId===d.username;});
+          clinics[cn].patients+=dPts.length;
+          clinics[cn].done+=dPts.filter(function(p){return p.status==='done';}).length;
+          clinics[cn].newPts+=dPts.filter(function(p){return p.visitType==='new';}).length;
+          clinics[cn].appts+=dAppts.length;
+        });
+
+        var clinicsEl=document.getElementById('sa-rep-clinics');
+        if(!clinicsEl) return;
+        var clinicNames=Object.keys(clinics);
+        if(!clinicNames.length){clinicsEl.innerHTML='<div style="text-align:center;padding:30px;color:#9CA3AF">No clinics found.</div>';return;}
+
+        var html='';
+        clinicNames.forEach(function(cn){
+          var c=clinics[cn];
+          var pct=c.patients?Math.round(c.done/c.patients*100):0;
+          html+=
+            '<div style="padding:16px 20px;border-bottom:1px solid var(--border)">'+
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+                '<div>'+
+                  '<div style="font-size:14px;font-weight:700;color:#0D1117">'+cn+'</div>'+
+                  '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+c.doctors.length+' doctor'+(c.doctors.length!==1?'s':'')+'</div>'+
+                '</div>'+
+                '<div style="text-align:right">'+
+                  '<div style="font-size:22px;font-weight:800;color:#0D1117">'+c.patients+'</div>'+
+                  '<div style="font-size:10px;color:#9CA3AF">patients</div>'+
+                '</div>'+
+              '</div>'+
+              '<div style="background:#F0F4F8;border-radius:4px;height:6px;margin-bottom:10px">'+
+                '<div style="background:linear-gradient(90deg,#1A3A5C,#2563A8);height:6px;border-radius:4px;width:'+pct+'%"></div>'+
+              '</div>'+
+              '<div style="display:flex;gap:16px">'+
+                '<span style="font-size:11px;font-weight:600;color:#059669">✅ '+c.done+' Done</span>'+
+                '<span style="font-size:11px;font-weight:600;color:#2563A8">🆕 '+c.newPts+' New</span>'+
+                '<span style="font-size:11px;font-weight:600;color:#7C3AED">📅 '+c.appts+' Appts</span>'+
+              '</div>'+
+            '</div>';
+        });
+        clinicsEl.innerHTML=html;
+      });
+    });
+  });
+}
+
 function loadReports(period){
   var clinicName=window._repClinicName||'';
   // Update button styles
@@ -2997,62 +3094,44 @@ function loadPage(page){
   // ── SUPERADMIN REPORTS PAGE ──
   if(page==='reports' && u.role==='superadmin'){
     mc.innerHTML=
-      '<h2 style="margin-bottom:6px">Reports</h2>'+
-      '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Overview of clinic activity</p>'+
-      '<div class="stats-grid" id="rep-stats">'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#1B6B4A20">👥</div><div><div class="stat-val" id="rep-today">—</div><div class="stat-lbl">Patients Today</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#2563A820">🆕</div><div><div class="stat-val" id="rep-new">—</div><div class="stat-lbl">New Patients</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#F0A50020">🔄</div><div><div class="stat-val" id="rep-followup">—</div><div class="stat-lbl">Follow-ups</div></div></div>'+
-        '<div class="stat-card"><div class="stat-icon" style="background:#7B5EA720">✅</div><div><div class="stat-val" id="rep-done">—</div><div class="stat-lbl">Completed</div></div></div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'+
+        '<div>'+
+          '<h2 style="font-size:20px;font-weight:800;color:#0D1117;margin-bottom:2px">Reports</h2>'+
+          '<div style="font-size:13px;color:#9CA3AF">All clinics — system wide</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;background:#F0F4F8;border-radius:10px;padding:4px">'+
+          '<button id="sa-rep-btn-today" onclick="loadSAReports(&quot;today&quot;)" style="padding:7px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Today</button>'+
+          '<button id="sa-rep-btn-week" onclick="loadSAReports(&quot;week&quot;)" style="padding:7px 16px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">Week</button>'+
+          '<button id="sa-rep-btn-month" onclick="loadSAReports(&quot;month&quot;)" style="padding:7px 16px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">Month</button>'+
+        '</div>'+
       '</div>'+
-      '<div class="table-card" style="margin-top:16px">'+
-        '<h3 style="font-size:14px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">Appointments Today</h3>'+
-        '<div id="rep-appts"><div style="text-align:center;padding:20px;color:#9CA3AF">Loading...</div></div>'+
+      '<div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;gap:0">'+
+        '<div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.1);padding:0 16px">'+
+          '<div id="sa-rep-total" style="font-size:40px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">Total</div>'+
+        '</div>'+
+        '<div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.1);padding:0 16px">'+
+          '<div id="sa-rep-done" style="font-size:40px;font-weight:900;color:#10B981;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">Done</div>'+
+        '</div>'+
+        '<div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.1);padding:0 16px">'+
+          '<div id="sa-rep-new" style="font-size:40px;font-weight:900;color:#60A5FA;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">New</div>'+
+        '</div>'+
+        '<div style="flex:1;text-align:center;padding:0 16px">'+
+          '<div id="sa-rep-appts" style="font-size:40px;font-weight:900;color:#F59E0B;line-height:1;letter-spacing:-1px">—</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600">Appts</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)">'+
+        '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
+          '<div style="font-size:14px;font-weight:700;color:#0D1117">Per Clinic</div>'+
+          '<div id="sa-rep-period" style="font-size:12px;color:#9CA3AF">Today</div>'+
+        '</div>'+
+        '<div id="sa-rep-clinics"><div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Loading...</div></div>'+
       '</div>';
 
-    if(window.fbGetPatients){
-      window.fbGetPatients(new Date().toISOString().split('T')[0]).then(function(pts){
-        var newP=pts.filter(function(p){return p.visitType==='new';}).length;
-        var fu=pts.filter(function(p){return p.visitType==='follow_up';}).length;
-        var done=pts.filter(function(p){return p.status==='done';}).length;
-        var t1=document.getElementById('rep-today'); if(t1) t1.textContent=pts.length;
-        var t2=document.getElementById('rep-new'); if(t2) t2.textContent=newP;
-        var t3=document.getElementById('rep-followup'); if(t3) t3.textContent=fu;
-        var t4=document.getElementById('rep-done'); if(t4) t4.textContent=done;
-      });
-    }
-
-    // Load today's appointments
-    var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    var todayName=dayNames[new Date().getDay()];
-    if(window.fbGetAccounts&&window.fbGetAppointments){
-      window.fbGetAccounts().then(function(accounts){
-        var doctors=accounts.filter(function(a){return a.role==='doctor';});
-        var promises=doctors.map(function(d){
-          return window.fbGetAppointments(d.username,null).then(function(appts){
-            return {doctor:d,appts:appts.filter(function(a){return a.day===todayName;})};
-          }).catch(function(){return {doctor:d,appts:[]};});
-        });
-        Promise.all(promises).then(function(results){
-          var repAppts=document.getElementById('rep-appts');
-          if(!repAppts) return;
-          var hasAny=results.some(function(r){return r.appts.length>0;});
-          if(!hasAny){repAppts.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No appointments today.</div>';return;}
-          var html='';
-          results.forEach(function(r){
-            if(!r.appts.length) return;
-            r.appts.forEach(function(a){
-              html+='<div class="table-row">'+
-                '<div><div class="row-name">'+a.patientName+'</div>'+
-                '<div class="row-sub">'+r.doctor.name+' · '+a.time+'</div></div>'+
-                '<span class="status-pill" style="color:#2563A8;background:#EEF2FF">'+a.status+'</span>'+
-              '</div>';
-            });
-          });
-          repAppts.innerHTML=html;
-        });
-      });
-    }
+    loadSAReports('today');
     return;
   }
 
