@@ -171,11 +171,6 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
     </div>
   </div>
 
-  <!-- TV Waiting Room Button -->
-  <div style="margin-top:24px;text-align:center">
-    <button onclick="openTVScreen()" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.8);border-radius:12px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.5px">📺 Waiting Room Screen</button>
-  </div>
-
   <!-- Login form (hidden by default) -->
   <div id="login-form" style="display:none;width:100%;max-width:420px">
     <button onclick="showLoginChoice()" style="background:rgba(255,255,255,0.1);border:none;border-radius:10px;padding:8px 16px;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;margin-bottom:16px">← Back</button>
@@ -2274,51 +2269,59 @@ function updateTVClock(){
 }
 
 function loadTVQueue(){
-  if(!window.fbGetPatients) return;
+  if(!window.fbGetPatients||!currentUser) return;
+  var doctorId=currentUser.doctorId||'';
   var today=new Date().toISOString().split('T')[0];
   var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var todayDay=dayNames[new Date().getDay()];
+
+  // Update clinic name on TV
+  var cnEl=document.getElementById('tv-clinic-name');
+  if(cnEl) cnEl.textContent=currentUser.cabinetName||currentUser.clinicName||'Shifaa Clinic';
+
   var ptsP=window.fbGetPatients(today);
-  var apptP=window.fbGetAppointments?window.fbGetAccounts().then(function(accs){
-    var docs=accs.filter(function(a){return a.role==='doctor';});
-    return Promise.all(docs.map(function(d){return window.fbGetAppointments(d.username,null).catch(function(){return[];});}))
-      .then(function(results){var all=[];results.forEach(function(r){all=all.concat(r||[]);});return all;});
-  }).catch(function(){return[];}):Promise.resolve([]);
+  var apptP=doctorId&&window.fbGetAppointments?window.fbGetAppointments(doctorId,null).catch(function(){return[];}):Promise.resolve([]);
 
   Promise.all([ptsP,apptP]).then(function(results){
-    var pts=(results[0]||[]).filter(function(p){return p.status!=='scheduled'&&p.status!=='cancelled';});
-    var appts=(results[1]||[]).filter(function(a){return a.day===todayDay&&a.status!=='cancelled';});
+    var pts=(results[0]||[]).filter(function(p){
+      return p.doctor===doctorId&&p.status!=='scheduled'&&p.status!=='cancelled';
+    });
+    var appts=(results[1]||[]).filter(function(a){
+      return a.day===todayDay&&a.status!=='cancelled';
+    });
 
-    // Sort by number (order of arrival)
     pts.sort(function(a,b){return (a.createdAt||'')>(b.createdAt||'')?1:-1;});
 
-    // Find current (inprogress)
     var inprog=pts.filter(function(p){return p.status==='inprogress';});
-    var apptInprog=appts.filter(function(a){return a.status==='inprogress';});
     var waiting=pts.filter(function(p){return p.status==='waiting';});
+    var apptInprog=appts.filter(function(a){return a.status==='inprogress';});
     var apptWaiting=appts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';});
 
-    // Current number (inprogress)
+    // Now serving
     var nowEl=document.getElementById('tv-now');
-    var currentNum=inprog.length>0?(pts.indexOf(inprog[0])+1):(apptInprog.length>0?'A':'—');
+    var currentNum='—';
+    if(inprog.length>0) currentNum=pts.indexOf(inprog[0])+1;
+    else if(apptInprog.length>0) currentNum='📅';
     if(nowEl) nowEl.textContent=currentNum;
 
-    // Waiting numbers
+    // Waiting
     var queueEl=document.getElementById('tv-queue');
     if(!queueEl) return;
     if(!waiting.length&&!apptWaiting.length){
-      queueEl.innerHTML='<div style="font-size:28px;color:rgba(255,255,255,0.2);font-weight:700">No patients waiting</div>';
+      queueEl.innerHTML='<div style="font-size:28px;color:rgba(255,255,255,0.2);font-weight:700">Queue is empty</div>';
       return;
     }
     var html='';
     var num=inprog.length>0?2:1;
-    waiting.forEach(function(p){
-      html+='<div style="background:rgba(255,255,255,0.08);border-radius:16px;width:100px;height:100px;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,0.1)">'+num+'</div>';
+    waiting.forEach(function(){
+      html+='<div style="background:rgba(255,255,255,0.08);border-radius:16px;width:110px;height:110px;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,0.1)">'+num+'</div>';
       num++;
     });
     apptWaiting.forEach(function(a){
-      html+='<div style="background:rgba(37,99,168,0.3);border-radius:16px;width:100px;height:100px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:#60A5FA;border:2px solid rgba(37,99,168,0.5);flex-direction:column">'+
-        '<span>📅</span><span style="font-size:18px;margin-top:4px">'+(a.time||'')+'</span></div>';
+      html+='<div style="background:rgba(37,99,168,0.3);border-radius:16px;width:110px;height:110px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(37,99,168,0.5);flex-direction:column;gap:4px">'+
+        '<span style="font-size:28px">📅</span>'+
+        '<span style="font-size:16px;font-weight:800;color:#60A5FA">'+(a.time||'')+'</span>'+
+      '</div>';
     });
     queueEl.innerHTML=html;
   }).catch(function(){});
@@ -3598,10 +3601,13 @@ function loadPage(page){
     mc.innerHTML =
       '<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:16px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden">'+
         '<div style="position:absolute;right:-10px;top:-10px;width:90px;height:90px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)"></div>'+
-        '<div style="margin-bottom:14px">'+
-          '<div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:4px">'+rDateStr+'</div>'+
-          '<div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.3px">Good '+rGreet+', '+rFname+' 👋</div>'+
-          '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+u.cabinetName+'</div>'+
+        '<div style="margin-bottom:14px;display:flex;align-items:flex-start;justify-content:space-between">'+
+          '<div>'+
+            '<div style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:4px">'+rDateStr+'</div>'+
+            '<div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.3px">Good '+rGreet+', '+rFname+' 👋</div>'+
+            '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+u.cabinetName+'</div>'+
+          '</div>'+
+          '<button onclick="openTVScreen()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📺 TV</button>'+
         '</div>'+
         '<div style="display:flex;gap:0;background:rgba(255,255,255,0.08);border-radius:12px;overflow:hidden">'+
           '<div id="rdb-total" style="flex:1;padding:14px 8px;text-align:center;border-right:1px solid rgba(255,255,255,0.1)">'+
