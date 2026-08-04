@@ -673,8 +673,8 @@ function renderStaffTable(accounts){
       '</div>'+
       '<table style="width:100%;border-collapse:collapse">';
     staff.forEach(function(a){
-      var roleColor=a.role==='doctor'?'#2563A8':a.role==='clinicadmin'?'#7C3AED':a.role==='labtech'?'#0891B2':'#E65100';
-      var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='clinicadmin'?'#F5F3FF':a.role==='labtech'?'#ECFEFF':'#FEF3C7';
+      var roleColor=ROLE_COLORS[a.role]||'#4B5563';
+      var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='clinicadmin'?'#F5F3FF':a.role==='labtech'?'#ECFEFF':a.role==='receptionist'?'#ECFDF5':'#F0F4F8';
       var docLinked=a.role==='receptionist'&&a.doctorId&&accounts.some(function(x){return x.role==='doctor'&&x.username===a.doctorId;});
       var linkColor=a.role!=='receptionist'?'#9CA3AF':docLinked?'#059669':'#EF4444';
       var linkText=a.role==='receptionist'?(a.doctorId?(docLinked?a.doctorId:a.doctorId+' (not found)'):'Not linked'):'-';
@@ -1380,8 +1380,8 @@ function caRenderStaff(staff){
     '<th style="padding:8px 12px"></th>'+
   '</tr></thead><tbody>';
   staff.forEach(function(a){
-    var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
-    var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
+    var roleColor=ROLE_COLORS[a.role]||'#4B5563';
+    var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='labtech'?'#ECFEFF':'#ECFDF5';
     html+='<tr style="border-bottom:1px solid var(--border)">'+
       '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>'+
       '<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>'+
@@ -2074,10 +2074,11 @@ function loadSAReports(period){
         apptResults.forEach(function(r){allAppts=allAppts.concat(r||[]);});
         var filteredAppts=allAppts.filter(function(a){return a.date>=fromDate&&a.date<=toDate&&a.status!=='cancelled';});
 
-        // Update top stats
+        // Update top stats — include appointments
         var setV=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
-        setV('sa-rep-total',pts.length);
-        setV('sa-rep-done',pts.filter(function(p){return p.status==='done';}).length);
+        var saDone=pts.filter(function(p){return p.status==='done';}).length+filteredAppts.filter(function(a){return a.status==='done';}).length;
+        setV('sa-rep-total',pts.length+filteredAppts.length);
+        setV('sa-rep-done',saDone);
         setV('sa-rep-new',pts.filter(function(p){return p.visitType==='new';}).length);
         setV('sa-rep-appts',filteredAppts.length);
 
@@ -2094,8 +2095,8 @@ function loadSAReports(period){
           if(!clinics[cn]) return;
           var dPts=pts.filter(function(p){return p.doctor===d.username;});
           var dAppts=filteredAppts.filter(function(a){return a.doctorId===d.username;});
-          clinics[cn].patients+=dPts.length;
-          clinics[cn].done+=dPts.filter(function(p){return p.status==='done';}).length;
+          clinics[cn].patients+=dPts.length+dAppts.length;
+          clinics[cn].done+=dPts.filter(function(p){return p.status==='done';}).length+dAppts.filter(function(a){return a.status==='done';}).length;
           clinics[cn].newPts+=dPts.filter(function(p){return p.visitType==='new';}).length;
           clinics[cn].appts+=dAppts.length;
         });
@@ -3449,7 +3450,7 @@ function loadPage(page){
 
     mc.innerHTML =
       // ── Hero greeting strip ──
-      '<div style="background:linear-gradient(135deg,'+ROLE_COLORS.receptionist+','+ROLE_COLORS.receptionist+'99);border-radius:20px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)">'+
+      '<div style="background:linear-gradient(135deg,'+ROLE_COLORS.doctor+','+ROLE_COLORS.doctor+'99);border-radius:20px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)">'+
         '<div style="position:absolute;right:-10px;top:-10px;width:90px;height:90px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)"></div>'+
         '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
           '<div style="width:46px;height:46px;background:rgba(255,255,255,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid rgba(255,255,255,0.2)">👨‍⚕️</div>'+
@@ -3627,7 +3628,7 @@ function loadPage(page){
     var rDateStr = rNow.toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
     mc.innerHTML =
-      '<div style="background:linear-gradient(135deg,'+ROLE_COLORS.receptionist+','+ROLE_COLORS.receptionist+'99);border-radius:20px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)">'+
+      '<div style="background:linear-gradient(135deg,'+ROLE_COLORS.doctor+','+ROLE_COLORS.doctor+'99);border-radius:20px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)">'+
         '<div style="position:absolute;right:-10px;top:-10px;width:90px;height:90px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)"></div>'+
         '<div style="margin-bottom:14px;display:flex;align-items:flex-start;justify-content:space-between">'+
           '<div>'+
@@ -4026,7 +4027,8 @@ function loadNotesTab(tab){
   function renderNotes(pts){
     if(!pts.length){ listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes found.</div>'; return; }
     var promises=pts.map(function(p){
-      return window.fbGetNotesByPatientId ? window.fbGetNotesByPatientId(p.id).then(function(n){ return {patient:p,notes:n}; }) : Promise.resolve({patient:p,notes:[]});
+      var phone=(p.phone||'').replace(/ /g,'');
+      return window.fbGetNotes ? window.fbGetNotes(p.id,phone).then(function(n){ return {patient:p,notes:n}; }) : Promise.resolve({patient:p,notes:[]});
     });
     Promise.all(promises).then(function(results){
       // Only show patients that have notes written
