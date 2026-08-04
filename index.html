@@ -4055,11 +4055,33 @@ function loadNotesTab(tab){
   }
 
   if(tab==='today'){
-    var now=new Date();
-    var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-    if(window.fbGetPatients){
-      window.fbGetPatients(todayStr).then(function(pts){
-        renderNotes(pts.filter(function(p){ return p.doctor===u.doctorId; }));
+    var todayStr2=new Date().toISOString().split('T')[0];
+    if(window.fbGetAllNotes){
+      window.fbGetAllNotes(u.doctorId).then(function(notes){
+        if(!notes.length){listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes today.</div>';return;}
+        // Filter today's notes and group by phone
+        var todayNotes=notes.filter(function(n){return (n.savedAt||'').split('T')[0]===todayStr2;});
+        if(!todayNotes.length){listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes today.</div>';return;}
+        var byPhone={};
+        todayNotes.forEach(function(n){
+          var phone=(n.patientPhone||n.patientId||'unknown');
+          if(!byPhone[phone]||n.savedAt>byPhone[phone].savedAt) byPhone[phone]=n;
+        });
+        var html='';
+        Object.values(byPhone).forEach(function(n){
+          var displayName=n.patientName&&n.patientName.trim()&&n.patientName!=='Patient'?n.patientName:(n.patientPhone?'📞 '+n.patientPhone:'Patient');
+          html+='<div style="background:#fff;border-radius:13px;border:1px solid #E5E9EF;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">';
+          html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
+          html+='<div><div style="font-weight:800;font-size:15px;color:#0D1117">'+displayName+'</div>';
+          html+='<div style="font-size:12px;color:#8FA89D">'+(n.savedAt?n.savedAt.split('T')[0]:'')+(n.patientPhone?' · '+n.patientPhone:'')+'</div></div></div>';
+          html+='<div style="background:#F7FAF8;border-radius:8px;padding:12px">';
+          html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Diagnosis</div>';
+          html+='<div style="font-size:14px;font-weight:600;color:#0D1117;margin-bottom:8px">'+(n.diagnosis||'—')+'</div>';
+          html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Treatment</div>';
+          html+='<div style="font-size:13px;color:#4A5E54">'+(n.treatment||'—')+'</div>';
+          html+='</div></div>';
+        });
+        listEl.innerHTML=html;
       });
     }
   } else {
