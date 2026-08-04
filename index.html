@@ -5830,26 +5830,25 @@ function renderQueue(patients){
     var chipBg=p.status==='waiting'?'#FEF3C7':p.status==='inprogress'?'#EEF2FF':'#ECFDF5';
     var chipColor=p.status==='waiting'?'#D97706':p.status==='inprogress'?'#2563A8':'#059669';
     if(isEmergency&&p.status==='waiting'){chipBg='#FEE2E2';chipColor='#EF4444';}
-    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBg+'border-left:4px solid '+leftColor+';cursor:pointer;padding:0;" onclick="if(event.target.tagName===\'BUTTON\')return;openPatientPopup(this)">';
+    html+='<div class="queue-item" data-pid="'+p.id+'" style="'+cardBg+'border-left:5px solid '+leftColor+';cursor:pointer;padding:0;border-radius:14px;overflow:hidden;" onclick="if(event.target.tagName===\'BUTTON\')return;openPatientPopup(this)">';
     html+='<div style="display:flex;align-items:stretch">';
-    html+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;padding:14px 0;border-right:1px solid #F3F4F6">';
-    html+='<span style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">No.</span>';
-    html+='<span style="font-size:24px;font-weight:900;color:'+(isEmergency?'#EF4444':'#0D1117')+';line-height:1;letter-spacing:-1px">'+(i+1)+'</span>';
+    html+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:56px;padding:16px 0;background:'+(isEmergency?'#FFF5F5':'#FAFBFC')+';border-right:1px solid #F0F2F5">';
+    html+='<span style="font-size:9px;font-weight:700;color:#C4C9D4;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">#</span>';
+    html+='<span style="font-size:26px;font-weight:900;color:'+(isEmergency?'#EF4444':'#1A3A5C')+';line-height:1;letter-spacing:-1px">'+(i+1)+'</span>';
     html+='</div>';
-    html+='<div style="flex:1;padding:12px 14px">';
-    html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">';
+    html+='<div style="flex:1;padding:13px 16px">';
+    html+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">';
     html+='<span style="font-weight:800;font-size:15px;color:#0D1117;letter-spacing:-0.3px">'+p.name+'</span>';
-    if(isEmergency) html+='<span style="font-size:9px;font-weight:700;background:#FEE2E2;color:#EF4444;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px">Emergency</span>';
+    if(isEmergency) html+='<span style="font-size:9px;font-weight:800;background:#FEE2E2;color:#EF4444;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:0.8px">🚨 Emergency</span>';
     html+='<span class="'+tc+'">'+tl+'</span>';
     html+='</div>';
-    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:8px;font-weight:500">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · '+p.reason:'')+'</div>';
+    html+='<div class="patient-details" data-name="'+p.name+'" data-age="'+p.age+'" data-gender="'+(p.gender||'')+'" data-phone="'+(p.phone||'')+'" data-address="'+(p.address||'')+'" data-doctor="'+p.doctor+'" data-reason="'+(p.reason||'')+'" data-status="'+p.status+'" style="font-size:11px;color:#9CA3AF;margin-bottom:10px;font-weight:500;line-height:1.5">Age '+p.age+' · '+(p.gender||'')+' · '+p.doctor+(p.reason?' · <span style="color:#4B5563">'+p.reason+'</span>':'')+'</div>';
     html+='<div style="display:flex;align-items:center;justify-content:space-between">';
-    html+='<button data-status="'+p.status+'" data-pid="'+p.id+'" onclick="event.stopPropagation();var b=this;cycleStatus(b.getAttribute(\'data-pid\'),b)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.2px">'+s[2]+'</button>';
-    // Show appointment time OR waiting time
+    html+='<button data-status="'+p.status+'" data-pid="'+p.id+'" onclick="event.stopPropagation();var b=this;cycleStatus(b.getAttribute(\'data-pid\'),b)" style="background:'+chipBg+';color:'+chipColor+';border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.3px">'+s[2]+'</button>';
     if(p.isAppointment&&p.appointmentTime){
-      html+='<span style="font-size:11px;color:#7C3AED;font-weight:700">&#x1F4C5; '+p.appointmentTime+'</span>';
+      html+='<span style="font-size:11px;color:#7C3AED;font-weight:700;background:#F5F3FF;padding:4px 10px;border-radius:8px">📅 '+p.appointmentTime+'</span>';
     } else if(waitStr){
-      html+='<span style="font-size:11px;color:#F59E0B;font-weight:700">⏱ '+waitStr+'</span>';
+      html+='<span style="font-size:11px;color:#D97706;font-weight:700;background:#FFFBEB;padding:4px 10px;border-radius:8px">⏱ '+waitStr+'</span>';
     }
     html+='</div>';
     html+='</div></div></div>';
