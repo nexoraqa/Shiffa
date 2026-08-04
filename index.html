@@ -2188,11 +2188,16 @@ function loadReports(period){
           return a.date>=fromDate&&a.date<=toDate&&a.status!=='cancelled';
         });
 
+        console.log('DEBUG filteredAppts:',filteredAppts.length,'fromDate:',fromDate,'toDate:',toDate);
+        filteredAppts.forEach(function(a){console.log('appt:',a.status,a.date,a.doctorId);});
+
         // Update stats
         var total=pts.length;
         var newPts=pts.filter(function(p){return p.visitType==='new';}).length;
         var fuPts=pts.filter(function(p){return p.visitType==='follow_up';}).length;
         var donePts=pts.filter(function(p){return p.status==='done';}).length;
+        var doneAppts=filteredAppts.filter(function(a){return a.status==='done';}).length;
+        var totalDone=donePts+doneAppts;
         var apptCount=filteredAppts.length;
         var walkinCount=pts.filter(function(p){return !p.isAppointment;}).length;
 
@@ -2200,7 +2205,7 @@ function loadReports(period){
         setVal('rep-total',total);
         setVal('rep-new',newPts);
         setVal('rep-fu',fuPts);
-        setVal('rep-done',donePts);
+        setVal('rep-done',totalDone);
         setVal('rep-appts',apptCount);
         setVal('rep-walkins',walkinCount);
 
@@ -2419,7 +2424,7 @@ function showLabResultPopup(order){
 function checkLabResultBadge(){
   if(!currentUser||currentUser.role!=='doctor'||!window.fbGetLabOrders) return;
   window.fbGetLabOrders(currentUser.doctorId||currentUser.username).then(function(orders){
-    var newResults=orders.filter(function(o){return o.status==='done'&&o.notified===false;});
+    var newResults=orders.filter(function(o){return o.status==='done'&&!o.notified;});
     if(!newResults.length) return;
     // Show one toast per new result
     newResults.forEach(function(o,idx){
@@ -2428,6 +2433,8 @@ function checkLabResultBadge(){
         if(window._shownLabToasts&&window._shownLabToasts[o.id]) return;
         if(!window._shownLabToasts) window._shownLabToasts={};
         window._shownLabToasts[o.id]=true;
+        // Mark as notified in Firebase so it doesn't show again next login
+        if(window.fbUpdateLabOrder) window.fbUpdateLabOrder(o.id,{notified:true}).catch(function(){});
         // Create toast
         var toast=document.createElement('div');
         toast.style.cssText='position:fixed;bottom:20px;right:20px;background:#fff;border-radius:14px;padding:14px 18px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,0.15);z-index:9999;max-width:280px;border-left:4px solid #059669;animation:slideIn 0.3s ease-out;cursor:pointer';
