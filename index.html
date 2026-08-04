@@ -63,23 +63,28 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 .signout-btn{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;color:#EF4444;cursor:pointer;transition:all 0.15s}
 .signout-btn:hover{background:#FEE2E2}
 /* ── Layout ── */
-.dash-layout{display:flex;flex:1;min-height:calc(100vh - 58px)}
+.dash-layout{display:flex;flex:1;min-height:calc(100vh - 58px);background:linear-gradient(160deg,#0D1F35 0%,#112840 50%,#163354 100%)}
 /* ── Dark sidebar ── */
 .sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);padding:20px 14px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.04)}
 .nav-btn{display:flex;align-items:center;gap:10px;padding:11px 14px;border:none;border-radius:12px;background:transparent;color:rgba(255,255,255,0.45);font-weight:500;font-size:13px;cursor:pointer;text-align:left;width:100%;transition:all 0.2s;letter-spacing:0.1px}
 .nav-btn:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.9)}
 .nav-btn.active{background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(27,107,74,0.5)}
-.nav-btn .mi{font-size:17px}
-.sidebar-footer{margin-top:auto;padding:12px;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.08)}
+.nav-btn .mi{font-size:16px;opacity:0.9}
+.sidebar-footer{margin-top:auto;padding:14px;background:rgba(255,255,255,0.05);border-radius:14px;border:1px solid rgba(255,255,255,0.08);transition:background 0.2s}
+.sidebar-footer:hover{background:rgba(255,255,255,0.09)}
 .sidebar-footer-label{font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px}
-.sidebar-footer-desc{font-size:11px;color:rgba(255,255,255,0.4);margin-top:6px}
+.sidebar-footer-desc{font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;letter-spacing:0.3px}
 /* ── Main content ── */
-.main-content{flex:1;padding:28px 32px;overflow-y:auto;max-width:1040px;scrollbar-width:thin;background:#F8FAFC}
-.welcome-banner{border-radius:16px;padding:24px 28px;margin-bottom:24px;color:#fff;position:relative;overflow:hidden}
-.welcome-banner::after{content:'';position:absolute;right:-15px;top:-15px;width:80px;height:80px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)}
-.w-date{font-size:12px;opacity:.7;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
-.w-title{font-size:22px;font-weight:800;margin-bottom:3px;letter-spacing:-0.3px}
-.w-sub{font-size:13px;opacity:.75}
+.main-content{flex:1;padding:28px 32px;overflow-y:auto;max-width:1040px;scrollbar-width:thin;background:transparent}
+.main-content h2{color:#fff!important}
+.main-content h3{color:rgba(255,255,255,0.6)!important}
+.main-content p{color:rgba(255,255,255,0.5)!important}
+.welcome-banner{border-radius:20px;padding:26px 28px;margin-bottom:24px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.12);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.welcome-banner::before{content:'';position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.04)}
+.welcome-banner::after{content:'';position:absolute;right:30px;bottom:-30px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.04)}
+.w-date{font-size:11px;opacity:.5;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.w-title{font-size:24px;font-weight:900;margin-bottom:4px;letter-spacing:-0.5px}
+.w-sub{font-size:13px;opacity:.6;font-weight:500}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
 .stat-card{background:#fff;border-radius:16px;padding:18px 20px;border:1px solid #EEF0F3;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);transition:all 0.2s}
 .stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.1)}
@@ -231,7 +236,7 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
     </div>
 
     <!-- Content area -->
-    <div id="sb-content" style="background:#fff;border-radius:20px;padding:24px;min-height:300px"></div>
+    <div id="sb-content" style="background:#fff;border-radius:20px;padding:24px;min-height:300px;box-shadow:0 8px 32px rgba(0,0,0,0.15)"></div>
   </div>
 </div>
 
@@ -261,10 +266,16 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
   </header>
   <div class="dash-layout">
     <aside class="sidebar">
+      <div style="padding:4px 2px 16px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">🌿</div>
+          <div style="font-size:15px;font-weight:900;color:#fff;letter-spacing:-0.3px">Shifaa</div>
+        </div>
+      </div>
       <div id="sidebar-nav"></div>
       <div class="sidebar-footer">
         <div style="display:flex;align-items:center;gap:10px">
-          <div id="sidebar-avatar" style="width:36px;height:36px;border-radius:50%;background:#1B6B4A;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+          <div id="sidebar-avatar" style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.3)">?</div>
           <div style="min-width:0">
             <div id="sidebar-badge"></div>
             <div class="sidebar-footer-desc" id="sidebar-desc" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
@@ -792,12 +803,15 @@ function sbStep1(){
   sbSetStep(1);
   var content=document.getElementById('sb-content');
   content.innerHTML=
-    '<h3 style="font-size:16px;font-weight:700;color:#0D1117;margin-bottom:4px">Find a Doctor</h3>'+
-    '<p style="font-size:13px;color:#9CA3AF;margin-bottom:16px">Search by specialty or city</p>'+
-    '<div style="display:flex;gap:8px;margin-bottom:16px">'+
-      '<input type="text" id="sb-search" placeholder="e.g. Generaliste, Algiers..." oninput="sbSearchDoctors(this.value)" style="flex:1;padding:11px 14px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:14px;outline:none"/>'+
+    '<div style="text-align:center;margin-bottom:20px">'+
+      '<div style="font-size:32px;margin-bottom:10px">🔍</div>'+
+      '<div style="font-size:18px;font-weight:900;color:#0D1117;margin-bottom:4px;letter-spacing:-0.3px">Find a Doctor</div>'+
+      '<div style="font-size:13px;color:#9CA3AF">Search by specialty or city</div>'+
     '</div>'+
-    '<div id="sb-doctor-list"><div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">Loading doctors...</div></div>';
+    '<div style="position:relative;margin-bottom:16px">'+
+      '<input type="text" id="sb-search" placeholder="Specialty, city, or doctor name..." oninput="sbSearchDoctors(this.value)" style="width:100%;padding:13px 16px;border:2px solid #E5E9EF;border-radius:14px;font-size:14px;outline:none;box-sizing:border-box"/>'+
+    '</div>'+
+    '<div id="sb-doctor-list"><div style="text-align:center;padding:30px;color:#9CA3AF;font-size:13px">Loading doctors...</div></div>';
   // Load all doctors
   sbLoadDoctors('');
 }
@@ -829,13 +843,18 @@ function sbRenderDoctors(doctors){
   var html='';
   doctors.forEach(function(d){
     html+=
-      '<div data-un="'+d.username+'" onclick="sbSelectDoctor(this.getAttribute(\'data-un\'))" style="border:1.5px solid #E5E9EF;border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer">'+
-        '<div style="font-size:15px;font-weight:700;color:#0D1117;margin-bottom:3px">'+d.name+'</div>'+
-        '<div style="font-size:12px;color:#4B5563;margin-bottom:3px">'+( d.specialty||'General Practice')+'</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+
-          (d.city?'<span style="background:#F0F4F8;color:#4B5563;border-radius:6px;padding:2px 8px;font-size:11px">📍 '+d.city+'</span>':'')+
-          (d.clinicName?'<span style="background:#F0F4F8;color:#4B5563;border-radius:6px;padding:2px 8px;font-size:11px">🏥 '+d.clinicName+'</span>':'')+
+      '<div data-un="'+d.username+'" onclick="sbSelectDoctor(this.getAttribute(\'data-un\'))" style="border:2px solid #E5E9EF;border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:14px">'+
+        '<div style="width:48px;height:48px;background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">👨‍⚕️</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:15px;font-weight:800;color:#0D1117;margin-bottom:3px">'+d.name+'</div>'+
+          '<div style="font-size:12px;color:#2563A8;font-weight:600;margin-bottom:6px">'+(d.specialty||'General Practice')+'</div>'+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+            (d.city?'<span style="background:#F0F4F8;color:#4B5563;border-radius:6px;padding:2px 8px;font-size:11px">📍 '+d.city+'</span>':'')+
+            (d.clinicName?'<span style="background:#F0F4F8;color:#4B5563;border-radius:6px;padding:2px 8px;font-size:11px">🏥 '+d.clinicName+'</span>':'')+
+          '</div>'+
         '</div>'+
+        '<div style="color:#9CA3AF;font-size:20px;font-weight:300">›</div>'+
+      '</div>';
       '</div>';
   });
   list.innerHTML=html;
@@ -888,25 +907,25 @@ function sbStep2(){
   });
 
   var html=
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E5E9EF">'+
-      '<button onclick="sbStep1()" style="background:#F0F4F8;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:#4B5563">←</button>'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;background:#F8FAFF;border-radius:14px;border:1px solid #E5E9EF">'+
+      '<button onclick="sbStep1()" style="background:#fff;border:1px solid #E5E9EF;border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;color:#4B5563;font-weight:600">←</button>'+
+      '<div style="width:40px;height:40px;background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👨‍⚕️</div>'+
       '<div>'+
-        '<div style="font-size:15px;font-weight:700;color:#0D1117">'+d.name+'</div>'+
-        '<div style="font-size:12px;color:#9CA3AF">'+(d.specialty||'General Practice')+'</div>'+
+        '<div style="font-size:14px;font-weight:800;color:#0D1117">'+d.name+'</div>'+
+        '<div style="font-size:11px;color:#2563A8;font-weight:600">'+(d.specialty||'General Practice')+'</div>'+
       '</div>'+
     '</div>'+
-    '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:12px">Select a Day</h3>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+    '<div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Select a Day</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
 
   workingDays.forEach(function(day){
-    var shift=day.shift==='am'?'Morning':day.shift==='pm'?'Evening':'Morning & Evening';
+    var shift=day.shift==='am'?'🌅 Morning':day.shift==='pm'?'🌆 Evening':'🌅🌆 All Day';
     html+=
-      '<div data-day="'+day.day+'" onclick="sbSelectDay(this.getAttribute(\'data-day\'))" style="border:1.5px solid #E5E9EF;border-radius:12px;padding:14px;cursor:pointer;text-align:center">'+
-        '<div style="font-size:15px;font-weight:700;color:#0D1117">'+(DAY_FULL[day.day]||day.day)+'</div>'+
-        '<div style="font-size:11px;color:#9CA3AF;margin-top:3px">'+shift+'</div>'+
+      '<div data-day="'+day.day+'" onclick="sbSelectDay(this.getAttribute(\'data-day\'))" style="border:2px solid #E5E9EF;border-radius:16px;padding:18px 14px;cursor:pointer;text-align:center">'+
+        '<div style="font-size:16px;font-weight:800;color:#0D1117;margin-bottom:6px">'+(DAY_FULL[day.day]||day.day)+'</div>'+
+        '<div style="font-size:11px;color:#9CA3AF;font-weight:500">'+shift+'</div>'+
       '</div>';
   });
-  html+='</div>';
   content.innerHTML=html;
 }
 
@@ -943,9 +962,9 @@ function sbStep3(){
         var h=Math.floor(m/60),mn=m%60;
         var t=(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;
         if(booked[t]){
-          html+='<span style="display:inline-block;background:#F0F0F0;color:#C0C0C0;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;margin:3px;cursor:not-allowed;text-decoration:line-through">'+t+'</span>';
+          html+='<span style="display:inline-block;background:#F5F5F5;color:#C0C0C0;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;margin:3px;cursor:not-allowed;text-decoration:line-through">'+t+'</span>';
         } else {
-          html+='<span data-t="'+t+'" onclick="sbSelectSlot(this.getAttribute(\'data-t\'))" style="display:inline-block;background:'+bg+';color:'+color+';border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;margin:3px;cursor:pointer;border:1.5px solid #E5E9EF">'+t+'</span>';
+          html+='<span data-t="'+t+'" onclick="sbSelectSlot(this.getAttribute(\'data-t\'))" style="display:inline-block;background:'+bg+';color:'+color+';border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;margin:3px;cursor:pointer;border:1.5px solid transparent">'+t+'</span>';
         }
       }
       return html;
@@ -953,14 +972,15 @@ function sbStep3(){
 
     var DAY_FULL={Sat:'Saturday',Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'};
     var html=
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E5E9EF">'+
-        '<button onclick="sbStep2()" style="background:#F0F4F8;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:#4B5563">←</button>'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;background:#F8FAFF;border-radius:14px;border:1px solid #E5E9EF">'+
+        '<button onclick="sbStep2()" style="background:#fff;border:1px solid #E5E9EF;border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;color:#4B5563;font-weight:600">←</button>'+
+        '<div style="width:40px;height:40px;background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📅</div>'+
         '<div>'+
-          '<div style="font-size:15px;font-weight:700;color:#0D1117">'+(DAY_FULL[_sb.day]||_sb.day)+'</div>'+
-          '<div style="font-size:12px;color:#9CA3AF">'+d.name+'</div>'+
+          '<div style="font-size:15px;font-weight:800;color:#0D1117">'+(DAY_FULL[_sb.day]||_sb.day)+'</div>'+
+          '<div style="font-size:11px;color:#9CA3AF">'+d.name+'</div>'+
         '</div>'+
       '</div>'+
-      '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:12px">Select a Time Slot</h3>';
+      '<div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Select a Time Slot</div>';
 
     if(dayData.shift==='am'||dayData.shift==='both'){
       html+='<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Morning</div>'+makeSlots(dayData.amStart||'08:00',dayData.amEnd||'12:00',dayData.amSlot||15,'#FEF3C7','#D97706')+'</div>';
@@ -2297,31 +2317,30 @@ function loadTVQueue(){
     var apptInprog=appts.filter(function(a){return a.status==='inprogress';});
     var apptWaiting=appts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';});
 
+    // Assign permanent numbers to all patients in order
+    var num=1;
+    var allQueue=[];
+    pts.forEach(function(p){ allQueue.push({status:p.status,num:num++}); });
+    apptWaiting.forEach(function(){ allQueue.push({status:'waiting',num:num++}); });
+
     // Now serving
     var nowEl=document.getElementById('tv-now');
-    var currentNum='—';
-    if(inprog.length>0) currentNum=pts.indexOf(inprog[0])+1;
-    else if(apptInprog.length>0) currentNum='📅';
-    if(nowEl) nowEl.textContent=currentNum;
+    if(nowEl){
+      var serving=allQueue.find(function(x){return x.status==='inprogress';});
+      nowEl.textContent=serving?serving.num:'—';
+    }
 
-    // Waiting
+    // Waiting numbers only
     var queueEl=document.getElementById('tv-queue');
     if(!queueEl) return;
-    if(!waiting.length&&!apptWaiting.length){
-      queueEl.innerHTML='<div style="font-size:28px;color:rgba(255,255,255,0.2);font-weight:700">Queue is empty</div>';
+    var waitList=allQueue.filter(function(x){return x.status==='waiting';});
+    if(!waitList.length){
+      queueEl.innerHTML='<div style="font-size:24px;color:rgba(255,255,255,0.15);font-weight:700">NO PATIENTS WAITING</div>';
       return;
     }
     var html='';
-    var num=inprog.length>0?2:1;
-    waiting.forEach(function(){
-      html+='<div style="background:rgba(255,255,255,0.08);border-radius:16px;width:110px;height:110px;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,0.1)">'+num+'</div>';
-      num++;
-    });
-    apptWaiting.forEach(function(a){
-      html+='<div style="background:rgba(37,99,168,0.3);border-radius:16px;width:110px;height:110px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(37,99,168,0.5);flex-direction:column;gap:4px">'+
-        '<span style="font-size:28px">📅</span>'+
-        '<span style="font-size:16px;font-weight:800;color:#60A5FA">'+(a.time||'')+'</span>'+
-      '</div>';
+    waitList.forEach(function(item){
+      html+='<div style="background:rgba(255,255,255,0.08);border-radius:20px;width:120px;height:120px;display:flex;align-items:center;justify-content:center;font-size:60px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,0.12)">'+item.num+'</div>';
     });
     queueEl.innerHTML=html;
   }).catch(function(){});
@@ -2353,7 +2372,7 @@ var NAV={
   receptionist:[['📊 Overview','dashboard'],['➕ Register','register'],['🔢 Queue','queue'],['📅 Schedule','schedule'],['👤 Profile','profile']],
   labtech:     [['🧪 Lab Orders','lab-orders'],['👤 Profile','lab-profile']]
 };
-var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#1B6B4A',doctor:'#1565C0',receptionist:'#E65100',labtech:'#0891B2'};
+var ROLE_COLORS={superadmin:'#7B5EA7',clinicadmin:'#065F46',doctor:'#1565C0',receptionist:'#10B981',labtech:'#0891B2'};
 var ROLE_DESCS={superadmin:'Full platform access',clinicadmin:'Clinic-level access',doctor:'Your patients only',receptionist:'Queue management',labtech:'Lab results management'};
 
 function makeBadge(role){
@@ -2553,7 +2572,7 @@ function loadPage(page){
   var dateStr=new Date().toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   var fname=u.name.split(' ')[0];
   var sub=u.specialty?u.specialty+' - '+(u.city||u.clinicName):u.clinicName||'';
-  var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'BB)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'! 👋</div><div class="w-sub">'+sub+'</div></div>';
+  var banner='<div class="welcome-banner" style="background:linear-gradient(135deg,'+color+','+color+'CC);box-shadow:0 8px 32px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15)"><div class="w-date">'+dateStr+'</div><div class="w-title">Good '+greet+', '+fname+'! 👋</div><div class="w-sub">'+sub+'</div></div>';
 
   // REGISTER PAGE
   if(page==='register'){
@@ -2575,24 +2594,24 @@ function loadPage(page){
     window.queueFilter = null;
     mc.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
-      '<h2 style="color:#0F1F17;margin:0;font-size:17px">Queue</h2>'+
-      '<button onclick="loadQueue(currentUser.doctorId)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
+      '<h2 style="margin:0">Queue</h2>'+
+      '<button onclick="loadQueue(currentUser.doctorId)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">🔄 Refresh</button>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:12px;padding:10px 14px;border:1px solid #D6E8DE;margin-bottom:14px">'+
-      '<button onclick="changeQueueDate(-1)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 14px;font-size:16px;cursor:pointer">←</button>'+
-      '<div id="queue-date-label" style="font-weight:700;font-size:14px;color:#0F1F17;text-align:center"></div>'+
-      '<button onclick="changeQueueDate(1)" style="background:#E8F5EF;color:#1B6B4A;border:none;border-radius:8px;padding:8px 14px;font-size:16px;cursor:pointer">→</button>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.08);border-radius:14px;padding:10px 14px;border:1px solid rgba(255,255,255,0.1);margin-bottom:14px">'+
+      '<button onclick="changeQueueDate(-1)" style="background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:16px;cursor:pointer;font-weight:700">←</button>'+
+      '<div id="queue-date-label" style="font-weight:700;font-size:14px;color:#fff;text-align:center"></div>'+
+      '<button onclick="changeQueueDate(1)" style="background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:16px;cursor:pointer;font-weight:700">→</button>'+
       '</div>'+
       '<div id="live-stats-bar" style="display:flex;gap:8px;margin-bottom:14px">'+
-      '<div data-f="waiting" onclick="filterQueueBtn(this)" id="ls-box-waiting" style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #F59E0B30;cursor:pointer">'+
+      '<div data-f="waiting" onclick="filterQueueBtn(this)" id="ls-box-waiting" style="flex:1;background:rgba(245,158,11,0.15);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid rgba(245,158,11,0.25);cursor:pointer;transition:all 0.2s">'+
       '<div id="ls-waiting" style="font-size:22px;font-weight:900;color:#D97706">—</div>'+
       '<div style="font-size:9px;color:#D97706;font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:0.5px">Waiting</div>'+
       '<div style="width:40%;height:2px;background:#F59E0B;border-radius:2px;margin:4px auto 0"></div></div>'+
-      '<div data-f="inprogress" onclick="filterQueueBtn(this)" id="ls-box-progress" style="flex:1;background:#EEF2FF;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #2563A830;cursor:pointer">'+
+      '<div data-f="inprogress" onclick="filterQueueBtn(this)" id="ls-box-progress" style="flex:1;background:rgba(37,99,168,0.15);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid rgba(37,99,168,0.25);cursor:pointer;transition:all 0.2s">'+
       '<div id="ls-progress" style="font-size:22px;font-weight:900;color:#2563A8">—</div>'+
       '<div style="font-size:9px;color:#2563A8;font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:0.5px">With Doctor</div>'+
       '<div style="width:40%;height:2px;background:#2563A8;border-radius:2px;margin:4px auto 0"></div></div>'+
-      '<div data-f="done" onclick="filterQueueBtn(this)" id="ls-box-done" style="flex:1;background:#ECFDF5;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #10B98130;cursor:pointer">'+
+      '<div data-f="done" onclick="filterQueueBtn(this)" id="ls-box-done" style="flex:1;background:rgba(16,185,129,0.15);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid rgba(16,185,129,0.25);cursor:pointer;transition:all 0.2s">'+
       '<div id="ls-done" style="font-size:22px;font-weight:900;color:#059669">—</div>'+
       '<div style="font-size:9px;color:#059669;font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:0.5px">Done</div>'+
       '<div style="width:40%;height:2px;background:#10B981;border-radius:2px;margin:4px auto 0"></div></div>'+
@@ -2667,23 +2686,23 @@ function loadPage(page){
     }
 
     mc.innerHTML=
-      '<h2 style="color:#0D1117;margin-bottom:4px">📅 Schedule</h2>'+
+      '<h2 style="margin-bottom:4px">📅 Schedule</h2>'+
       '<div style="font-size:13px;color:#9CA3AF;margin-bottom:16px">'+(isDoc?'Set your working hours per day':'Doctor working hours — read only')+'</div>'+
       ((!isDoc&&window._pendingBookingPatient)?
-        '<div style="background:#EEF2FF;border:1.5px solid #2563A8;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">'+
-        '<div><div style="font-size:12px;font-weight:700;color:#2563A8;margin-bottom:2px">&#x1F4C5; Booking appointment for:</div>'+
-        '<div style="font-size:15px;font-weight:800;color:#0D1117">'+window._pendingBookingPatient.name+'</div>'+
+        '<div style="background:rgba(37,99,168,0.2);border:1.5px solid rgba(37,99,168,0.4);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">'+
+        '<div><div style="font-size:12px;font-weight:700;color:#93C5FD;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px">📅 Booking appointment for:</div>'+
+        '<div style="font-size:15px;font-weight:800;color:#fff">'+window._pendingBookingPatient.name+'</div>'+
         '<div style="font-size:12px;color:#4B5563">'+window._pendingBookingPatient.phone+' · '+(window._pendingBookingPatient.visitType==='new'?'New Patient':'Follow-up')+'</div></div>'+
         '<button onclick="window._pendingBookingPatient=null;goPage(\'schedule\')" style="background:#fff;border:1px solid #DBEAFE;border-radius:8px;padding:6px 12px;font-size:12px;color:#2563A8;cursor:pointer">Cancel</button>'+
         '</div>'
       :'')+
-      '<div style="background:#fff;border-radius:14px;border:1.5px solid #E5E7EB;overflow:hidden;margin-bottom:14px">'+
+      '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">'+
         '<div style="display:flex;background:#F8FAFF;border-bottom:2px solid #E5E7EB;overflow-x:auto">'+headerCols+'</div>'+
         '<div id="slots-grid" style="overflow-x:auto"><div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">'+(isDoc?'Set shifts above then click Generate':'Loading...')+'</div></div>'+
       '</div>'+
       (isDoc?
         '<div style="display:flex;gap:10px;margin-bottom:14px">'+
-          '<button onclick="previewSlots()" style="flex:1;padding:12px;background:#EEF2FF;color:#2563A8;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">👁 Preview</button>'+
+          '<button onclick="previewSlots()" style="flex:1;padding:12px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">👁 Preview</button>'+
           '<button onclick="saveSchedule()" style="flex:2;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Schedule</button>'+
         '</div>'
       :'<div style="background:#F4F6FA;border-radius:10px;padding:12px 16px;text-align:center;font-size:13px;color:#9CA3AF;margin-bottom:14px">Read only</div>');
@@ -2774,8 +2793,8 @@ function loadPage(page){
     mc.innerHTML='<h2 style="margin-bottom:6px">Manage Staff</h2>'+
       '<p style="color:#9CA3AF;font-size:13px;margin-bottom:20px">Add doctors, receptionists and clinic admins</p>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px">'+
-        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
-          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Doctor</h3>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;border-top:3px solid '+ROLE_COLORS.doctor+'">'+
+          '<h3 style="font-size:14px;font-weight:700;color:'+ROLE_COLORS.doctor+';margin-bottom:14px">👨‍⚕️ Add Doctor</h3>'+
           '<input type="text" id="add-doc-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-doc-specialty" placeholder="Specialty (e.g. Medecin Generaliste)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-doc-city" placeholder="City" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
@@ -2783,36 +2802,36 @@ function loadPage(page){
           '<input type="text" id="add-doc-user" placeholder="Username (e.g. dr.smith)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="password" id="add-doc-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="add-doc-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
-          '<button onclick="addDoctor()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Doctor</button>'+
+          '<button onclick="addDoctor()" style="width:100%;padding:12px;background:linear-gradient(135deg,'+ROLE_COLORS.doctor+','+ROLE_COLORS.doctor+'CC);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Doctor</button>'+
         '</div>'+
-        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
-          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Receptionist</h3>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;border-top:3px solid '+ROLE_COLORS.receptionist+'">'+
+          '<h3 style="font-size:14px;font-weight:700;color:'+ROLE_COLORS.receptionist+';margin-bottom:14px">🧑‍💼 Add Receptionist</h3>'+
           '<input type="text" id="add-rec-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-rec-docid" placeholder="Doctor username (e.g. dr.smith)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-rec-clinic" placeholder="Clinic name" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-rec-user" placeholder="Username (e.g. sara.recep)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="password" id="add-rec-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="add-rec-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
-          '<button onclick="addReceptionist()" style="width:100%;padding:12px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Receptionist</button>'+
+          '<button onclick="addReceptionist()" style="width:100%;padding:12px;background:linear-gradient(135deg,'+ROLE_COLORS.receptionist+','+ROLE_COLORS.receptionist+'CC);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Receptionist</button>'+
         '</div>'+
-        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
-          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Clinic Admin</h3>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;border-top:3px solid '+ROLE_COLORS.clinicadmin+'">'+
+          '<h3 style="font-size:14px;font-weight:700;color:'+ROLE_COLORS.clinicadmin+';margin-bottom:14px">🏥 Add Clinic Admin</h3>'+
           '<input type="text" id="add-ca-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-ca-clinic" placeholder="Clinic name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-ca-city" placeholder="City" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-ca-user" placeholder="Username (e.g. admin.clinic1)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="password" id="add-ca-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="add-ca-err" style="display:none;color:#EF4444;font-size:12px;margin-bottom:8px"></div>'+
-          '<button onclick="addClinicAdmin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#7C3AED,#9F6EFF);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Clinic Admin</button>'+
+          '<button onclick="addClinicAdmin()" style="width:100%;padding:12px;background:linear-gradient(135deg,'+ROLE_COLORS.clinicadmin+','+ROLE_COLORS.clinicadmin+'CC);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Clinic Admin</button>'+
         '</div>'+
-        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
-          '<h3 style="font-size:14px;font-weight:700;color:#0D1117;margin-bottom:14px">Add Lab Tech</h3>'+
+        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;border-top:3px solid '+ROLE_COLORS.labtech+'">'+
+          '<h3 style="font-size:14px;font-weight:700;color:'+ROLE_COLORS.labtech+';margin-bottom:14px">🧪 Add Lab Tech</h3>'+
           '<input type="text" id="add-lt-name" placeholder="Full name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-lt-clinic" placeholder="Clinic name *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="text" id="add-lt-user" placeholder="Username (e.g. lab.tech1)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
           '<input type="password" id="add-lt-pass" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
           '<div id="add-lt-err" style="display:none;font-size:12px;margin-bottom:8px"></div>'+
-          '<button onclick="addLabTech()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Lab Tech</button>'+
+          '<button onclick="addLabTech()" style="width:100%;padding:12px;background:linear-gradient(135deg,'+ROLE_COLORS.labtech+','+ROLE_COLORS.labtech+'CC);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Add Lab Tech</button>'+
         '</div>'+
       '</div>'+
       '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px">'+
@@ -2967,12 +2986,12 @@ function loadPage(page){
 
   if(page==='profile' && u.role==='doctor'){
     mc.innerHTML=
-      '<h2 style="color:#0F1F17;margin-bottom:20px">👤 Mon Profil</h2>'+
-      '<div style="background:#fff;border-radius:16px;border:1.5px solid #D6E8DE;padding:20px;margin-bottom:16px">'+
-        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #D6E8DE">'+
-          '<div style="width:56px;height:56px;background:linear-gradient(135deg,#1B6B4A,#2D9166);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px">👨‍⚕️</div>'+
+      '<h2 style="margin-bottom:20px">👤 Profile</h2>'+
+      '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">'+
+        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #F0F2F5">'+
+          '<div style="width:60px;height:60px;background:linear-gradient(135deg,#1565C0,#2563A8);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 12px rgba(21,101,192,0.3)">👨‍⚕️</div>'+
           '<div>'+
-            '<div style="font-weight:800;font-size:16px;color:#0F1F17" id="prof-display-name">'+u.name+'</div>'+
+            '<div style="font-weight:800;font-size:18px;color:#0D1117;letter-spacing:-0.3px" id="prof-display-name">'+u.name+'</div>'+
             '<div style="font-size:13px;color:#8FA89D">'+u.cabinetName+'</div>'+
           '</div>'+
         '</div>'+
@@ -2995,10 +3014,10 @@ function loadPage(page){
         '<div id="prof-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:12px"></div>'+
         '<button onclick="saveProfile()" class="btn-filled" style="width:100%;padding:14px;font-size:15px">💾 Save Profile</button>'+
       '</div>'+
-      '<div style="background:#fff;border-radius:16px;border:1.5px solid #D6E8DE;padding:20px;margin-top:16px">'+
-        '<div style="font-size:14px;font-weight:700;color:#0F1F17;margin-bottom:14px">🔒 Change Password</div>'+
-        '<input type="password" id="doc-new-pass" placeholder="New password..." style="width:100%;padding:10px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box"/>'+
-        '<input type="password" id="doc-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:10px 14px;border:1.5px solid #D6E8DE;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"/>'+
+      '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;margin-top:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">'+
+        '<div style="font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px">🔒 Change Password</div>'+
+        '<input type="password" id="doc-new-pass" placeholder="New password..." style="width:100%;padding:12px 14px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box;background:#FAFBFC"/>'+
+        '<input type="password" id="doc-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:12px 14px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;background:#FAFBFC"/>'+
         '<div id="doc-pass-err" style="display:none;font-size:13px;margin-bottom:8px"></div>'+
         '<button onclick="docChangePassword()" style="padding:11px 20px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Update Password</button>'+
       '</div>';
@@ -3021,16 +3040,18 @@ function loadPage(page){
     var hour3=now3.getHours();
     var greet3=hour3<12?'Good morning':'Good afternoon';
     mc.innerHTML=
-      // Header
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">'+
-        '<div>'+
-          '<div style="font-size:12px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+greet3+'</div>'+
-          '<div style="font-size:22px;font-weight:900;color:#0D1117;letter-spacing:-0.5px">'+u.name+'</div>'+
-          '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">Shifaa Platform — Super Admin</div>'+
-        '</div>'+
-        '<div style="background:linear-gradient(135deg,#7C3AED,#9F6EF5);border-radius:14px;padding:12px 16px;text-align:center">'+
-          '<div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">System</div>'+
-          '<div style="font-size:14px;font-weight:800;color:#fff">Active</div>'+
+      // Header banner
+      '<div class="welcome-banner" style="background:linear-gradient(135deg,'+ROLE_COLORS.superadmin+','+ROLE_COLORS.superadmin+'99);box-shadow:0 8px 32px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);margin-bottom:24px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between">'+
+          '<div>'+
+            '<div class="w-date">'+greet3+'</div>'+
+            '<div class="w-title">'+u.name+'</div>'+
+            '<div class="w-sub">Shifaa Platform — Super Admin</div>'+
+          '</div>'+
+          '<div style="background:rgba(255,255,255,0.15);border-radius:14px;padding:12px 16px;text-align:center;border:1px solid rgba(255,255,255,0.2)">'+
+            '<div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">System</div>'+
+            '<div style="font-size:14px;font-weight:800;color:#fff">Active ✓</div>'+
+          '</div>'+
         '</div>'+
       '</div>'+
       // Top stats
@@ -3145,16 +3166,18 @@ function loadPage(page){
     var hour2=now2.getHours();
     var greet2=hour2<12?'Good morning':'Good afternoon';
     mc.innerHTML=
-      // Header greeting
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">'+
-        '<div>'+
-          '<div style="font-size:12px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+greet2+'</div>'+
-          '<div style="font-size:22px;font-weight:900;color:#0D1117;letter-spacing:-0.5px">'+u.name+'</div>'+
-          '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">'+clinicName+'</div>'+
-        '</div>'+
-        '<div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);border-radius:14px;padding:12px 16px;text-align:center">'+
-          '<div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Today</div>'+
-          '<div id="ca-time" style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>'+
+      // Header banner
+      '<div class="welcome-banner" style="background:linear-gradient(135deg,'+ROLE_COLORS.clinicadmin+','+ROLE_COLORS.clinicadmin+'99);box-shadow:0 8px 32px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);margin-bottom:24px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between">'+
+          '<div>'+
+            '<div class="w-date">'+greet2+'</div>'+
+            '<div class="w-title">'+u.name+'</div>'+
+            '<div class="w-sub">'+clinicName+'</div>'+
+          '</div>'+
+          '<div style="background:rgba(255,255,255,0.15);border-radius:14px;padding:12px 16px;text-align:center;border:1px solid rgba(255,255,255,0.2)">'+
+            '<div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Today</div>'+
+            '<div id="ca-time" style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>'+
+          '</div>'+
         '</div>'+
       '</div>'+
       // Summary strip
@@ -3421,7 +3444,7 @@ function loadPage(page){
 
     mc.innerHTML =
       // ── Hero greeting strip ──
-      '<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:16px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden">'+
+      '<div style="background:linear-gradient(135deg,'+ROLE_COLORS.receptionist+','+ROLE_COLORS.receptionist+'99);border-radius:20px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)">'+
         '<div style="position:absolute;right:-10px;top:-10px;width:90px;height:90px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)"></div>'+
         '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
           '<div style="width:46px;height:46px;background:rgba(255,255,255,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid rgba(255,255,255,0.2)">👨‍⚕️</div>'+
@@ -3599,7 +3622,7 @@ function loadPage(page){
     var rDateStr = rNow.toLocaleDateString('en-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
     mc.innerHTML =
-      '<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:16px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden">'+
+      '<div style="background:linear-gradient(135deg,'+ROLE_COLORS.receptionist+','+ROLE_COLORS.receptionist+'99);border-radius:20px;padding:20px 20px 16px;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)">'+
         '<div style="position:absolute;right:-10px;top:-10px;width:90px;height:90px;opacity:0.06;background:#fff;clip-path:polygon(50% 0%,50% 35%,100% 35%,100% 65%,50% 65%,50% 100%,0% 100%,0% 65%,50% 65%,50% 35%,0% 35%,0% 0%)"></div>'+
         '<div style="margin-bottom:14px;display:flex;align-items:flex-start;justify-content:space-between">'+
           '<div>'+
@@ -3770,16 +3793,18 @@ function loadPage(page){
     var hour4=now4.getHours();
     var greet4=hour4<12?'Good morning':'Good afternoon';
     mc.innerHTML=
-      // Header
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'+
-        '<div>'+
-          '<div style="font-size:12px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+greet4+'</div>'+
-          '<div style="font-size:20px;font-weight:900;color:#0D1117;letter-spacing:-0.5px">'+u.name+'</div>'+
-          '<div style="font-size:13px;color:#9CA3AF;margin-top:2px">🧪 Lab Technician · '+clinicName+'</div>'+
-        '</div>'+
-        '<div style="background:linear-gradient(135deg,#0891B2,#06B6D4);border-radius:14px;padding:12px 16px;text-align:center">'+
-          '<div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Today</div>'+
-          '<div id="lt-clock" style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>'+
+      // Header banner
+      '<div class="welcome-banner" style="background:linear-gradient(135deg,'+ROLE_COLORS.labtech+','+ROLE_COLORS.labtech+'99);box-shadow:0 8px 32px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);margin-bottom:20px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between">'+
+          '<div>'+
+            '<div class="w-date">'+greet4+'</div>'+
+            '<div class="w-title">'+u.name+'</div>'+
+            '<div class="w-sub">🧪 Lab Technician · '+clinicName+'</div>'+
+          '</div>'+
+          '<div style="background:rgba(255,255,255,0.15);border-radius:14px;padding:12px 16px;text-align:center;border:1px solid rgba(255,255,255,0.2)">'+
+            '<div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Today</div>'+
+            '<div id="lt-clock" style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>'+
+          '</div>'+
         '</div>'+
       '</div>'+
       // Stats row
@@ -3917,10 +3942,10 @@ function loadPage(page){
 
   if(page==='patients' && u.role==='doctor'){
     mc.innerHTML=
-      '<h2 style="color:#0F1F17;margin-bottom:16px">👥 My Patients</h2>'+
+      '<h2 style="margin-bottom:16px">👥 My Patients</h2>'+
       '<div style="position:relative;margin-bottom:16px">'+
         '<input type="tel" id="pat-search" placeholder="🔍 Filter by phone number..." '+
-        'style="width:100%;padding:12px 16px;border:1.5px solid #D6E8DE;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box" '+
+        'style="width:100%;padding:12px 16px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;background:#fff" '+
         'oninput="searchPatients(this.value)"/>'+
       '</div>'+
       '<div id="pat-list"><div style="text-align:center;padding:20px;color:#8FA89D">Loading patients...</div></div>';
@@ -3936,10 +3961,10 @@ function loadPage(page){
   // NOTES PAGE
   if(page==='notes' && u.role==='doctor'){
     mc.innerHTML=
-      '<h2 style="color:#0F1F17;margin-bottom:12px">📝 Notes</h2>'+
+      '<h2 style="margin-bottom:12px">📝 Notes</h2>'+
       '<div style="display:flex;gap:8px;margin-bottom:16px">'+
         '<button id="notes-tab-today" onclick="loadNotesTab(\'today\')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #1B6B4A;background:#1B6B4A;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Today</button>'+
-        '<button id="notes-tab-all" onclick="loadNotesTab(\'all\')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #D6E8DE;background:#fff;color:#8FA89D;font-weight:700;font-size:13px;cursor:pointer">All Time</button>'+
+        '<button id="notes-tab-all" onclick="loadNotesTab(\'all\')" style="flex:1;padding:9px;border-radius:10px;border:1px solid #E5E9EF;background:#fff;color:#8FA89D;font-weight:700;font-size:13px;cursor:pointer">All Time</button>'+
       '</div>'+
       '<div id="notes-list"><div style="text-align:center;padding:40px;color:#8FA89D">Loading...</div></div>';
     loadNotesTab('today');
@@ -4006,15 +4031,15 @@ function loadNotesTab(tab){
         var notes=results[i].notes;
         var n=notes&&notes.length?notes[0]:null;
         if(!n) continue; // skip patients with no notes
-        html+='<div style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;animation:slideIn 0.25s ease-out">';
+        html+='<div style="background:#fff;border-radius:13px;border:1px solid #E5E9EF;padding:16px;margin-bottom:12px;animation:slideIn 0.25s ease-out;box-shadow:0 2px 8px rgba(0,0,0,0.06)">';
         html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
-        html+='<div><div style="font-weight:800;font-size:15px;color:#0F1F17">'+pt.name+'</div>';
+        html+='<div><div style="font-weight:800;font-size:15px;color:#0D1117">'+pt.name+'</div>';
         html+='<div style="font-size:12px;color:#8FA89D">'+pt.visitDate+' · Age '+pt.age+'</div></div>';
         html+='<span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:3px 8px;border-radius:8px;font-weight:600">'+(pt.visitType==='new'?'New':'Follow-up')+'</span>';
         html+='</div>';
         html+='<div style="background:#F7FAF8;border-radius:8px;padding:12px">';
         html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Diagnosis</div>';
-        html+='<div style="font-size:14px;font-weight:600;color:#0F1F17;margin-bottom:8px">'+(n.diagnosis||'—')+'</div>';
+        html+='<div style="font-size:14px;font-weight:600;color:#0D1117;margin-bottom:8px">'+(n.diagnosis||'—')+'</div>';
         html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Treatment</div>';
         html+='<div style="font-size:13px;color:#4A5E54">'+(n.treatment||'—')+'</div>';
         html+='</div></div>';
@@ -4066,10 +4091,10 @@ function renderPatientsList(results){
   for(var ki=0;ki<keys.length;ki++){
     var pt=grouped[keys[ki]];
     html+='<div onclick="openPatientHistory(this)" data-phone="'+pt.phone+'" data-name="'+pt.name+'" data-age="'+pt.age+'" data-gender="'+pt.gender+'" '+
-      'style="background:#fff;border-radius:13px;border:1.5px solid #D6E8DE;padding:16px;margin-bottom:12px;cursor:pointer;animation:slideIn 0.25s ease-out">';
+      'style="background:#fff;border-radius:13px;border:1px solid #E5E9EF;padding:16px;margin-bottom:12px;cursor:pointer;animation:slideIn 0.25s ease-out">';
     html+='<div style="display:flex;justify-content:space-between;align-items:center">';
     html+='<div>';
-    html+='<div style="font-weight:800;font-size:16px;color:#0F1F17">'+pt.name+'</div>';
+    html+='<div style="font-weight:800;font-size:16px;color:#0D1117">'+pt.name+'</div>';
     html+='<div style="font-size:13px;color:#8FA89D;margin-top:3px">Age '+pt.age+' · 📞 '+(pt.phone||'—')+'</div>';
     html+='<div style="font-size:12px;color:#8FA89D;margin-top:2px">Last visit: '+pt.lastVisit+' · '+pt.visits.length+' visit'+(pt.visits.length>1?'s':'')+'</div>';
     html+='</div>';
@@ -4137,7 +4162,7 @@ function openPatientHistory(el){
         for(var j=0;j<ALL_DOCTORS.length;j++){if(ALL_DOCTORS[j].id===v.doctor){dName=ALL_DOCTORS[j].name;break;}}
         html+='<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px;margin-bottom:10px">';
         html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-        html+='<div style="font-weight:700;font-size:14px;color:#0F1F17">'+v.visitDate+'</div>';
+        html+='<div style="font-weight:700;font-size:14px;color:#0D1117">'+v.visitDate+'</div>';
         html+='<span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:2px 8px;border-radius:8px">'+(v.visitType==='new'?'New':'Follow-up')+'</span>';
         html+='</div>';
         html+='<div style="font-size:12px;color:#4A5E54">'+dName+'</div>';
@@ -4840,7 +4865,7 @@ function searchByPhone(){
         retPatient.phone = phone;
         res.innerHTML =
           '<div style="background:#E8F5EF;border-radius:12px;padding:16px;border:2px solid #1B6B4A;margin-top:4px">'+
-          '<div style="font-weight:800;font-size:16px;color:#0F1F17;margin-bottom:4px">'+latest.name+'</div>'+
+          '<div style="font-weight:800;font-size:16px;color:#0D1117;margin-bottom:4px">'+latest.name+'</div>'+
           '<div style="font-size:12px;color:#4A5E54;margin-bottom:12px">Age '+latest.age+' · '+latest.gender+' · '+phone+'</div>'+
           '<div style="font-size:13px;font-weight:600;color:#1B6B4A;margin-bottom:10px">Patient found! Add to today’s queue?</div>'+
           '<button onclick="bookReturnPatient()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">📅 Book Appointment</button>'+
@@ -4882,7 +4907,7 @@ function emergencyReturnWalkIn(){
     '<input type="hidden" id="ret-doctor" value="'+docId+'"/>'+
     '<div id="ret-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:8px"></div>'+
     '<div style="display:flex;gap:10px;margin-top:12px">'+
-    '<button onclick="searchByPhone()" style="padding:12px 16px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:10px;font-size:13px;cursor:pointer">Back</button>'+
+    '<button onclick="searchByPhone()" style="padding:12px 16px;background:#fff;color:#4A5E54;border:1px solid #E5E9EF;border-radius:10px;font-size:13px;cursor:pointer">Back</button>'+
     '<button onclick="selRetPrio=\'emergency\';selRetVisit=\'follow_up\';confirmReturnPatient()" style="flex:1;padding:12px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">🚨 Add to Queue Now</button>'+
     '</div></div>';
 }
@@ -4929,7 +4954,7 @@ function addReturnPatient(){
 
   document.getElementById('search-result').innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #D6E8DE;margin-top:4px">'+
-    '<div style="font-weight:700;font-size:15px;color:#0F1F17;margin-bottom:12px">'+p.name+' - Add to queue</div>'+
+    '<div style="font-weight:700;font-size:15px;color:#0D1117;margin-bottom:12px">'+p.name+' - Add to queue</div>'+
     '<div class="form-field"><label class="form-label">Visit Type</label>'+
     '<div class="toggle-group">'+
     '<button class="visit-btn" onclick="pickRetVisit(this)" data-val="new">New Patient</button>'+
@@ -4948,7 +4973,7 @@ function addReturnPatient(){
     '<input class="form-input" id="ret-reason" type="text" placeholder="Reason for visit..."/></div>'+
     '<div id="ret-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:8px"></div>'+
     '<div style="display:flex;gap:10px">'+
-    '<button onclick="searchByPhone()" style="padding:12px 16px;background:#fff;color:#4A5E54;border:1.5px solid #D6E8DE;border-radius:10px;font-size:13px;cursor:pointer">Back</button>'+
+    '<button onclick="searchByPhone()" style="padding:12px 16px;background:#fff;color:#4A5E54;border:1px solid #E5E9EF;border-radius:10px;font-size:13px;cursor:pointer">Back</button>'+
     '<button onclick="confirmReturnPatient()" style="flex:1;padding:12px;background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Confirm</button>'+
     '</div></div>';
 }
@@ -5071,7 +5096,7 @@ function showSuccess(name){
   document.getElementById('main-content').innerHTML=
     '<div style="text-align:center;padding:60px 20px">'+
     '<div style="font-size:52px;margin-bottom:14px">✅</div>'+
-    '<div style="font-size:21px;font-weight:800;color:#0F1F17;margin-bottom:6px">'+name+' Registered!</div>'+
+    '<div style="font-size:21px;font-weight:800;color:#0D1117;margin-bottom:6px">'+name+' Registered!</div>'+
     '<div style="font-size:14px;color:#8FA89D;margin-bottom:22px">Patient added to queue.</div>'+
     '<div class="btn-row">'+
     '<button class="btn-outline" onclick="goPage(\'queue\')">View Queue</button>'+
@@ -5580,7 +5605,7 @@ function openPatientPopup(el){
         var last=visits[0];
         var dName=last.doctor;
         for(var j=0;j<ALL_DOCTORS.length;j++){if(ALL_DOCTORS[j].id===last.doctor){dName=ALL_DOCTORS[j].name;break;}}
-        historyEl.innerHTML='<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px"><div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Last visit</div><div style="font-weight:700;font-size:14px;color:#0F1F17">'+last.visitDate+'</div><div style="font-size:13px;color:#4A5E54;margin-top:3px">'+dName+'</div>'+(last.reason?'<div style="font-size:12px;color:#8FA89D;margin-top:2px">'+last.reason+'</div>':'')+'</div>';
+        historyEl.innerHTML='<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px"><div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Last visit</div><div style="font-weight:700;font-size:14px;color:#0D1117">'+last.visitDate+'</div><div style="font-size:13px;color:#4A5E54;margin-top:3px">'+dName+'</div>'+(last.reason?'<div style="font-size:12px;color:#8FA89D;margin-top:2px">'+last.reason+'</div>':'')+'</div>';
       });
     }
     return;
@@ -5606,11 +5631,11 @@ function openPatientPopup(el){
       for(var n=0;n<notes.length;n++){var key=(notes[n].savedAt||'').substring(0,10)+'_'+(notes[n].doctorId||'');if(!notesMap[key])notesMap[key]=[];notesMap[key].push(notes[n]);}
       var html='<div style="font-size:12px;font-weight:700;color:#8FA89D;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Last Visit</div>';
       html+='<div style="background:#F7FAF8;border-radius:10px;padding:12px 14px;margin-bottom:10px">';
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:14px;color:#0F1F17">'+last.visitDate+'</div><span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:2px 8px;border-radius:8px">'+(last.visitType==='new'?'New':'Follow-up')+'</span></div>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:14px;color:#0D1117">'+last.visitDate+'</div><span style="font-size:11px;background:#E8F5EF;color:#1B6B4A;padding:2px 8px;border-radius:8px">'+(last.visitType==='new'?'New':'Follow-up')+'</span></div>';
       html+='<div style="font-size:12px;color:#4A5E54">'+dName+'</div>';
       if(last.reason) html+='<div style="font-size:12px;color:#8FA89D;margin-top:3px">'+last.reason+'</div>';
       var nKey=(last.visitDate||'')+'_'+(last.doctor||'');
-      if(notesMap[nKey]){var nd=notesMap[nKey][0];html+='<div style="margin-top:8px;padding:8px;background:#fff;border-radius:6px"><div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Diagnosis</div><div style="font-size:13px;font-weight:600;color:#0F1F17">'+nd.diagnosis+'</div></div>';}
+      if(notesMap[nKey]){var nd=notesMap[nKey][0];html+='<div style="margin-top:8px;padding:8px;background:#fff;border-radius:6px"><div style="font-size:11px;color:#8FA89D;margin-bottom:3px">Diagnosis</div><div style="font-size:13px;font-weight:600;color:#0D1117">'+nd.diagnosis+'</div></div>';}
       html+='</div>';
       historyEl.innerHTML=html;
     });
@@ -5853,7 +5878,8 @@ function renderQueue(patients){
     html+='</div>';
     html+='</div></div></div>';
   }
-  list.innerHTML=html;
+  // Only update if content changed — prevents flash on refresh
+  if(list.innerHTML!==html) list.innerHTML=html;
 }
 
 function printSavedRx(rx){
@@ -5874,7 +5900,7 @@ function printSavedRx(rx){
   for(var j=0;j<medicines.length;j++){
     medsRows +=
       '<tr>'+
-      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:14px;font-weight:600;color:#0F1F17">'+(j+1)+'. '+(medicines[j].med||'')+'</td>'+
+      '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:14px;font-weight:600;color:#0D1117">'+(j+1)+'. '+(medicines[j].med||'')+'</td>'+
       '<td style="padding:10px 8px;border-bottom:1px solid #e8f0eb;font-size:13px;color:#444">'+(medicines[j].dose||'')+'</td>'+
       '</tr>';
   }
@@ -5889,7 +5915,7 @@ function printSavedRx(rx){
     '.top{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px double #1B6B4A;margin-bottom:20px}'+
     '.clinic-block{}'+
     '.clinic-name{font-size:20px;font-weight:900;color:#1B6B4A;letter-spacing:1px}'+
-    '.doctor-title{font-size:15px;font-weight:700;margin-top:4px;color:#0F1F17}'+
+    '.doctor-title{font-size:15px;font-weight:700;margin-top:4px;color:#0D1117}'+
     '.doctor-sub{font-size:12px;color:#555;margin-top:3px;line-height:1.6}'+
     '.ordonnance-title{text-align:right}'+
     '.ord-word{font-size:28px;font-weight:900;color:#1B6B4A;letter-spacing:2px;font-style:italic}'+
@@ -5897,7 +5923,7 @@ function printSavedRx(rx){
     '.patient-box{background:#f7faf8;border:1px solid #D6E8DE;border-radius:8px;padding:14px 18px;margin-bottom:22px;display:flex;gap:30px}'+
     '.pat-field{flex:1}'+
     '.pat-label{font-size:10px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;margin-bottom:3px}'+
-    '.pat-value{font-size:14px;font-weight:700;color:#0F1F17}'+
+    '.pat-value{font-size:14px;font-weight:700;color:#0D1117}'+
     '.pat-sub{font-size:12px;color:#555;margin-top:2px}'+
     '.rx-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}'+
     '.rp-symbol{font-size:32px;font-weight:900;color:#1B6B4A;font-style:italic;line-height:1}'+
@@ -5935,7 +5961,7 @@ function printSavedRx(rx){
     '</div>'+
     '<div style="padding:10px 0 18px 0;border-bottom:1px solid #e8f0eb;margin-bottom:18px">'+
       '<div style="font-size:10px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;margin-bottom:6px">Nom du patient</div>'+
-      '<div style="font-size:22px;font-weight:900;color:#0F1F17;margin-bottom:4px">'+pname+'</div>'+
+      '<div style="font-size:22px;font-weight:900;color:#0D1117;margin-bottom:4px">'+pname+'</div>'+
       '<div style="font-size:13px;color:#555;">'+pinfo+(patAddr?' &nbsp;|&nbsp; '+patAddr:'')+'</div>'+
     '</div>'+
     '<div class="rx-header">'+
@@ -5976,8 +6002,8 @@ function printSavedRx(rx){
 <!-- REGISTER TEMPLATE -->
 <script type="text/html" id="reg-template">
 <div style="max-width:480px;margin:0 auto">
-  <h2 style="color:var(--dark);margin-bottom:18px">Register Patient</h2>
-  <div style="background:#fff;border-radius:16px;border:1.5px solid var(--border);padding:20px;margin-bottom:14px">
+  <h2 style="margin-bottom:18px">Register Patient</h2>
+  <div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
     <div class="form-field"><label class="form-label">Search by phone number first:</label>
       <div style="display:flex;gap:8px">
         <input class="form-input" id="search-phone" type="tel" placeholder="0555 123 456" style="flex:1"/>
@@ -5986,7 +6012,7 @@ function printSavedRx(rx){
     </div>
     <div id="search-result"></div>
   </div>
-  <div id="new-patient-form" style="display:none;background:#fff;border-radius:16px;border:1.5px solid var(--border);padding:20px">
+  <div id="new-patient-form" style="display:none;background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
     <h3 style="margin-bottom:16px;color:var(--dark);font-size:15px">New Patient</h3>
     <div class="form-row">
       <div class="form-field"><label class="form-label">Full Name *</label><input class="form-input" id="r-name" placeholder="Patient name"/></div>
