@@ -2162,10 +2162,10 @@ function loadReports(period){
   if(!window.fbGetAccounts||!window.fbGetAllPatients) return;
 
   window.fbGetAccounts().then(function(accounts){
-    var myDoctors=accounts.filter(function(a){
-      return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);
-    });
+    var myDoctors=accounts.filter(function(a){return a.role==='doctor';});
     var docIds=myDoctors.map(function(d){return d.username;});
+
+
 
     window.fbGetAllPatients().then(function(allPts){
       // Filter by clinic and date range
@@ -2175,9 +2175,9 @@ function loadReports(period){
         return p.visitDate>=fromDate&&p.visitDate<=toDate;
       });
 
-      // Also get appointments
-      var apptPromises=myDoctors.map(function(d){
-        return window.fbGetAppointments?window.fbGetAppointments(d.username,null).catch(function(){return[];}):Promise.resolve([]);
+      // Load ALL appointments and filter by docIds + date
+      var apptPromises=docIds.map(function(docId){
+        return window.fbGetAppointments?window.fbGetAppointments(docId,null).catch(function(){return[];}):Promise.resolve([]);
       });
 
       Promise.all(apptPromises).then(function(results){
@@ -2188,18 +2188,15 @@ function loadReports(period){
           return a.date>=fromDate&&a.date<=toDate&&a.status!=='cancelled';
         });
 
-        console.log('DEBUG filteredAppts:',filteredAppts.length,'fromDate:',fromDate,'toDate:',toDate);
-        filteredAppts.forEach(function(a){console.log('appt:',a.status,a.date,a.doctorId);});
-
-        // Update stats
-        var total=pts.length;
+        // Update stats — combine walk-ins and appointments
+        var apptCount=filteredAppts.length;
+        var total=pts.length+apptCount;
         var newPts=pts.filter(function(p){return p.visitType==='new';}).length;
         var fuPts=pts.filter(function(p){return p.visitType==='follow_up';}).length;
         var donePts=pts.filter(function(p){return p.status==='done';}).length;
         var doneAppts=filteredAppts.filter(function(a){return a.status==='done';}).length;
         var totalDone=donePts+doneAppts;
-        var apptCount=filteredAppts.length;
-        var walkinCount=pts.filter(function(p){return !p.isAppointment;}).length;
+        var walkinCount=pts.length;
 
         var setVal=function(id,val){var el=document.getElementById(id);if(el)el.textContent=val;};
         setVal('rep-total',total);
@@ -2222,19 +2219,20 @@ function loadReports(period){
         myDoctors.forEach(function(doc){
           var dPts=pts.filter(function(p){return p.doctor===doc.username;});
           var dAppts=filteredAppts.filter(function(a){return a.doctorId===doc.username;});
+          var dTotal=dPts.length+dAppts.length;
           var dNew=dPts.filter(function(p){return p.visitType==='new';}).length;
           var dFu=dPts.filter(function(p){return p.visitType==='follow_up';}).length;
-          var dDone=dPts.filter(function(p){return p.status==='done';}).length;
-          var pct=dPts.length?Math.round(dDone/dPts.length*100):0;
+          var dDone=dPts.filter(function(p){return p.status==='done';}).length+dAppts.filter(function(a){return a.status==='done';}).length;
+          var pct=dTotal?Math.round(dDone/dTotal*100):0;
           html+=
-            '<div style="padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s" >'+
+            '<div style="padding:16px 20px;border-bottom:1px solid var(--border)">'+
               '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
                 '<div>'+
                   '<div style="font-size:14px;font-weight:700;color:#0D1117">'+doc.name+'</div>'+
                   '<div style="font-size:11px;color:#9CA3AF;margin-top:1px">'+(doc.specialty||'General Practice')+'</div>'+
                 '</div>'+
                 '<div style="text-align:right">'+
-                  '<div style="font-size:22px;font-weight:800;color:#0D1117">'+dPts.length+'</div>'+
+                  '<div style="font-size:22px;font-weight:800;color:#0D1117">'+dTotal+'</div>'+
                   '<div style="font-size:10px;color:#9CA3AF">patients</div>'+
                 '</div>'+
               '</div>'+
@@ -3224,7 +3222,7 @@ function loadPage(page){
     // Load real data filtered by clinic
     if(window.fbGetAccounts){
       window.fbGetAccounts().then(function(accounts){
-        var myDoctors=accounts.filter(function(a){return a.role==='doctor'&&(a.clinicName===clinicName||a.cabinetName===clinicName);});
+        var myDoctors=accounts.filter(function(a){return a.role==='doctor'&&(!a.clinicName||(a.clinicName===clinicName||a.cabinetName===clinicName));});
         var myReceps=accounts.filter(function(a){return a.role==='receptionist'&&(a.clinicName===clinicName||a.cabinetName===clinicName);});
         var dEl=document.getElementById('ca-doctors'); if(dEl) dEl.textContent=myDoctors.length;
         var rEl=document.getElementById('ca-receps'); if(rEl) rEl.textContent=myReceps.length;
