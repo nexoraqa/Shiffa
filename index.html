@@ -4027,9 +4027,7 @@ function loadNotesTab(tab){
   function renderNotes(pts){
     if(!pts.length){ listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes found.</div>'; return; }
     var promises=pts.map(function(p){
-      var pPhone=(p.phone||'').replace(/ /g,'');
-      return (window.fbGetNotesByPhone?window.fbGetNotesByPhone(pPhone):window.fbGetNotesByPatientId?window.fbGetNotesByPatientId(p.id):Promise.resolve([]))
-        .then(function(n){return {patient:p,notes:n};});
+      return window.fbGetNotesByPatientId ? window.fbGetNotesByPatientId(p.id).then(function(n){ return {patient:p,notes:n}; }) : Promise.resolve({patient:p,notes:[]});
     });
     Promise.all(promises).then(function(results){
       // Only show patients that have notes written
