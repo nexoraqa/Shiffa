@@ -4084,7 +4084,8 @@ function loadNotesTab(tab){
           var n=pt._note;
           html+='<div style="background:#fff;border-radius:13px;border:1px solid #E5E9EF;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">';
           html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
-          html+='<div><div style="font-weight:800;font-size:15px;color:#0D1117">'+(n.patientName||pt.name||'Patient')+'</div>';
+          var displayName=n.patientName&&n.patientName.trim()&&n.patientName!=='Patient'?n.patientName:(n.patientPhone?'📞 '+n.patientPhone:'Patient');
+          html+='<div><div style="font-weight:800;font-size:15px;color:#0D1117">'+displayName+'</div>';
           html+='<div style="font-size:12px;color:#8FA89D">'+(pt.visitDate||'')+(pt.phone?' · '+pt.phone:'')+'</div></div>';
           html+='</div>';
           html+='<div style="background:#F7FAF8;border-radius:8px;padding:12px">';
