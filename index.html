@@ -4063,12 +4063,38 @@ function loadNotesTab(tab){
       });
     }
   } else {
-    // All time — load all patients for this doctor from patients collection
-    if(window.fbGetAllPatients){
-      window.fbGetAllPatients().then(function(pts){
-        pts=pts.filter(function(p){return p.doctor===u.doctorId;});
-        pts.sort(function(a,b){ return b.visitDate>a.visitDate?1:-1; });
-        renderNotes(pts);
+    // All time — load notes directly from notes collection for this doctor
+    if(window.fbGetAllNotes){
+      window.fbGetAllNotes(u.doctorId).then(function(notes){
+        if(!notes.length){listEl.innerHTML='<div style="text-align:center;padding:40px;color:#8FA89D">📋 No notes found.</div>';return;}
+        // Group by patientPhone — show latest note per patient
+        var byPhone={};
+        notes.forEach(function(n){
+          var phone=(n.patientPhone||n.patientId||'unknown');
+          if(!byPhone[phone]||n.savedAt>byPhone[phone].savedAt) byPhone[phone]=n;
+        });
+        // Build fake patient objects from notes
+        var pts=Object.values(byPhone).map(function(n){
+          return {id:n.patientId,name:n.patientName||'Patient',phone:n.patientPhone||'',age:'',visitDate:n.savedAt?n.savedAt.split('T')[0]:'',visitType:'',_note:n};
+        });
+        pts.sort(function(a,b){return b.visitDate>a.visitDate?1:-1;});
+        // Render directly
+        var html='';
+        pts.forEach(function(pt){
+          var n=pt._note;
+          html+='<div style="background:#fff;border-radius:13px;border:1px solid #E5E9EF;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">';
+          html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
+          html+='<div><div style="font-weight:800;font-size:15px;color:#0D1117">'+(n.patientName||pt.name||'Patient')+'</div>';
+          html+='<div style="font-size:12px;color:#8FA89D">'+(pt.visitDate||'')+(pt.phone?' · '+pt.phone:'')+'</div></div>';
+          html+='</div>';
+          html+='<div style="background:#F7FAF8;border-radius:8px;padding:12px">';
+          html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Diagnosis</div>';
+          html+='<div style="font-size:14px;font-weight:600;color:#0D1117;margin-bottom:8px">'+(n.diagnosis||'—')+'</div>';
+          html+='<div style="font-size:11px;color:#8FA89D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Treatment</div>';
+          html+='<div style="font-size:13px;color:#4A5E54">'+(n.treatment||'—')+'</div>';
+          html+='</div></div>';
+        });
+        listEl.innerHTML=html;
       });
     }
   }
@@ -5462,12 +5488,15 @@ function saveNotes(){
       }
     }, 5000);
 
+    var popupName=document.getElementById('popup-name');
+    var patientName=popupName?popupName.textContent:'';
     window.fbSaveNotes(currentPatientId, {
       diagnosis: diagnosis,
       treatment: treatment,
       doctor: currentUser.name,
       doctorId: currentUser.doctorId,
       patientPhone: currentPatientPhone||'',
+      patientName: patientName,
       savedAt: new Date().toISOString()
     }).then(function(ok){
       if(saved) return;
@@ -6184,6 +6213,17 @@ try{
     return getDocs(query(collection(db,'notes'),where('patientPhone','==',phone)))
       .then(function(snap){var list=[];snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});return list;})
       .catch(function(e){console.error(e);return[];});
+  };
+  window.fbGetAllNotes=function(doctorId){
+    return getDocs(collection(db,'notes'))
+      .then(function(snap){
+        var list=[];
+        snap.forEach(function(d){
+          var data=Object.assign({id:d.id},d.data());
+          if(data.doctorId===doctorId) list.push(data);
+        });
+        return list;
+      }).catch(function(e){console.error(e);return[];});
   };
   window.fbGetNotesByPatientId=function(patientId){
     return getDocs(query(collection(db,'notes'),where('patientId','==',patientId)))
