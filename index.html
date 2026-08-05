@@ -4192,12 +4192,24 @@ function openPatientHistory(el){
   document.getElementById('popup-phone').textContent = phone ? 'Phone: '+phone : '';
   currentPatientPhone = phone;
   currentPatientId = null;
-  // Hide all action buttons — history view only
+  // Reset all forms and sections
   var notesBtn = document.getElementById('write-notes-btn');
   var rxBtn = document.getElementById('rx-btn');
-  var closeBtn = document.getElementById('popup-close-btn');
+  var labBtn = document.getElementById('lab-btn');
+  var notesForm = document.getElementById('popup-notes-form');
+  var rxForm = document.getElementById('popup-rx-form');
+  var labForm = document.getElementById('lab-form-section');
+  var rxSection = document.getElementById('popup-rx-section');
   if(notesBtn) notesBtn.style.display='none';
   if(rxBtn) rxBtn.style.display='none';
+  if(labBtn) labBtn.style.display='none';
+  if(notesForm) notesForm.style.display='none';
+  if(rxForm) rxForm.style.display='none';
+  if(labForm) labForm.style.display='none';
+  if(rxSection) rxSection.style.display='none';
+  // Clear prescription fields
+  var rxList = document.getElementById('rx-items');
+  if(rxList) rxList.innerHTML='';
   // Show popup
   popup.style.display='flex';
   // Load full visit history
