@@ -2316,18 +2316,27 @@ function loadTVQueue(){
       return a.day===todayDay&&a.status!=='cancelled';
     });
 
-    pts.sort(function(a,b){return (a.createdAt||'')>(b.createdAt||'')?1:-1;});
+    // Sort walk-ins by arrival time, appointments by scheduled time
+    pts.sort(function(a,b){
+      var ta=a.createdAt||a.visitDate||'';
+      var tb=b.createdAt||b.visitDate||'';
+      return ta>tb?1:-1;
+    });
+    appts.sort(function(a,b){
+      return (a.time||'')>(b.time||'')?1:-1;
+    });
 
     var inprog=pts.filter(function(p){return p.status==='inprogress';});
     var waiting=pts.filter(function(p){return p.status==='waiting';});
     var apptInprog=appts.filter(function(a){return a.status==='inprogress';});
     var apptWaiting=appts.filter(function(a){return a.status==='waiting'||a.status==='scheduled';});
 
-    // Assign permanent numbers to all patients in order
+    // Assign permanent numbers to all patients in order — include all statuses
     var num=1;
     var allQueue=[];
     pts.forEach(function(p){ allQueue.push({status:p.status,num:num++,name:p.name||''}); });
-    apptWaiting.forEach(function(a){ allQueue.push({status:a.status||'waiting',num:num++,name:a.patientName||''}); });
+    apptInprog.forEach(function(a){ allQueue.push({status:'inprogress',num:num++,name:a.patientName||''}); });
+    apptWaiting.forEach(function(a){ allQueue.push({status:'waiting',num:num++,name:a.patientName||''}); });
 
     // Now serving — show patient name
     var nowEl=document.getElementById('tv-now');
