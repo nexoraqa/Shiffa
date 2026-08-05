@@ -1601,10 +1601,12 @@ function toggleLabForm(){
   if(!form) return;
   var isOpen=form.style.display!=='none';
   // Close other forms
-  if(notesForm) notesForm.style.display='none';
-  if(rxForm) rxForm.style.display='none';
-  if(document.getElementById('write-notes-btn')) document.getElementById('write-notes-btn').textContent='Write Notes';
-  if(document.getElementById('rx-btn')) document.getElementById('rx-btn').textContent='Prescription';
+  if(notesForm){notesForm.style.display='none';}
+  if(rxForm){rxForm.style.display='none';}
+  var notesBtn3=document.getElementById('write-notes-btn');
+  var rxBtn3=document.getElementById('rx-btn');
+  if(notesBtn3){notesBtn3.textContent='Write Notes';notesBtn3.style.background='linear-gradient(135deg,var(--green),var(--green-l))';notesBtn3.style.color='#fff';notesBtn3.style.border='none';}
+  if(rxBtn3){rxBtn3.textContent='Prescription';rxBtn3.style.background='linear-gradient(135deg,#1565C0,#1976D2)';rxBtn3.style.color='#fff';rxBtn3.style.border='none';}
   if(isOpen){
     form.style.display='none';
     if(btn) btn.textContent='🧪 Lab Test';
@@ -2192,8 +2194,8 @@ function loadReports(period){
         // Update stats — combine walk-ins and appointments
         var apptCount=filteredAppts.length;
         var total=pts.length+apptCount;
-        var newPts=pts.filter(function(p){return p.visitType==='new';}).length;
-        var fuPts=pts.filter(function(p){return p.visitType==='follow_up';}).length;
+        var newPts=pts.filter(function(p){return p.visitType==='new';}).length+filteredAppts.filter(function(a){return a.visitType==='new';}).length;
+        var fuPts=pts.filter(function(p){return p.visitType==='follow_up';}).length+filteredAppts.filter(function(a){return a.visitType==='follow_up';}).length;
         var donePts=pts.filter(function(p){return p.status==='done';}).length;
         var doneAppts=filteredAppts.filter(function(a){return a.status==='done';}).length;
         var totalDone=donePts+doneAppts;
@@ -2221,8 +2223,8 @@ function loadReports(period){
           var dPts=pts.filter(function(p){return p.doctor===doc.username;});
           var dAppts=filteredAppts.filter(function(a){return a.doctorId===doc.username;});
           var dTotal=dPts.length+dAppts.length;
-          var dNew=dPts.filter(function(p){return p.visitType==='new';}).length;
-          var dFu=dPts.filter(function(p){return p.visitType==='follow_up';}).length;
+          var dNew=dPts.filter(function(p){return p.visitType==='new';}).length+dAppts.filter(function(a){return a.visitType==='new';}).length;
+          var dFu=dPts.filter(function(p){return p.visitType==='follow_up';}).length+dAppts.filter(function(a){return a.visitType==='follow_up';}).length;
           var dDone=dPts.filter(function(p){return p.status==='done';}).length+dAppts.filter(function(a){return a.status==='done';}).length;
           var pct=dTotal?Math.round(dDone/dTotal*100):0;
           html+=
@@ -2324,32 +2326,44 @@ function loadTVQueue(){
     // Assign permanent numbers to all patients in order
     var num=1;
     var allQueue=[];
-    pts.forEach(function(p){ allQueue.push({status:p.status,num:num++}); });
-    apptWaiting.forEach(function(){ allQueue.push({status:'waiting',num:num++}); });
+    pts.forEach(function(p){ allQueue.push({status:p.status,num:num++,name:p.name||''}); });
+    apptWaiting.forEach(function(a){ allQueue.push({status:a.status||'waiting',num:num++,name:a.patientName||''}); });
 
-    // Now serving
+    // Now serving — show patient name
     var nowEl=document.getElementById('tv-now');
     if(nowEl){
       var serving=allQueue.find(function(x){return x.status==='inprogress';});
-      nowEl.textContent=serving?serving.num:'—';
+      if(serving){
+        nowEl.style.fontSize='60px';
+        nowEl.style.letterSpacing='-1px';
+        nowEl.style.color='#fff';
+        nowEl.textContent=serving.name||String(serving.num);
+      } else {
+        nowEl.style.fontSize='52px';
+        nowEl.style.letterSpacing='0px';
+        nowEl.style.color='rgba(255,255,255,0.3)';
+        nowEl.textContent='Please Wait';
+      }
     }
 
-    // Waiting numbers only
+    // Waiting — show names
     var queueEl=document.getElementById('tv-queue');
     if(!queueEl) return;
-    var waitList=allQueue.filter(function(x){return x.status==='waiting';});
+    var waitList=allQueue.filter(function(x){return x.status==='waiting'||x.status==='scheduled';});
     if(!waitList.length){
-      queueEl.innerHTML='<div style="font-size:24px;color:rgba(255,255,255,0.15);font-weight:700">NO PATIENTS WAITING</div>';
+      queueEl.innerHTML='<div style="font-size:22px;color:rgba(255,255,255,0.15);font-weight:700;letter-spacing:1px">NO PATIENTS WAITING</div>';
       return;
     }
     var html='';
     waitList.forEach(function(item){
-      html+='<div style="background:rgba(255,255,255,0.08);border-radius:20px;width:120px;height:120px;display:flex;align-items:center;justify-content:center;font-size:60px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,0.12)">'+item.num+'</div>';
+      html+='<div style="background:rgba(255,255,255,0.08);border-radius:16px;padding:16px 24px;display:flex;align-items:center;gap:14px;border:1px solid rgba(255,255,255,0.1);margin-bottom:8px">'+
+        '<div style="font-size:24px;font-weight:900;color:rgba(255,255,255,0.35);min-width:32px">'+item.num+'</div>'+
+        '<div style="font-size:22px;font-weight:700;color:#fff">'+(item.name||'Patient')+'</div>'+
+      '</div>';
     });
     queueEl.innerHTML=html;
   }).catch(function(){});
 }
-
 function doLogout(){
   stopInactivityWatch();
   if(window._labBadgeInterval){clearInterval(window._labBadgeInterval);window._labBadgeInterval=null;}
@@ -5717,10 +5731,14 @@ function toggleNotesForm(){
   var rxForm=document.getElementById('popup-rx-form');
   var btn=document.getElementById('write-notes-btn');
   var rxBtn=document.getElementById('rx-btn');
+  var labForm=document.getElementById('lab-form-section');
+  var labBtn=document.getElementById('lab-btn');
   if(notesForm.style.display==='none'){
     notesForm.style.display='block';
-    if(rxForm) rxForm.style.display='none';
+    if(rxForm){rxForm.style.display='none';}
+    if(labForm){labForm.style.display='none';}
     if(rxBtn){rxBtn.textContent='Prescription';rxBtn.style.background='linear-gradient(135deg,#1565C0,#1976D2)';rxBtn.style.color='#fff';rxBtn.style.border='none';}
+    if(labBtn){labBtn.textContent='🧪 Lab Test';labBtn.style.background='linear-gradient(135deg,#059669,#10B981)';}
     btn.textContent='Cancel Notes';btn.style.background='#fff';btn.style.color='#4A5E54';btn.style.border='1px solid #D6E8DE';
     document.getElementById('note-err').style.display='none';
     loadExistingNotes();
@@ -5735,10 +5753,14 @@ function toggleRxForm(){
   var notesForm=document.getElementById('popup-notes-form');
   var btn=document.getElementById('rx-btn');
   var notesBtn=document.getElementById('write-notes-btn');
+  var labForm2=document.getElementById('lab-form-section');
+  var labBtn2=document.getElementById('lab-btn');
   if(rxForm.style.display==='none'){
     rxForm.style.display='block';
-    if(notesForm) notesForm.style.display='none';
+    if(notesForm){notesForm.style.display='none';}
+    if(labForm2){labForm2.style.display='none';}
     if(notesBtn){notesBtn.textContent='Write Notes';notesBtn.style.background='linear-gradient(135deg,var(--green),var(--green-l))';notesBtn.style.color='#fff';notesBtn.style.border='none';}
+    if(labBtn2){labBtn2.textContent='🧪 Lab Test';labBtn2.style.background='linear-gradient(135deg,#059669,#10B981)';}
     btn.textContent='Cancel Prescription';btn.style.background='#fff';btn.style.color='#4A5E54';btn.style.border='1px solid #D6E8DE';
     loadExistingRx();
   } else {
