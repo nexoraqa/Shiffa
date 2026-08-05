@@ -1622,8 +1622,8 @@ function deleteLabTest(id){
 function toggleLabForm(){
   var form=document.getElementById('lab-form-section');
   var btn=document.getElementById('lab-btn');
-  var notesForm=document.getElementById('notes-form-section');
-  var rxForm=document.getElementById('rx-form-section');
+  var notesForm=document.getElementById('popup-notes-form');
+  var rxForm=document.getElementById('popup-rx-form');
   if(!form) return;
   var isOpen=form.style.display!=='none';
   // Close other forms
@@ -2030,16 +2030,16 @@ function resetInactivityTimer(){
     // Show custom popup
     var overlay=document.createElement('div');
     overlay.id='inactivity-popup';
-    overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+    overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,22,40,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;backdrop-filter:blur(6px)';
     overlay.innerHTML=
-      '<div style="background:#fff;border-radius:20px;padding:28px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'+
-        '<div style="font-size:44px;margin-bottom:14px">⏱️</div>'+
-        '<div style="font-size:17px;font-weight:800;color:#0D1117;margin-bottom:8px">Session Timeout</div>'+
+      '<div style="background:#fff;border-radius:24px;padding:32px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.4)">'+
+        '<div style="width:72px;height:72px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 18px;box-shadow:0 4px 16px rgba(245,158,11,0.3)">⏱️</div>'+
+        '<div style="font-size:19px;font-weight:900;color:#0D1117;margin-bottom:8px;letter-spacing:-0.3px">Session Timeout</div>'+
         '<div style="font-size:13px;color:#9CA3AF;margin-bottom:6px">You have been inactive for 20 minutes.</div>'+
-        '<div style="font-size:13px;color:#9CA3AF;margin-bottom:20px">Logging out in <span id="inactivity-countdown">5</span> seconds...</div>'+
+        '<div style="font-size:13px;color:#9CA3AF;margin-bottom:24px">Logging out in <span id="inactivity-countdown" style="font-weight:800;color:#EF4444;font-size:15px">5</span> seconds...</div>'+
         '<div style="display:flex;gap:10px;justify-content:center">'+
-          '<button onclick="inactivityStay()" style="padding:11px 24px;background:#F0F4F8;border:1px solid #E5E9EF;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#4B5563">Stay Logged In</button>'+
-          '<button onclick="inactivityLogout()" style="padding:11px 24px;background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Log Out</button>'+
+          '<button onclick="inactivityStay()" style="flex:1;padding:13px;background:#F8FAFC;border:1.5px solid #E5E9EF;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;color:#4B5563">Stay Logged In</button>'+
+          '<button onclick="inactivityLogout()" style="flex:1;padding:13px;background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer">Log Out</button>'+
         '</div>'+
       '</div>';
     document.body.appendChild(overlay);
@@ -2154,13 +2154,13 @@ function loadSAReports(period){
                   '<div style="font-size:10px;color:#9CA3AF">patients</div>'+
                 '</div>'+
               '</div>'+
-              '<div style="background:#F0F4F8;border-radius:4px;height:6px;margin-bottom:10px">'+
-                '<div style="background:linear-gradient(90deg,#1A3A5C,#2563A8);height:6px;border-radius:4px;width:'+pct+'%"></div>'+
+              '<div style="background:rgba(0,0,0,0.08);border-radius:6px;height:8px;margin-bottom:12px">'+
+                '<div style="background:linear-gradient(90deg,#1A3A5C,#2563A8);height:8px;border-radius:6px;width:'+pct+'%;box-shadow:0 2px 6px rgba(26,58,92,0.3)"></div>'+
               '</div>'+
-              '<div style="display:flex;gap:16px">'+
-                '<span style="font-size:11px;font-weight:600;color:#059669">✅ '+c.done+' Done</span>'+
-                '<span style="font-size:11px;font-weight:600;color:#2563A8">🆕 '+c.newPts+' New</span>'+
-                '<span style="font-size:11px;font-weight:600;color:#7C3AED">📅 '+c.appts+' Appts</span>'+
+              '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+                '<span style="font-size:11px;font-weight:700;color:#059669;background:#ECFDF5;padding:3px 8px;border-radius:6px">✅ '+c.done+' Done</span>'+
+                '<span style="font-size:11px;font-weight:700;color:#2563A8;background:#EEF2FF;padding:3px 8px;border-radius:6px">🆕 '+c.newPts+' New</span>'+
+                '<span style="font-size:11px;font-weight:700;color:#7C3AED;background:#F5F3FF;padding:3px 8px;border-radius:6px">📅 '+c.appts+' Appts</span>'+
               '</div>'+
             '</div>';
         });
@@ -2270,15 +2270,14 @@ function loadReports(period){
                 '</div>'+
               '</div>'+
               // Progress bar
-              '<div style="background:#F0F4F8;border-radius:4px;height:6px;margin-bottom:10px">'+
-                '<div style="background:linear-gradient(90deg,#059669,#10B981);height:6px;border-radius:4px;width:'+pct+'%;transition:width 0.5s"></div>'+
+              '<div style="background:rgba(0,0,0,0.08);border-radius:6px;height:8px;margin-bottom:12px">'+
+                '<div style="background:linear-gradient(90deg,#059669,#10B981);height:8px;border-radius:6px;width:'+pct+'%;transition:width 0.5s;box-shadow:0 2px 6px rgba(5,150,105,0.3)"></div>'+
               '</div>'+
-              // Mini stats
-              '<div style="display:flex;gap:12px">'+
-                '<span style="font-size:11px;font-weight:600;color:#059669">🆕 '+dNew+' New</span>'+
-                '<span style="font-size:11px;font-weight:600;color:#2563A8">🔄 '+dFu+' Follow-up</span>'+
-                '<span style="font-size:11px;font-weight:600;color:#059669">✅ '+dDone+' Done</span>'+
-                '<span style="font-size:11px;font-weight:600;color:#7C3AED">📅 '+dAppts.length+' Appts</span>'+
+              '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+                '<span style="font-size:11px;font-weight:700;color:#059669;background:#ECFDF5;padding:3px 8px;border-radius:6px">🆕 '+dNew+' New</span>'+
+                '<span style="font-size:11px;font-weight:700;color:#2563A8;background:#EEF2FF;padding:3px 8px;border-radius:6px">🔄 '+dFu+' Follow-up</span>'+
+                '<span style="font-size:11px;font-weight:700;color:#059669;background:#ECFDF5;padding:3px 8px;border-radius:6px">✅ '+dDone+' Done</span>'+
+                '<span style="font-size:11px;font-weight:700;color:#7C3AED;background:#F5F3FF;padding:3px 8px;border-radius:6px">📅 '+dAppts.length+' Appts</span>'+
               '</div>'+
             '</div>';
         });
@@ -3046,7 +3045,7 @@ function loadPage(page){
   if(page==='profile' && u.role==='doctor'){
     mc.innerHTML=
       '<h2 style="margin-bottom:20px">👤 Profile</h2>'+
-      '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">'+
+      '<div style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:20px;margin-bottom:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15)">'+
         '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #F0F2F5">'+
           '<div style="width:60px;height:60px;background:linear-gradient(135deg,#1565C0,#2563A8);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 12px rgba(21,101,192,0.3)">👨‍⚕️</div>'+
           '<div>'+
@@ -3073,7 +3072,7 @@ function loadPage(page){
         '<div id="prof-err" style="display:none;color:#D64045;font-size:13px;margin-bottom:12px"></div>'+
         '<button onclick="saveProfile()" class="btn-filled" style="width:100%;padding:14px;font-size:15px">💾 Save Profile</button>'+
       '</div>'+
-      '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;margin-top:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">'+
+      '<div style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:20px;margin-top:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15)">'+
         '<div style="font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px">🔒 Change Password</div>'+
         '<input type="password" id="doc-new-pass" placeholder="New password..." style="width:100%;padding:12px 14px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;box-sizing:border-box;background:#FAFBFC"/>'+
         '<input type="password" id="doc-confirm-pass" placeholder="Confirm new password..." style="width:100%;padding:12px 14px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;background:#FAFBFC"/>'+
@@ -3174,24 +3173,26 @@ function loadPage(page){
         clinicNames.forEach(function(cn){
           var c=clinics[cn];
           html+=
-            '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">'+
-              '<div style="background:linear-gradient(135deg,#4C1D95,#7C3AED);padding:16px 18px">'+
-                '<div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:2px">'+cn+'</div>'+
-                '<div style="font-size:11px;color:rgba(255,255,255,0.6)">'+c.admins.length+' admin'+(c.admins.length!==1?'s':'')+'</div>'+
+            '<div style="background:rgba(255,255,255,0.95);border-radius:18px;border:1px solid rgba(255,255,255,0.2);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15)">'+
+              '<div style="background:linear-gradient(135deg,'+ROLE_COLORS.superadmin+','+ROLE_COLORS.clinicadmin+');padding:18px 20px;position:relative;overflow:hidden">'+
+                '<div style="position:absolute;right:-15px;top:-15px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.06)"></div>'+
+                '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🏥 Clinic</div>'+
+                '<div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.3px">'+cn+'</div>'+
+                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+c.admins.length+' admin'+(c.admins.length!==1?'s':'')+'</div>'+
               '</div>'+
               '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0">'+
-                '<div style="padding:14px;text-align:center;border-right:1px solid #F0F4F8">'+
-                  '<div style="font-size:26px;font-weight:800;color:#1A3A5C">'+c.doctors.length+'</div>'+
-                  '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Doctors</div>'+
+                '<div style="padding:16px;text-align:center;border-right:1px solid #F0F4F8">'+
+                  '<div style="font-size:30px;font-weight:900;color:#1A3A5C;letter-spacing:-1px">'+c.doctors.length+'</div>'+
+                  '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-top:3px">Doctors</div>'+
                 '</div>'+
-                '<div style="padding:14px;text-align:center">'+
-                  '<div style="font-size:26px;font-weight:800;color:#E65100">'+c.receps.length+'</div>'+
-                  '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Receptionists</div>'+
+                '<div style="padding:16px;text-align:center">'+
+                  '<div style="font-size:30px;font-weight:900;color:#10B981;letter-spacing:-1px">'+c.receps.length+'</div>'+
+                  '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-top:3px">Receptionists</div>'+
                 '</div>'+
               '</div>'+
-              '<div style="padding:12px 18px;background:#F8FAFF;border-top:1px solid #F0F4F8">'+
-                '<div style="font-size:11px;color:#4B5563;font-weight:600">'+
-                  c.doctors.map(function(d){return d.name;}).join(' · ')||'No doctors yet'+
+              '<div style="padding:12px 18px;background:rgba(0,0,0,0.02);border-top:1px solid #F0F4F8">'+
+                '<div style="font-size:11px;color:#6B7280;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
+                  (c.doctors.map(function(d){return d.name;}).join(' · ')||'No doctors yet')+
                 '</div>'+
               '</div>'+
             '</div>';
@@ -3325,32 +3326,31 @@ function loadPage(page){
                 var linked=myReceps.filter(function(r){return r.doctorId===doc.username;});
 
                 html+=
-                  '<div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">'+
-                    // Card header
-                    '<div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);padding:16px 18px;display:flex;align-items:center;gap:12px">'+
-                      '<div style="width:40px;height:40px;background:rgba(255,255,255,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid rgba(255,255,255,0.2)">👨‍⚕️</div>'+
+                  '<div style="background:rgba(255,255,255,0.95);border-radius:18px;border:1px solid rgba(255,255,255,0.2);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15)">'+
+                    '<div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);padding:18px 20px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden">'+
+                      '<div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>'+
+                      '<div style="width:44px;height:44px;background:rgba(255,255,255,0.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid rgba(255,255,255,0.15)">👨‍⚕️</div>'+
                       '<div style="flex:1;min-width:0">'+
-                        '<div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+doc.name+'</div>'+
-                        '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px">'+(doc.specialty||'General Practice')+'</div>'+
+                        '<div style="font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.2px">'+doc.name+'</div>'+
+                        '<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px">'+(doc.specialty||'General Practice')+'</div>'+
                       '</div>'+
                       '<div style="text-align:right">'+
-                        '<div style="font-size:22px;font-weight:900;color:#fff;line-height:1">'+total+'</div>'+
-                        '<div style="font-size:10px;color:rgba(255,255,255,0.4)">total</div>'+
+                        '<div style="font-size:26px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">'+total+'</div>'+
+                        '<div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.5px">TOTAL</div>'+
                       '</div>'+
                     '</div>'+
-                    // Stats row
                     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0">'+
-                      '<div style="padding:14px;text-align:center;border-right:1px solid #F0F4F8">'+
-                        '<div style="font-size:22px;font-weight:800;color:#D97706">'+waiting+'</div>'+
-                        '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Waiting</div>'+
+                      '<div style="padding:16px;text-align:center;border-right:1px solid #F0F4F8">'+
+                        '<div style="font-size:26px;font-weight:900;color:#D97706;letter-spacing:-1px">'+waiting+'</div>'+
+                        '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-top:3px">Waiting</div>'+
                       '</div>'+
-                      '<div style="padding:14px;text-align:center;border-right:1px solid #F0F4F8">'+
-                        '<div style="font-size:22px;font-weight:800;color:#2563A8">'+inprog+'</div>'+
-                        '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">With Doctor</div>'+
+                      '<div style="padding:16px;text-align:center;border-right:1px solid #F0F4F8">'+
+                        '<div style="font-size:26px;font-weight:900;color:#2563A8;letter-spacing:-1px">'+inprog+'</div>'+
+                        '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-top:3px">With Dr.</div>'+
                       '</div>'+
-                      '<div style="padding:14px;text-align:center">'+
-                        '<div style="font-size:22px;font-weight:800;color:#059669">'+done+'</div>'+
-                        '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Done</div>'+
+                      '<div style="padding:16px;text-align:center">'+
+                        '<div style="font-size:26px;font-weight:900;color:#059669;letter-spacing:-1px">'+done+'</div>'+
+                        '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-top:3px">Done</div>'+
                       '</div>'+
                     '</div>'+
                     // Footer
@@ -4022,8 +4022,8 @@ function loadPage(page){
     mc.innerHTML=
       '<h2 style="margin-bottom:12px">📝 Notes</h2>'+
       '<div style="display:flex;gap:8px;margin-bottom:16px">'+
-        '<button id="notes-tab-today" onclick="loadNotesTab(\'today\')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #1B6B4A;background:#1B6B4A;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Today</button>'+
-        '<button id="notes-tab-all" onclick="loadNotesTab(\'all\')" style="flex:1;padding:9px;border-radius:10px;border:1px solid #E5E9EF;background:#fff;color:#8FA89D;font-weight:700;font-size:13px;cursor:pointer">All Time</button>'+
+        '<button id="notes-tab-today" onclick="loadNotesTab(\'today\')" style="flex:1;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.9);color:#0D1117;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1)">Today</button>'+
+        '<button id="notes-tab-all" onclick="loadNotesTab(\'all\')" style="flex:1;padding:10px;border-radius:10px;border:none;background:transparent;color:rgba(255,255,255,0.5);font-weight:700;font-size:13px;cursor:pointer">All Time</button>'+
       '</div>'+
       '<div id="notes-list"><div style="text-align:center;padding:40px;color:#8FA89D">Loading...</div></div>';
     loadNotesTab('today');
@@ -4066,11 +4066,11 @@ function loadNotesTab(tab){
   var tAll   = document.getElementById('notes-tab-all');
   if(tToday && tAll){
     if(tab==='today'){
-      tToday.style.background='#1B6B4A'; tToday.style.color='#fff'; tToday.style.borderColor='#1B6B4A';
-      tAll.style.background='#fff'; tAll.style.color='#8FA89D'; tAll.style.borderColor='#D6E8DE';
+      tToday.style.background='rgba(255,255,255,0.9)'; tToday.style.color='#0D1117'; tToday.style.borderColor='transparent'; tToday.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';
+      tAll.style.background='transparent'; tAll.style.color='rgba(255,255,255,0.5)'; tAll.style.borderColor='transparent'; tAll.style.boxShadow='none';
     } else {
-      tAll.style.background='#1B6B4A'; tAll.style.color='#fff'; tAll.style.borderColor='#1B6B4A';
-      tToday.style.background='#fff'; tToday.style.color='#8FA89D'; tToday.style.borderColor='#D6E8DE';
+      tAll.style.background='rgba(255,255,255,0.9)'; tAll.style.color='#0D1117'; tAll.style.borderColor='transparent'; tAll.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';
+      tToday.style.background='transparent'; tToday.style.color='rgba(255,255,255,0.5)'; tToday.style.borderColor='transparent'; tToday.style.boxShadow='none';
     }
   }
   var listEl = document.getElementById('notes-list');
@@ -4199,14 +4199,19 @@ function renderPatientsList(results){
   for(var ki=0;ki<keys.length;ki++){
     var pt=grouped[keys[ki]];
     html+='<div onclick="openPatientHistory(this)" data-phone="'+pt.phone+'" data-name="'+pt.name+'" data-age="'+pt.age+'" data-gender="'+pt.gender+'" '+
-      'style="background:#fff;border-radius:13px;border:1px solid #E5E9EF;padding:16px;margin-bottom:12px;cursor:pointer;animation:slideIn 0.25s ease-out">';
+      'style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:18px;margin-bottom:12px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.12);transition:all 0.2s">';
     html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+    html+='<div style="display:flex;align-items:center;gap:14px">';
+    html+='<div style="width:46px;height:46px;background:linear-gradient(135deg,#1A3A5C,#2563A8);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+(pt.gender==='female'?'👩':'👨')+'</div>';
     html+='<div>';
-    html+='<div style="font-weight:800;font-size:16px;color:#0D1117">'+pt.name+'</div>';
-    html+='<div style="font-size:13px;color:#8FA89D;margin-top:3px">Age '+pt.age+' · 📞 '+(pt.phone||'—')+'</div>';
-    html+='<div style="font-size:12px;color:#8FA89D;margin-top:2px">Last visit: '+pt.lastVisit+' · '+pt.visits.length+' visit'+(pt.visits.length>1?'s':'')+'</div>';
+    html+='<div style="font-weight:800;font-size:16px;color:#0D1117;letter-spacing:-0.2px">'+pt.name+'</div>';
+    html+='<div style="font-size:12px;color:#9CA3AF;margin-top:3px">Age '+pt.age+' · '+(pt.phone||'—')+'</div>';
+    html+='<div style="font-size:11px;color:#9CA3AF;margin-top:2px">Last visit: '+pt.lastVisit+'</div>';
+    html+='</div></div>';
+    html+='<div style="text-align:right">';
+    html+='<div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border-radius:12px;padding:6px 14px;font-size:13px;font-weight:800">'+pt.visits.length+'x</div>';
+    html+='<div style="font-size:10px;color:#9CA3AF;margin-top:4px">visits</div>';
     html+='</div>';
-    html+='<span style="background:#E8F5EF;color:#1B6B4A;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:700">'+pt.visits.length+'x</span>';
     html+='</div></div>';
   }
   listEl.innerHTML=html||'<div style="text-align:center;padding:40px;color:#8FA89D">No patients found.</div>';
@@ -4420,7 +4425,7 @@ function previewSlots(savedDays, bookedMap){
         var badgeColor=isBooked?'#15803D':color;
         var cursor=isRecepView2&&!isBooked?'pointer':'default';
         var onclick2=isRecepView2&&!isBooked?'openSlotBooking(\''+d+'\',\''+t+'\',\''+(_slotDoctorId||currentUser.doctorId)+'\')':'';
-        result+='<span onclick="'+onclick2+'" title="'+(isBooked?'Booked':'Click to book')+'" style="display:inline-block;background:'+badgeBg+';color:'+badgeColor+';border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;margin:2px;cursor:'+cursor+';border:1px solid '+(isBooked?'#86EFAC':'transparent')+'">'+t+(isBooked?' ✓':'')+'</span>';
+        result+='<span onclick="'+onclick2+'" title="'+(isBooked?'Booked':'Click to book')+'" style="display:inline-block;background:'+badgeBg+';color:'+badgeColor+';border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;margin:3px;cursor:'+cursor+';border:1.5px solid '+(isBooked?'#86EFAC':'rgba(255,255,255,0.15)')+';box-shadow:'+(isBooked?'0 2px 8px rgba(21,128,61,0.2)':'none')+'">'+t+(isBooked?' ✓':'')+'</span>';
       }
       return result;
     }
@@ -4994,7 +4999,11 @@ function searchByPhone(){
         document.getElementById('new-patient-form').style.display='none';
       } else {
         // NOT FOUND — show new patient form
-        res.innerHTML = '<div style="color:#1B6B4A;font-size:13px;font-weight:600;padding:8px 0">New patient — please fill in the details below.</div>';
+        res.innerHTML = '<div style="background:rgba(255,255,255,0.95);border-radius:14px;padding:14px 16px;border:1px solid rgba(255,255,255,0.2);margin-top:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px">'+
+          '<div style="width:38px;height:38px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🆕</div>'+
+          '<div><div style="font-size:11px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.5px">New Patient</div>'+
+          '<div style="font-size:13px;color:#4B5563;margin-top:1px">Phone not found — please fill in the details below</div></div>'+
+          '</div>';
         document.getElementById('new-patient-form').style.display='block';
         document.getElementById('r-phone').value = raw;
         document.getElementById('r-name').focus();
@@ -5073,8 +5082,11 @@ function addReturnPatient(){
   }
 
   document.getElementById('search-result').innerHTML =
-    '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #D6E8DE;margin-top:4px">'+
-    '<div style="font-weight:700;font-size:15px;color:#0D1117;margin-bottom:12px">'+p.name+' - Add to queue</div>'+
+    '<div style="background:rgba(255,255,255,0.95);border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,0.2);margin-top:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12)">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #F0F4F8">'+
+    '<div style="width:40px;height:40px;background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px">✓</div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px">Patient Found</div>'+
+    '<div style="font-weight:800;font-size:15px;color:#0D1117;letter-spacing:-0.2px">'+p.name+'</div></div></div>'+
     '<div class="form-field"><label class="form-label">Visit Type</label>'+
     '<div class="toggle-group">'+
     '<button class="visit-btn" onclick="pickRetVisit(this)" data-val="new">New Patient</button>'+
@@ -6134,7 +6146,7 @@ function printSavedRx(rx){
 <script type="text/html" id="reg-template">
 <div style="max-width:480px;margin:0 auto">
   <h2 style="margin-bottom:18px">Register Patient</h2>
-  <div style="background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+  <div style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:20px;margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,0.15)">
     <div class="form-field"><label class="form-label">Search by phone number first:</label>
       <div style="display:flex;gap:8px">
         <input class="form-input" id="search-phone" type="tel" placeholder="0555 123 456" style="flex:1"/>
@@ -6143,7 +6155,7 @@ function printSavedRx(rx){
     </div>
     <div id="search-result"></div>
   </div>
-  <div id="new-patient-form" style="display:none;background:#fff;border-radius:16px;border:1px solid #E5E9EF;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+  <div id="new-patient-form" style="display:none;background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:20px;box-shadow:0 4px 16px rgba(0,0,0,0.15)">
     <h3 style="margin-bottom:16px;color:var(--dark);font-size:15px">New Patient</h3>
     <div class="form-row">
       <div class="form-field"><label class="form-label">Full Name *</label><input class="form-input" id="r-name" placeholder="Patient name"/></div>
@@ -6203,25 +6215,25 @@ function printSavedRx(rx){
     <div class="popup-history-section" style="margin-bottom:16px">
       <div id="popup-history"></div>
     </div>
-    <div id="popup-notes-form" style="display:none;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px">Diagnosis &amp; Notes</div>
-      <div class="form-field"><label class="form-label">Diagnosis</label><input class="form-input" id="note-diagnosis" placeholder="Main diagnosis"/></div>
-      <div class="form-field"><label class="form-label">Notes &amp; Treatment</label><textarea class="form-textarea" id="note-treatment" placeholder="Treatment plan, observations..."></textarea></div>
+    <div id="popup-notes-form" style="display:none;margin-bottom:14px;background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border-radius:14px;padding:16px;border:1.5px solid #6EE7B7">
+      <div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">📝 Diagnosis &amp; Notes</div>
+      <div class="form-field"><label class="form-label" style="color:#059669">Diagnosis</label><input class="form-input" id="note-diagnosis" placeholder="Main diagnosis" style="border-color:#6EE7B7;background:#fff"/></div>
+      <div class="form-field"><label class="form-label" style="color:#059669">Notes &amp; Treatment</label><textarea class="form-textarea" id="note-treatment" placeholder="Treatment plan, observations..." style="border-color:#6EE7B7;background:#fff"></textarea></div>
       <div id="note-err" style="display:none;color:var(--red);font-size:12px;margin-bottom:8px"></div>
-      <button onclick="saveNotes()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--green),var(--green-l));color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Save Notes</button>
+      <button onclick="saveNotes()" style="width:100%;padding:13px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(5,150,105,0.3)">Save Notes</button>
     </div>
-    <div id="popup-rx-form" style="display:none;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px">Prescription</div>
+    <div id="popup-rx-form" style="display:none;margin-bottom:14px;background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border-radius:14px;padding:16px;border:1.5px solid #A5B4FC">
+      <div style="font-size:11px;font-weight:700;color:#2563A8;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">💊 Prescription</div>
       <div id="rx-medicines">
         <div class="rx-line" style="display:flex;gap:8px;margin-bottom:8px">
-          <input type="text" placeholder="Medicine name" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/>
-          <input type="text" placeholder="Dose + duration" style="flex:2;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none"/>
-          <button onclick="removeRxLine(this)" style="padding:9px 12px;background:var(--red-l);color:var(--red);border:none;border-radius:8px;font-size:13px;cursor:pointer">✕</button>
+          <input type="text" placeholder="Medicine name" style="flex:2;padding:10px 12px;border:1.5px solid #C7D2FE;border-radius:10px;font-size:13px;outline:none;background:#fff"/>
+          <input type="text" placeholder="Dose + duration" style="flex:2;padding:10px 12px;border:1.5px solid #C7D2FE;border-radius:10px;font-size:13px;outline:none;background:#fff"/>
+          <button onclick="removeRxLine(this)" style="padding:10px 12px;background:#FEE2E2;color:#EF4444;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-weight:700">✕</button>
         </div>
       </div>
-      <button onclick="addRxLine()" style="width:100%;padding:10px;border:2px dashed var(--green-l);background:transparent;color:var(--green-l);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">+ Add Medicine</button>
-      <div class="form-field"><label class="form-label">Instructions / Notes</label><textarea class="form-textarea" id="rx-notes" placeholder="e.g. Rest for 3 days, avoid cold water..."></textarea></div>
-      <button onclick="saveAndPrintRx()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Prescription</button>
+      <button onclick="addRxLine()" style="width:100%;padding:10px;border:2px dashed #A5B4FC;background:transparent;color:#2563A8;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">+ Add Medicine</button>
+      <div class="form-field"><label class="form-label" style="color:#2563A8">Instructions / Notes</label><textarea class="form-textarea" id="rx-notes" placeholder="e.g. Rest for 3 days, avoid cold water..." style="border-color:#C7D2FE;background:#fff"></textarea></div>
+      <button onclick="saveAndPrintRx()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(21,101,192,0.3)">💾 Save Prescription</button>
     </div>
     <!-- Lab Order Form -->
     <div id="lab-form-section" style="display:none;margin-top:14px;background:#ECFDF5;border-radius:12px;padding:16px;border:1.5px solid #6EE7B7">
@@ -6497,19 +6509,20 @@ try{
 </script>
 
 <!-- SLOT BOOKING POPUP -->
-<div id="slot-booking-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto">
-  <div style="background:#fff;border-radius:20px;margin:40px auto;max-width:420px;width:90%;overflow:hidden">
-    <div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-size:16px;font-weight:800;color:#fff">Book Appointment</div><div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px" id="slot-popup-subtitle"></div></div>
-      <button onclick="closeSlotBooking()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer">✕</button>
+<div id="slot-booking-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,22,40,0.7);z-index:2000;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:24px;max-width:420px;width:100%;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.4)">
+    <div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);padding:20px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden">
+      <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
+      <div><div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">📅 Schedule</div><div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.3px">Book Appointment</div><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px" id="slot-popup-subtitle"></div></div>
+      <button onclick="closeSlotBooking()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:7px 14px;color:rgba(255,255,255,0.8);font-size:13px;font-weight:600;cursor:pointer">✕</button>
     </div>
     <div style="padding:20px">
       <!-- Step 1: Phone search always first -->
       <div style="margin-bottom:16px">
         <div style="font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Search by Phone Number</div>
         <div style="display:flex;gap:8px">
-          <input type="tel" id="slot-search-phone" placeholder="Phone number..." style="flex:1;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none"/>
-          <button onclick="searchSlotPatient()" style="padding:10px 16px;background:#1A3A5C;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
+          <input type="tel" id="slot-search-phone" placeholder="Phone number..." style="flex:1;padding:11px 14px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:14px;outline:none;background:#FAFBFC"/>
+          <button onclick="searchSlotPatient()" style="padding:11px 18px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
         </div>
         <div id="slot-search-result" style="margin-top:10px"></div>
       </div>
@@ -6533,36 +6546,37 @@ try{
         </div>
       </div>
       <div id="slot-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:12px"></div>
-      <button id="slot-confirm-btn" onclick="confirmSlotBooking()" style="width:100%;padding:14px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Confirm Appointment</button>
+      <button id="slot-confirm-btn" onclick="confirmSlotBooking()" style="width:100%;padding:14px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(5,150,105,0.3);letter-spacing:0.3px">✓ Confirm Appointment</button>
     </div>
   </div>
 </div>
 <!-- MANAGE BOOKED SLOT POPUP -->
-<div id="manage-slot-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto">
-  <div style="background:#fff;border-radius:20px;margin:80px auto;max-width:360px;width:90%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
-    <div style="background:linear-gradient(135deg,#059669,#10B981);padding:16px 20px">
-      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Booked Slot</div>
-      <div style="font-size:17px;font-weight:800;color:#fff" id="mslot-title"></div>
+<div id="manage-slot-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,22,40,0.7);z-index:2000;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:24px;max-width:360px;width:100%;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.4)">
+    <div style="background:linear-gradient(135deg,#059669,#047857);padding:20px;position:relative;overflow:hidden">
+      <div style="position:absolute;right:-10px;top:-10px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.06)"></div>
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📅 Booked Appointment</div>
+      <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.3px" id="mslot-title"></div>
     </div>
     <div style="padding:20px">
-      <div style="background:#F0FDF4;border-radius:12px;padding:14px;margin-bottom:20px">
-        <div style="font-size:14px;font-weight:800;color:#065F46" id="mslot-patient"></div>
-        <div style="font-size:12px;color:#4B5563;margin-top:3px" id="mslot-phone"></div>
+      <div style="background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border-radius:14px;padding:16px;margin-bottom:20px;border:1px solid #6EE7B7">
+        <div style="font-size:15px;font-weight:800;color:#065F46;letter-spacing:-0.2px" id="mslot-patient"></div>
+        <div style="font-size:12px;color:#4B5563;margin-top:4px" id="mslot-phone"></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button onclick="rescheduleBookedSlot()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">&#x1F4C5; Reschedule</button>
-        <button id="mslot-cancel-btn" onclick="cancelBookedSlot()" style="width:100%;padding:13px;background:#FEF2F2;color:#EF4444;border:1.5px solid #FECACA;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">&#x274C; Cancel Appointment</button>
-        <button onclick="closeManageSlot()" style="width:100%;padding:11px;background:#fff;color:#9CA3AF;border:1.5px solid #E5E7EB;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer">Back</button>
+        <button onclick="rescheduleBookedSlot()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1A3A5C,#2563A8);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.3px">📅 Reschedule</button>
+        <button id="mslot-cancel-btn" onclick="cancelBookedSlot()" style="width:100%;padding:14px;background:#FEF2F2;color:#EF4444;border:1.5px solid #FECACA;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer">✕ Cancel Appointment</button>
+        <button onclick="closeManageSlot()" style="width:100%;padding:12px;background:#F8FAFC;color:#9CA3AF;border:1px solid #E5E7EB;border-radius:14px;font-size:13px;font-weight:600;cursor:pointer">← Back</button>
       </div>
     </div>
   </div>
 </div>
 <!-- INFO POPUP -->
-<div id="info-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:3000;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
-  <div style="background:#fff;border-radius:20px;max-width:500px;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
-    <div style="background:linear-gradient(135deg,#1A3A5C,#2563A8);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
-      <div id="info-popup-title" style="font-size:16px;font-weight:800;color:#fff"></div>
-      <button onclick="closeInfoPopup()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer">✕ Close</button>
+<div id="info-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,22,40,0.7);z-index:3000;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:24px;max-width:500px;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.4)">
+    <div style="background:linear-gradient(135deg,#0A1628,#1A3A5C);padding:18px 22px;display:flex;justify-content:space-between;align-items:center">
+      <div id="info-popup-title" style="font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.3px"></div>
+      <button onclick="closeInfoPopup()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:7px 14px;color:rgba(255,255,255,0.8);font-size:13px;font-weight:600;cursor:pointer">✕ Close</button>
     </div>
     <div id="info-popup-body" style="padding:20px;overflow-y:auto;flex:1"></div>
   </div>
