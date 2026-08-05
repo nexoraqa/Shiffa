@@ -86,12 +86,12 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 .w-title{font-size:24px;font-weight:900;margin-bottom:4px;letter-spacing:-0.5px}
 .w-sub{font-size:13px;opacity:.6;font-weight:500}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
-.stat-card{background:#fff;border-radius:16px;padding:18px 20px;border:1px solid #EEF0F3;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);transition:all 0.2s}
-.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.1)}
-.stat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px}
-.stat-val{font-size:26px;font-weight:800;color:var(--dark);letter-spacing:-0.5px}
+.stat-card{background:rgba(255,255,255,0.95);border-radius:16px;padding:18px 20px;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:all 0.2s;backdrop-filter:blur(10px)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,0.2)}
+.stat-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.stat-val{font-size:28px;font-weight:900;color:#0D1117;letter-spacing:-1px;line-height:1}
 .stat-lbl{font-size:12px;color:var(--light);font-weight:500;margin-top:1px}
-.table-card{background:#fff;border-radius:16px;border:1px solid #EEF0F3;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.table-card{background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,0.15);backdrop-filter:blur(10px)}
 .table-card h3{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px;color:var(--light)}
 .table-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
 .table-row:last-child{border-bottom:none}
@@ -1135,12 +1135,38 @@ function sbConfirm(){
       }
       // Show success
       document.getElementById('sb-content').innerHTML=
-        '<div style="text-align:center;padding:30px 20px">'+
-          '<div style="font-size:52px;margin-bottom:16px">🎉</div>'+
-          '<div style="font-size:18px;font-weight:800;color:#0D1117;margin-bottom:6px">Appointment Confirmed!</div>'+
-          '<div style="font-size:13px;color:#4B5563;margin-bottom:16px">'+_sb.patient.name+' — '+_sb.day+' at '+_sb.time+'</div>'+
-          '<div style="background:#ECFDF5;border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:#059669;font-weight:600">A confirmation has been sent to your WhatsApp</div>'+
-          '<button onclick="hideSelfBooking()" style="padding:12px 28px;background:#0D1117;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Done</button>'+
+        '<div style="text-align:center;padding:32px 20px">'+
+          '<div style="width:80px;height:80px;background:linear-gradient(135deg,#059669,#10B981);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 20px;box-shadow:0 8px 24px rgba(5,150,105,0.3)">✓</div>'+
+          '<div style="font-size:22px;font-weight:900;color:#0D1117;margin-bottom:6px;letter-spacing:-0.5px">Appointment Confirmed!</div>'+
+          '<div style="font-size:13px;color:#9CA3AF;margin-bottom:24px">Your appointment has been booked</div>'+
+          '<div style="background:#F8FAFF;border-radius:16px;padding:16px;margin-bottom:20px;text-align:left;border:1px solid #E5E9EF">'+
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+              '<span style="font-size:18px">👨‍⚕️</span>'+
+              '<div>'+
+                '<div style="font-size:11px;color:#9CA3AF;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Doctor</div>'+
+                '<div style="font-size:14px;font-weight:700;color:#0D1117">'+_sb.doctor.name+'</div>'+
+              '</div>'+
+            '</div>'+
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+              '<span style="font-size:18px">📅</span>'+
+              '<div>'+
+                '<div style="font-size:11px;color:#9CA3AF;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Day</div>'+
+                '<div style="font-size:14px;font-weight:700;color:#0D1117">'+_sb.day+'</div>'+
+              '</div>'+
+            '</div>'+
+            '<div style="display:flex;align-items:center;gap:10px">'+
+              '<span style="font-size:18px">⏰</span>'+
+              '<div>'+
+                '<div style="font-size:11px;color:#9CA3AF;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Time</div>'+
+                '<div style="font-size:14px;font-weight:700;color:#0D1117">'+_sb.time+'</div>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+          '<div style="background:#ECFDF5;border-radius:12px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;gap:10px">'+
+            '<span style="font-size:20px">💬</span>'+
+            '<span style="font-size:13px;color:#059669;font-weight:600">WhatsApp confirmation sent</span>'+
+          '</div>'+
+          '<button onclick="hideSelfBooking()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0D1117,#1A3A5C);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.3px">Done ✓</button>'+
         '</div>';
     } else {
       btn.textContent='Confirm Appointment';btn.disabled=false;
@@ -1819,34 +1845,37 @@ function loadLabOrders(filter){
     }
     var html='';
     filtered.forEach(function(o){
+      var isPending=o.status==='pending';
       html+=
-        '<div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">'+
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
-            '<div>'+
-              '<div style="font-size:15px;font-weight:800;color:#0D1117">'+o.patientName+'</div>'+
-              '<div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+(o.patientPhone||'')+' · '+(o.date||'')+'</div>'+
+        '<div style="background:rgba(255,255,255,0.95);border-radius:18px;border:1px solid rgba(255,255,255,0.2);padding:20px;margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,0.12)">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
+            '<div style="display:flex;align-items:center;gap:12px">'+
+              '<div style="width:44px;height:44px;background:'+(isPending?'#FEF3C7':'#ECFDF5')+';border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px">'+(isPending?'⏳':'✅')+'</div>'+
+              '<div>'+
+                '<div style="font-size:15px;font-weight:800;color:#0D1117">'+o.patientName+'</div>'+
+                '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'+(o.patientPhone||'')+' · '+(o.date||'')+'</div>'+
+              '</div>'+
             '</div>'+
-            '<span style="font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;background:'+(o.status==='done'?'#ECFDF5':'#FEF3C7')+';color:'+(o.status==='done'?'#059669':'#D97706')+'">'+o.status+'</span>'+
+            '<span style="font-size:11px;padding:4px 12px;border-radius:8px;font-weight:700;background:'+(isPending?'#FEF3C7':'#ECFDF5')+';color:'+(isPending?'#D97706':'#059669')+'">'+o.status.toUpperCase()+'</span>'+
           '</div>'+
-          '<div style="background:#F0F9FF;border-radius:10px;padding:12px;margin-bottom:12px">'+
-            '<div style="font-size:11px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Test Ordered</div>'+
-            '<div style="font-size:15px;font-weight:700;color:#0D1117">🧪 '+o.testType+'</div>'+
-            (o.notes?'<div style="font-size:12px;color:#4B5563;margin-top:4px">Note: '+o.notes+'</div>':'')+
+          '<div style="background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border-radius:12px;padding:12px 14px;margin-bottom:14px;border:1px solid #BAE6FD">'+
+            '<div style="font-size:10px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Test Ordered</div>'+
+            '<div style="font-size:16px;font-weight:800;color:#0D1117">🧪 '+o.testType+'</div>'+
+            (o.notes?'<div style="font-size:12px;color:#4B5563;margin-top:6px">📝 '+o.notes+'</div>':'')+
           '</div>'+
-          (o.status==='pending'?
+          (isPending?
             '<div>'+
-              '<textarea id="lt-result-'+o.id+'" placeholder="Enter test results here..." style="width:100%;padding:10px;border:1.5px solid #E5E9EF;border-radius:10px;font-size:13px;outline:none;height:80px;resize:none;margin-bottom:8px;box-sizing:border-box"></textarea>'+
-              '<button data-oid="'+o.id+'" onclick="submitLabResult(this.getAttribute(\'data-oid\'))" style="width:100%;padding:11px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Submit Results</button>'+
+              '<textarea id="lt-result-'+o.id+'" placeholder="Type test results here..." style="width:100%;padding:12px;border:1.5px solid #E5E9EF;border-radius:12px;font-size:13px;outline:none;height:90px;resize:none;margin-bottom:10px;box-sizing:border-box"></textarea>'+
+              '<button data-oid="'+o.id+'" onclick="submitLabResult(this.getAttribute(\'data-oid\'))" style="width:100%;padding:13px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">✅ Submit Results</button>'+
             '</div>'
           :
-            '<div style="background:#ECFDF5;border-radius:10px;padding:12px">'+
-              '<div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:4px">Results</div>'+
-              '<div style="font-size:13px;color:#0D1117">'+(o.result||'No result entered')+'</div>'+
+            '<div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:12px;padding:14px;border:1px solid #6EE7B7">'+
+              '<div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Result</div>'+
+              '<div style="font-size:14px;color:#0D1117;line-height:1.5">'+(o.result||'No result entered')+'</div>'+
             '</div>'
           )+
         '</div>';
     });
-    list.innerHTML=html;
   });
 }
 
