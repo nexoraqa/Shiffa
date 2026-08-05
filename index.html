@@ -3120,7 +3120,7 @@ function loadPage(page){
         '</div>'+
         '<div onclick="showRecepsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
           '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Recep.</div>'+
-          '<div id="sa-receps" style="font-size:28px;font-weight:900;color:#E65100;letter-spacing:-1px">—</div>'+
+          '<div id="sa-receps" style="font-size:28px;font-weight:900;color:'+ROLE_COLORS.receptionist+';letter-spacing:-1px">—</div>'+
         '</div>'+
         '<div onclick="showAdminsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
           '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Admins</div>'+
@@ -3404,8 +3404,8 @@ function loadPage(page){
         var html='<table style="width:100%;border-collapse:collapse">';
         html+='<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Role</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Username</th><th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Linked To</th></tr></thead><tbody>';
         myStaff.forEach(function(a){
-          var roleColor=a.role==='doctor'?'#2563A8':'#E65100';
-          var roleBg=a.role==='doctor'?'#EEF2FF':'#FEF3C7';
+          var roleColor=ROLE_COLORS[a.role]||'#4B5563';
+          var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='labtech'?'#ECFEFF':'#ECFDF5';
           html+='<tr style="border-bottom:1px solid var(--border)">'+
             '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>'+
             '<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>'+
