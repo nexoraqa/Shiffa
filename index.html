@@ -3113,26 +3113,27 @@ function loadPage(page){
         '</div>'+
       '</div>'+
       // Top stats
-      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px">'+
-        '<div onclick="showDoctorsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
-          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Doctors</div>'+
-          '<div id="sa-doctors" style="font-size:28px;font-weight:900;color:#1A3A5C;letter-spacing:-1px">—</div>'+
+      // Top stats
+      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px">'+
+        '<div onclick="showDoctorsPopup()" style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.12);transition:all 0.2s">'+
+          '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Doctors</div>'+
+          '<div id="sa-doctors" style="font-size:26px;font-weight:900;color:#1565C0;letter-spacing:-1px;line-height:1">—</div>'+
         '</div>'+
-        '<div onclick="showRecepsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
-          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Recep.</div>'+
-          '<div id="sa-receps" style="font-size:28px;font-weight:900;color:'+ROLE_COLORS.receptionist+';letter-spacing:-1px">—</div>'+
+        '<div onclick="showRecepsPopup()" style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.12);transition:all 0.2s">'+
+          '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Recept.</div>'+
+          '<div id="sa-receps" style="font-size:26px;font-weight:900;color:'+ROLE_COLORS.receptionist+';letter-spacing:-1px;line-height:1">—</div>'+
         '</div>'+
-        '<div onclick="showAdminsPopup()" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
-          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Admins</div>'+
-          '<div id="sa-admins" style="font-size:28px;font-weight:900;color:#7C3AED;letter-spacing:-1px">—</div>'+
+        '<div onclick="showAdminsPopup()" style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.12);transition:all 0.2s">'+
+          '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Admins</div>'+
+          '<div id="sa-admins" style="font-size:26px;font-weight:900;color:#7C3AED;letter-spacing:-1px;line-height:1">—</div>'+
         '</div>'+
-        '<div onclick="showPatientsPopup(null)" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
-          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Today</div>'+
-          '<div id="sa-patients" style="font-size:28px;font-weight:900;color:#059669;letter-spacing:-1px">—</div>'+
+        '<div onclick="showPatientsPopup(null)" style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.12);transition:all 0.2s">'+
+          '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Today</div>'+
+          '<div id="sa-patients" style="font-size:26px;font-weight:900;color:#059669;letter-spacing:-1px;line-height:1">—</div>'+
         '</div>'+
-        '<div onclick="showApptsPopup(null)" style="background:#fff;border-radius:14px;border:1px solid #E5E9EF;padding:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)">'+
-          '<div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Appts</div>'+
-          '<div id="sa-appts" style="font-size:28px;font-weight:900;color:#D97706;letter-spacing:-1px">—</div>'+
+        '<div onclick="showApptsPopup(null)" style="background:rgba(255,255,255,0.95);border-radius:16px;border:1px solid rgba(255,255,255,0.2);padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.12);transition:all 0.2s">'+
+          '<div style="font-size:9px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Appts</div>'+
+          '<div id="sa-appts" style="font-size:26px;font-weight:900;color:#D97706;letter-spacing:-1px;line-height:1">—</div>'+
         '</div>'+
       '</div>'+
       // Clinics breakdown
@@ -3868,21 +3869,21 @@ function loadPage(page){
       '</div>'+
       // Stats row
       '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">'+
-        '<div style="background:#FEF3C7;border-radius:14px;padding:16px;border:1px solid #FDE68A">'+
-          '<div style="font-size:11px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Pending</div>'+
-          '<div id="lt-count-pending" style="font-size:32px;font-weight:900;color:#D97706;letter-spacing:-1px">—</div>'+
+        '<div style="background:rgba(255,255,255,0.95);border-radius:16px;padding:18px;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 16px rgba(0,0,0,0.12)">'+
+          '<div style="font-size:10px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">⏳ Pending</div>'+
+          '<div id="lt-count-pending" style="font-size:36px;font-weight:900;color:#D97706;letter-spacing:-2px;line-height:1">—</div>'+
         '</div>'+
-        '<div style="background:#ECFDF5;border-radius:14px;padding:16px;border:1px solid #6EE7B7">'+
-          '<div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">✅ Done Today</div>'+
-          '<div id="lt-count-done" style="font-size:32px;font-weight:900;color:#059669;letter-spacing:-1px">—</div>'+
+        '<div style="background:rgba(255,255,255,0.95);border-radius:16px;padding:18px;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 16px rgba(0,0,0,0.12)">'+
+          '<div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">✅ Done</div>'+
+          '<div id="lt-count-done" style="font-size:36px;font-weight:900;color:#059669;letter-spacing:-2px;line-height:1">—</div>'+
         '</div>'+
-        '<div style="background:#F0F9FF;border-radius:14px;padding:16px;border:1px solid #BAE6FD">'+
-          '<div style="font-size:11px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">📋 Total Today</div>'+
-          '<div id="lt-count-total" style="font-size:32px;font-weight:900;color:#0891B2;letter-spacing:-1px">—</div>'+
+        '<div style="background:rgba(255,255,255,0.95);border-radius:16px;padding:18px;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 16px rgba(0,0,0,0.12)">'+
+          '<div style="font-size:10px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">📋 Total</div>'+
+          '<div id="lt-count-total" style="font-size:36px;font-weight:900;color:#0891B2;letter-spacing:-2px;line-height:1">—</div>'+
         '</div>'+
       '</div>'+
       // Filter tabs
-      '<div style="display:flex;gap:6px;background:#F0F4F8;border-radius:10px;padding:4px;margin-bottom:16px">'+
+      '<div style="display:flex;gap:6px;background:rgba(255,255,255,0.08);border-radius:12px;padding:4px;margin-bottom:16px">'+
         '<button id="lt-btn-pending" onclick="loadLabOrders(&quot;pending&quot;)" style="flex:1;padding:8px;border-radius:8px;border:none;background:linear-gradient(135deg,#0891B2,#06B6D4);color:#fff;font-size:12px;font-weight:700;cursor:pointer">⏳ Pending</button>'+
         '<button id="lt-btn-done" onclick="loadLabOrders(&quot;done&quot;)" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">✅ Completed</button>'+
         '<button id="lt-btn-all" onclick="loadLabOrders(&quot;all&quot;)" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer">📋 All</button>'+
