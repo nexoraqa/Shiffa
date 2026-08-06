@@ -690,6 +690,7 @@ function renderStaffTable(accounts){
     });
     html+='</table></div></div>';
   });
+  list.innerHTML=html;
 }
 
 function filterStaff(q){
@@ -1430,8 +1431,9 @@ function caRenderStaff(staff){
       '</td>'+
     '</tr>';
   });
-  html+='</tbody></table></div>';
+  list.innerHTML=html;
 }
+
 
 function caFilterStaff(q){
   var filtered=(window._caAllStaff||[]).filter(function(a){
