@@ -815,21 +815,33 @@ function sbStep1(){
   sbLoadDoctors('');
 }
 
+var _sbAllDoctors=null;
+
 function sbLoadDoctors(query){
   if(!window.fbGetAccounts) return;
+  // Use cache if available
+  if(_sbAllDoctors){
+    sbFilterAndRender(query);
+    return;
+  }
   window.fbGetAccounts().then(function(accounts){
-    var doctors=accounts.filter(function(a){
-      if(a.role!=='doctor') return false;
-      if(!query) return true;
-      var q=query.toLowerCase();
-      return (a.name||'').toLowerCase().includes(q)||(a.specialty||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q)||(a.clinicName||'').toLowerCase().includes(q);
-    });
-    sbRenderDoctors(doctors);
+    _sbAllDoctors=accounts.filter(function(a){return a.role==='doctor';});
+    sbFilterAndRender(query);
   });
 }
 
+function sbFilterAndRender(query){
+  if(!_sbAllDoctors) return;
+  var doctors=_sbAllDoctors.filter(function(a){
+    if(!query) return true;
+    var q=query.toLowerCase();
+    return (a.name||'').toLowerCase().includes(q)||(a.specialty||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q)||(a.clinicName||'').toLowerCase().includes(q);
+  });
+  sbRenderDoctors(doctors);
+}
+
 function sbSearchDoctors(q){
-  sbLoadDoctors(q);
+  sbFilterAndRender(q);
 }
 
 function sbRenderDoctors(doctors){
