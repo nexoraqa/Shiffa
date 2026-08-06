@@ -65,10 +65,10 @@ body{background:var(--bg);min-height:100vh;color:var(--dark);-webkit-font-smooth
 /* ── Layout ── */
 .dash-layout{display:flex;flex:1;min-height:calc(100vh - 58px);background:linear-gradient(160deg,#0D1F35 0%,#112840 50%,#163354 100%)}
 /* ── Dark sidebar ── */
-.sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);padding:20px 14px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.04)}
-.nav-btn{display:flex;align-items:center;gap:10px;padding:11px 14px;border:none;border-radius:12px;background:transparent;color:rgba(255,255,255,0.45);font-weight:500;font-size:13px;cursor:pointer;text-align:left;width:100%;transition:all 0.2s;letter-spacing:0.1px}
+.sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);padding:20px 14px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.06)}
+.nav-btn{display:flex;align-items:center;gap:11px;padding:11px 14px;border:none;border-radius:12px;background:transparent;color:rgba(255,255,255,0.5);font-weight:500;font-size:13px;cursor:pointer;text-align:left;width:100%;transition:all 0.2s;letter-spacing:0.1px;border-left:3px solid transparent}
 .nav-btn:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.9)}
-.nav-btn.active{background:linear-gradient(135deg,#1B6B4A,#2D9166);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(27,107,74,0.5)}
+.nav-btn.active{background:rgba(255,255,255,0.12);color:#fff;font-weight:700;border-left:3px solid rgba(255,255,255,0.6)}
 .nav-btn .mi{font-size:16px;opacity:0.9}
 .sidebar-footer{margin-top:auto;padding:14px;background:rgba(255,255,255,0.05);border-radius:14px;border:1px solid rgba(255,255,255,0.08);transition:background 0.2s}
 .sidebar-footer:hover{background:rgba(255,255,255,0.09)}
@@ -6099,14 +6099,15 @@ function printSavedRx(rx){
     '@media print{.no-print{display:none}body{margin:10px;padding:20px}.watermark{display:block}}'+
     '</style></head><body>'+
     '<div class="watermark">SHIFAA</div>'+
-    '<div class="no-print" style="text-align:center;padding:16px;background:#f5f5f5;border-bottom:1px solid #ddd;font-family:Arial,sans-serif">'+
-    '<button onclick="document.getElementById(\'rx-print-overlay\').remove()" style="padding:10px 20px;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-right:10px">\u2190 Back</button>'+
-    '<button onclick="setTimeout(function(){window.print();},500)" style="padding:10px 28px;background:#1B6B4A;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimer</button>'+
+    '<div class="no-print" style="text-align:center;padding:16px;background:#0A1628;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;gap:12px">'+
+    '<span style="color:rgba(255,255,255,0.5);font-size:13px;margin-right:8px">🌿 Shifaa Prescription</span>'+
+    '<button onclick="document.getElementById(\'rx-print-overlay\').remove()" style="padding:10px 20px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:10px;font-size:14px;cursor:pointer">← Back</button>'+
+    '<button onclick="setTimeout(function(){window.print();},500)" style="padding:10px 28px;background:linear-gradient(135deg,#059669,#10B981);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(5,150,105,0.3)">🖨️ Print</button>'+
     '</div>'+
     '<div style="max-width:680px;margin:20px auto;padding:20px">'+
     '<div class="top">'+
       '<div class="clinic-block">'+
-        '<div class="clinic-name">🌿 Cabinet Médical</div>'+
+        '<div class="clinic-name">🌿 '+(u.cabinetName||u.clinicName||'Cabinet Médical')+'</div>'+
         '<div class="doctor-title">'+(doctorName.startsWith('Dr.')?doctorName:'Dr. '+doctorName)+'</div>'+
         '<div class="doctor-sub">'+doctorSpecialty+'<br>'+doctorCity+'</div>'+
       '</div>'+
