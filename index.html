@@ -1397,7 +1397,7 @@ function caLoadStaff(){
   var clinicName=window._caClinicName||'';
   window.fbGetAccounts().then(function(accounts){
     window._caAllStaff=accounts.filter(function(a){
-      return (a.role==='doctor'||a.role==='receptionist')&&
+      return (a.role==='doctor'||a.role==='receptionist'||a.role==='labtech')&&
              (a.clinicName===clinicName||a.cabinetName===clinicName);
     });
     caRenderStaff(window._caAllStaff);
