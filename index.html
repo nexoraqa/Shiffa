@@ -666,10 +666,11 @@ function renderStaffTable(accounts){
   Object.keys(clinics).forEach(function(cn){
     var staff=clinics[cn];
     html+='<div style="margin-bottom:20px">'+
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:#F0F4F8;border-radius:8px;border-left:3px solid #7C3AED">'+
-        '<span style="font-size:13px;font-weight:700;color:#0D1117">🏥 '+cn+'</span>'+
-        '<span style="font-size:11px;color:#9CA3AF;margin-left:auto">'+staff.length+' staff</span>'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px 14px;background:rgba(255,255,255,0.95);border-radius:12px;border-left:4px solid '+ROLE_COLORS.superadmin+';box-shadow:0 2px 8px rgba(0,0,0,0.08)">'+
+        '<span style="font-size:14px;font-weight:800;color:#0D1117">🏥 '+cn+'</span>'+
+        '<span style="font-size:11px;color:#9CA3AF;margin-left:auto;background:#F0F4F8;padding:2px 8px;border-radius:6px;font-weight:600">'+staff.length+' staff</span>'+
       '</div>'+
+      '<div style="background:rgba(255,255,255,0.95);border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1)">'+
       '<table style="width:100%;border-collapse:collapse">';
     staff.forEach(function(a){
       var roleColor=ROLE_COLORS[a.role]||'#4B5563';
@@ -677,19 +678,18 @@ function renderStaffTable(accounts){
       var docLinked=a.role==='receptionist'&&a.doctorId&&accounts.some(function(x){return x.role==='doctor'&&x.username===a.doctorId;});
       var linkColor=a.role!=='receptionist'?'#9CA3AF':docLinked?'#059669':'#EF4444';
       var linkText=a.role==='receptionist'?(a.doctorId?(docLinked?a.doctorId:a.doctorId+' (not found)'):'Not linked'):'-';
-      html+='<tr style="border-bottom:1px solid var(--border)">';
-      html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>';
-      html+='<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
-      html+='<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>';
-      html+='<td style="padding:10px 12px;font-size:13px;color:'+linkColor+';font-weight:'+(docLinked?'600':'400')+'">'+linkText+'</td>';
-      html+='<td style="padding:10px 12px;text-align:right;white-space:nowrap">';
-      html+='<button data-id="'+a.id+'" onclick="editStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">Edit</button>';
-      html+='<button data-id="'+a.id+'" onclick="deleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>';
+      html+='<tr style="border-bottom:1px solid #F5F7FA">';
+      html+='<td style="padding:12px 14px;font-size:13px;font-weight:700;color:#0D1117">'+a.name+'</td>';
+      html+='<td style="padding:12px 14px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700">'+a.role+'</span></td>';
+      html+='<td style="padding:12px 14px;font-size:12px;color:#6B7280">'+a.username+'</td>';
+      html+='<td style="padding:12px 14px;font-size:12px;color:'+linkColor+';font-weight:'+(docLinked?'600':'400')+'">'+linkText+'</td>';
+      html+='<td style="padding:12px 14px;text-align:right;white-space:nowrap">';
+      html+='<button data-id="'+a.id+'" onclick="editStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-right:6px">Edit</button>';
+      html+='<button data-id="'+a.id+'" onclick="deleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>';
       html+='</td></tr>';
     });
-    html+='</table></div>';
+    html+='</table></div></div>';
   });
-  list.innerHTML=html;
 }
 
 function filterStaff(q){
@@ -1408,30 +1408,29 @@ function caRenderStaff(staff){
   var list=document.getElementById('ca-staff-list');
   if(!list) return;
   if(!staff.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px">No staff yet.</div>';return;}
-  var html='<table style="width:100%;border-collapse:collapse">';
-  html+='<thead><tr style="border-bottom:2px solid var(--border)">'+
-    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Name</th>'+
-    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Role</th>'+
-    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Username</th>'+
-    '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#9CA3AF;text-transform:uppercase">Linked</th>'+
-    '<th style="padding:8px 12px"></th>'+
+  var html='<div style="background:rgba(255,255,255,0.95);border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1)"><table style="width:100%;border-collapse:collapse">';
+  html+='<thead><tr style="background:#F8FAFC;border-bottom:2px solid #F0F4F8">'+
+    '<th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Name</th>'+
+    '<th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Role</th>'+
+    '<th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Username</th>'+
+    '<th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Linked</th>'+
+    '<th style="padding:10px 14px"></th>'+
   '</tr></thead><tbody>';
   staff.forEach(function(a){
     var roleColor=ROLE_COLORS[a.role]||'#4B5563';
     var roleBg=a.role==='doctor'?'#EEF2FF':a.role==='labtech'?'#ECFEFF':'#ECFDF5';
-    html+='<tr style="border-bottom:1px solid var(--border)">'+
-      '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1117">'+a.name+'</td>'+
-      '<td style="padding:10px 12px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">'+a.role+'</span></td>'+
-      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+a.username+'</td>'+
-      '<td style="padding:10px 12px;font-size:13px;color:#4B5563">'+(a.role==='receptionist'?(a.doctorId||'—'):a.specialty||'—')+'</td>'+
-      '<td style="padding:10px 12px;text-align:right;white-space:nowrap">'+
-      '<button data-id="'+a.id+'" onclick="caEditStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">Edit</button>'+
-      '<button data-id="'+a.id+'" onclick="caDeleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>'+
+    html+='<tr style="border-bottom:1px solid #F5F7FA">'+
+      '<td style="padding:12px 14px;font-size:13px;font-weight:700;color:#0D1117">'+a.name+'</td>'+
+      '<td style="padding:12px 14px"><span style="background:'+roleBg+';color:'+roleColor+';border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700">'+a.role+'</span></td>'+
+      '<td style="padding:12px 14px;font-size:12px;color:#6B7280">'+a.username+'</td>'+
+      '<td style="padding:12px 14px;font-size:12px;color:#6B7280">'+(a.role==='receptionist'?(a.doctorId||'—'):a.specialty||'—')+'</td>'+
+      '<td style="padding:12px 14px;text-align:right;white-space:nowrap">'+
+      '<button data-id="'+a.id+'" onclick="caEditStaff(this.getAttribute(\'data-id\'))" style="background:#EEF2FF;color:#2563A8;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-right:6px">Edit</button>'+
+      '<button data-id="'+a.id+'" onclick="caDeleteStaff(this.getAttribute(\'data-id\'))" style="background:#FEE2E2;color:#EF4444;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">Remove</button>'+
       '</td>'+
     '</tr>';
   });
-  html+='</tbody></table>';
-  list.innerHTML=html;
+  html+='</tbody></table></div>';
 }
 
 function caFilterStaff(q){
